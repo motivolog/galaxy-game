@@ -1,16 +1,34 @@
-# flutter_projects
+# flutter_projects = "Galaksimde Öğreniyorum"
 
 Erişilebilir, sesli yönlendirmeli çocuklara özel eğitim oyunu.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
+## Özellikler
+- Sesli yönlendirme ve geri bildirim
+- Gezegen temalı seviye seçimi
+- Eşleştirme oyunu
+- Sesleri tanıma oyunu
+- Mobil cihazlara uygun için responsive tasarım
+- Erişilebilirlik destekleri
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+## Kullanılan Teknolojiler
+- Flutter - mobil uygulama geliştirme 
+- Dart - yazılım dili
+- Audioplayers - ses çalma işlemleri için
+- Lottie - animasyonlar için
+
+
+
+## Kurulum
+  ```bash
+   git clone https://github.com/kullaniciadi/galaksimde-ogreniyorum.git
+   cd galaksimde-ogreniyorum
+   flutter pub get
+   flutter run
+
+
+
+
