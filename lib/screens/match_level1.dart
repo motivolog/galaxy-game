@@ -15,22 +15,10 @@ class _MatchLevel1State extends State<MatchLevel1> {
   @override
   void initState() {
     super.initState();
-    print("MatchLevel1 init çalıştı");
     Future.delayed(Duration.zero, () {
-      _speakLevelIntro();
     });
   }
-  Future<void> _speakLevelIntro() async{
-    await _flutterTts.setLanguage("en-US");  //Türkçe
-    await _flutterTts.setSpeechRate(0.5);   //Konuşma hızı
-    await _flutterTts.setPitch(1.0);       //sesin tonlaması
-    await _flutterTts.setVolume(1.0);     //sesin yüksekliği
-    await _flutterTts.awaitSpeakCompletion(true);
 
-    await _flutterTts.speak(
-      "Welcome to level one. Are you ready to match the items?"
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
