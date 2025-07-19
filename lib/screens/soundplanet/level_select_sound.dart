@@ -14,7 +14,7 @@ class LevelSelectSoundScreen extends StatelessWidget {
             /* --- Lacivert arka plan + silik desenler --- */
             Positioned.fill(
               child: Image.asset(
-                'assets/images/levelsecsound_bg.png',   // ← arkaplan görseliniz
+                'assets/gif/bgg.gif',   // ← arkaplan görseliniz
                 fit: BoxFit.cover,
               ),
             ),

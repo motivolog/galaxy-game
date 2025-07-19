@@ -1,3 +1,4 @@
+// Yeni tasarımlı SoundLevel1
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'question.dart';
@@ -22,55 +23,33 @@ class _SoundLevel1State extends State<SoundLevel1> {
 
   Future<void> _playSoundWithPrompt() async {
     await _audioPlayer.stop();
-
-    // 1️⃣ Hayvan sesi
-    await _audioPlayer.play(
-      UrlSource(soundQuestions[_currentQuestionIndex]['sound']),
-    );
-
-    // 2️⃣ Bekleme + Yönlendirme sesi
+    await _audioPlayer.play(UrlSource(soundQuestions[_currentQuestionIndex]['sound']));
     await Future.delayed(const Duration(seconds: 3));
-    await _audioPlayer.play(
-      AssetSource('audio/neyin_sesi.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
   }
 
   Future<void> _handleAnswer(String selectedImage) async {
     if (_answered) return;
-
-    setState(() {
-      _answered = true;
-    });
-
+    setState(() => _answered = true);
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
     if (selectedImage == correct) {
       final correctSound = question['correct_sound'] ?? 'audio/tebrikler.mp3';
       await _audioPlayer.play(AssetSource(correctSound));
-
-
       await Future.delayed(const Duration(seconds: 3));
-
       if (!mounted) return;
-
       setState(() {
         _currentQuestionIndex++;
         _answered = false;
       });
-
       if (_currentQuestionIndex < soundQuestions.length) {
         _playSoundWithPrompt();
       }
     } else {
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _audioPlayer.onPlayerComplete.first;
-
-      if (mounted) {
-        setState(() {
-          _answered = false;
-        });
-      }
+      if (mounted) setState(() => _answered = false);
     }
   }
 
@@ -80,13 +59,31 @@ class _SoundLevel1State extends State<SoundLevel1> {
     super.dispose();
   }
 
-  Widget _buildImage(String imagePath) {
+  Widget _buildImage(String imagePath, {required double size}) {
     return GestureDetector(
       onTap: () => _handleAnswer(imagePath),
-      child: Image.asset(
-        imagePath,
-        width: 190,
-        height: 190,
+      child: Container(
+        width: size,
+        height: size,
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(4, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
     );
   }
@@ -108,59 +105,61 @@ class _SoundLevel1State extends State<SoundLevel1> {
     final question = soundQuestions[_currentQuestionIndex];
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: false,
-      body: Center(
-        child: OrientationBuilder(
-          builder: (context, orientation) {
-            final isPortrait = orientation == Orientation.portrait;
+      body: Stack(
+        children: [
+          // Arkaplan GIF
+          Positioned.fill(
+            child: Image.asset(
+              'assets/gif/back.gif',
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: OrientationBuilder(
+                builder: (context, orientation) {
+                  final isPortrait = orientation == Orientation.portrait;
+                  final double cardSize = isPortrait ? 180 : 230;
 
-            final question = soundQuestions[_currentQuestionIndex];
-
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isPortrait) ...[
-                  // DİKEY GÖRÜNÜM
-                  Row(
+                  return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildImage(question['options'][0]),
-                      const SizedBox(width: 20),
-                      _buildImage(question['options'][1]),
+                      if (isPortrait) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildImage(question['options'][0], size: cardSize),
+                            _buildImage(question['options'][1], size: cardSize),
+                          ],
+                        ),
+                        _buildImage(question['options'][2], size: cardSize),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildImage(question['options'][0], size: cardSize),
+                            _buildImage(question['options'][1], size: cardSize),
+                            _buildImage(question['options'][2], size: cardSize),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 30),
+                      IconButton(
+                        onPressed: _playSoundWithPrompt,
+                        icon: const Icon(
+                          Icons.volume_up,
+                          size: 70,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildImage(question['options'][2]),
-                ] else ...[
-                  // YATAY GÖRÜNÜM
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildImage(question['options'][0]),
-                      const SizedBox(width: 20),
-                      _buildImage(question['options'][1]),
-                      const SizedBox(width: 20),
-                      _buildImage(question['options'][2]),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 40),
-                IconButton(
-                  onPressed: _playSoundWithPrompt,
-                  icon: const Icon(
-                    Icons.volume_up,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
-
     );
   }
 }
