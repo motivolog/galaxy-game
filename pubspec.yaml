@@ -107,8 +107,6 @@ flutter:
     - assets/images/levelsec_back.png
     - assets/images/soundplanet1.png
     - assets/images/levelsecsound_bg.png
-
-
     - assets/images/bird.png
     - assets/images/cat.png
     - assets/images/cow.png
@@ -119,11 +117,9 @@ flutter:
     - assets/audio/correct_dog.mp3
     - assets/audio/game2_tekrar_dene.mp3
     - assets/audio/neyin_sesi.mp3
-    - assets/images/maskot.png
-    - assets/images/nota1.png
-    - assets/images/nota2.png
-    - assets/images/nota3.png
     - assets/images/game2_back.png
+    - assets/gif/bgg.gif
+    - assets/gif/back.gif
 
 
 
