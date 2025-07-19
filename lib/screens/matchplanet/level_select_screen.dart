@@ -69,12 +69,11 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         // 🔵 Arka plan görseli — tüm ekranı ve AppBar'ı kaplar
         Positioned.fill(
           child: Image.asset(
-            'assets/images/levelscreen_background.png',
+            'assets/images/levelsec_back.png',
             fit: BoxFit.cover,
           ),
         ),
 
-        // 🔸 Scaffold içeriği
         Scaffold(
           extendBodyBehindAppBar: true, // Arka plan AppBar'ın arkasına geçsin
           backgroundColor: Colors.transparent, // Scaffold arkaplanı şeffaf
@@ -98,10 +97,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       ],
     );
   }
-
-
-
-
   Widget _buildBox(int i) {
     final locked = !_unlocked[i];
     final done = _completed[i];
@@ -111,7 +106,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       'assets/images/planet_white.png',
       'assets/images/planet_turquoise.png',
     ];
-
     return GestureDetector(
       onTap: () => _openLevel(i),
       child: Padding(

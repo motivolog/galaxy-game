@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../widgets/spinning_planet.dart';
-import '../widgets/spinning_sound_planet.dart';
-import 'level_select_screen.dart';
-import 'package:flutter_projects/screens/soundplanet/soundplanet_game.dart';
+import '../../widgets/spinning_planet.dart';
+import '../../widgets/spinning_sound_planet.dart';
+import '../matchplanet/level_select_screen.dart';
+import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -24,12 +24,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _playWelcomeAudio();
   }
 
-  /* --------- Açılış “Hoş geldin” sesi --------- */
   Future<void> _playWelcomeAudio() async {
     await _audioPlayer.play(AssetSource('audio/hosgeldin.mp3'));
   }
 
-  /* --------- Gezegen tıklanınca çalınacak ses --------- */
   Future<void> _playGezegenAudio() async {
     await _audioPlayer.stop();
     await _audioPlayer.play(
@@ -43,11 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /* --------- Gezegen → Seviye Seç ekranı --------- */
+
   Future<void> _navigateToLevelSelect() async {
      _playGezegenAudio();
      await Future.delayed(const Duration(
-         seconds: 4));                          // 2) Yalnızca 2 sn bekle
+         seconds: 4));
+
     if (!mounted) return;
     Navigator.push(
       context,
@@ -55,13 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /* ----------------- build ----------------- */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          /* Animasyonlu galaksi arka planı */
           SizedBox.expand(
             child: Lottie.asset(
               'assets/animations/space_animation.json',
@@ -69,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
               repeat: true,
             ),
           ),
-          /* Ortada dönen gezegen */
+
           Center(
             child: SingleChildScrollView(
               child: Column(
@@ -95,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 40),
 
-                  // 2. GEZEGEN – BU NEYİN SESİ (Düz PNG)
+                  // 2. GEZEGEN – BU NEYİN SESİ
                   GestureDetector(
                     onTap: () async {
                       await _audioPlayer.stop();
@@ -106,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (!mounted) return;
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const SoundPlanetGame()),
+                        MaterialPageRoute(builder: (_) => const LevelSelectSoundScreen()),
                       );
                     },
                     child: const SpinningSoundPlanet(),
@@ -115,9 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-
-
         ],
       ),
     );
