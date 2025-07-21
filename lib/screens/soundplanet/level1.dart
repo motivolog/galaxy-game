@@ -1,6 +1,6 @@
-// Yeni tasarımlı SoundLevel1
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path/path.dart' as p;
 import 'question.dart';
 
 class SoundLevel1 extends StatefulWidget {
@@ -24,34 +24,49 @@ class _SoundLevel1State extends State<SoundLevel1> {
   Future<void> _playSoundWithPrompt() async {
     await _audioPlayer.stop();
     await _audioPlayer.play(UrlSource(soundQuestions[_currentQuestionIndex]['sound']));
-    await Future.delayed(const Duration(seconds: 3));
-    await _audioPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
+
+    // Sadece ilk soruda "Bu neyin sesi?" sesini çal
+    if (_currentQuestionIndex == 0) {
+      await Future.delayed(const Duration(seconds: 3));
+      await _audioPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
+    }
   }
 
   Future<void> _handleAnswer(String selectedImage) async {
     if (_answered) return;
     setState(() => _answered = true);
+
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
-    if (selectedImage == correct) {
-      final correctSound = question['correct_sound'] ?? 'audio/tebrikler.mp3';
-      await _audioPlayer.play(AssetSource(correctSound));
-      await Future.delayed(const Duration(seconds: 3));
+
+
+    if (p.basename(selectedImage) == p.basename(correct)) {
+      final correctSound = question['correct_sound'];
+      if (correctSound != null) {
+        await _audioPlayer.play(AssetSource(correctSound));
+        await _audioPlayer.onPlayerComplete.first;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 20));
+
       if (!mounted) return;
       setState(() {
         _currentQuestionIndex++;
         _answered = false;
       });
+
       if (_currentQuestionIndex < soundQuestions.length) {
         _playSoundWithPrompt();
       }
     } else {
+      print("❌ YANLIŞ CEVAPLANDI");
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _audioPlayer.onPlayerComplete.first;
       if (mounted) setState(() => _answered = false);
     }
   }
+
 
   @override
   void dispose() {
@@ -107,7 +122,6 @@ class _SoundLevel1State extends State<SoundLevel1> {
     return Scaffold(
       body: Stack(
         children: [
-          // Arkaplan GIF
           Positioned.fill(
             child: Image.asset(
               'assets/gif/back.gif',

@@ -28,11 +28,13 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  path: any
   flutter:
     sdk: flutter
   flutter_tts: ^3.8.5
   audioplayers: ^5.2.1
   lottie: ^3.2.0
+
 
 
 
@@ -113,13 +115,34 @@ flutter:
     - assets/images/dog.png
     - assets/images/horse.png
     - assets/images/hen.png
-    - assets/audio/correct_cat.mp3
-    - assets/audio/correct_dog.mp3
+    - assets/images/antelope.png
+    - assets/images/bat.png
+    - assets/images/bee.png
+    - assets/images/duck.png
+    - assets/images/elephant.png
+    - assets/images/camel.png
+    - assets/images/crocodile.png
+    - assets/images/dolphin.png
+    - assets/images/sheep.png
+    - assets/images/rooster.png
+
     - assets/audio/game2_tekrar_dene.mp3
     - assets/audio/neyin_sesi.mp3
     - assets/images/game2_back.png
     - assets/gif/bgg.gif
     - assets/gif/back.gif
+
+    - assets/audio/animals_sound/correct_antelope.mp3
+    - assets/audio/animals_sound/correct_bat.mp3
+    - assets/audio/animals_sound/correct_cat.mp3
+    - assets/audio/animals_sound/correct_cow.mp3
+    - assets/audio/animals_sound/correct_dog.mp3
+    - assets/audio/animals_sound/correct_duck.mp3
+    - assets/audio/animals_sound/correct_elephant.mp3
+    - assets/audio/animals_sound/correct_hen.mp3
+    - assets/audio/animals_sound/correct_rooster.mp3
+    - assets/audio/animals_sound/correct_sheep.mp3
+
 
 
 
