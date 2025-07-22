@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-
 import 'match_level1.dart';
 import 'match_level2.dart';
 import 'match_level3.dart';
@@ -75,12 +74,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         ),
 
         Scaffold(
-          extendBodyBehindAppBar: true, // Arka plan AppBar'ın arkasına geçsin
-          backgroundColor: Colors.transparent, // Scaffold arkaplanı şeffaf
+          extendBodyBehindAppBar: true,
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
             title: const Text('Seviye Seç'),
-            backgroundColor: Colors.transparent, // AppBar şeffaf
-            elevation: 0, // Gölgeyi de kaldır
+            backgroundColor: Colors.transparent,
+            elevation: 0,
           ),
           body: SafeArea(
             child: Center(

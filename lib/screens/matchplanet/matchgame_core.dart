@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 
 class MatchGameCore extends StatefulWidget {
   final List<Map<String, String>> cards;
@@ -46,7 +47,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     super.initState();
     _cards = [...widget.cards, ...widget.cards]..shuffle(Random());
     _revealed = List.filled(_cards.length, false);
-    _matched  = List.filled(_cards.length, false);
+    _matched = List.filled(_cards.length, false);
     _slideCtrls = List.generate(
       _cards.length,
           (_) => AnimationController(
@@ -105,8 +106,48 @@ class _MatchGameCoreState extends State<MatchGameCore>
         } else {
           await Future.delayed(const Duration(milliseconds: 500));
           _playFx(widget.congratsSound);
-          await Future.delayed(const Duration(seconds: 4));
-          if (mounted) Navigator.pop(context, true);
+          await Future.delayed(const Duration(milliseconds: 800));
+
+          if (!mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+
+                },
+                child: Scaffold(
+                  backgroundColor: Colors.black.withOpacity(0.8),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/celebrate_baykus.json',
+                          width: 400,
+                          height: 400,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Tebrikler!\nDevam etmek için dokun',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+
         }
       } else {
         _playFx(widget.failSound);
@@ -187,8 +228,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
           child: _flipCard(
             showFront: _revealed[idx],
             imagePath: _cards[idx]['image']!,
-            backColor:
-            Colors.deepPurple.shade200.withOpacity(0.8),
+            backColor: Colors.deepPurple.shade200.withOpacity(0.8),
           ),
         ),
       ),
@@ -232,26 +272,20 @@ class _MatchGameCoreState extends State<MatchGameCore>
                     final totalHSpacing = spacing * (cols - 1);
                     final totalVSpacing = spacing * (rows - 1);
 
-                    final cellWidth =
-                        (maxW - totalHSpacing) / cols;
-                    final cellHeight =
-                        (maxH - totalVSpacing) / rows;
+                    final cellWidth = (maxW - totalHSpacing) / cols;
+                    final cellHeight = (maxH - totalVSpacing) / rows;
 
-                    final cellSize =
-                    min(cellWidth, cellHeight);
+                    final cellSize = min(cellWidth, cellHeight);
 
-                    final gridW =
-                        cellSize * cols + totalHSpacing;
-                    final gridH =
-                        cellSize * rows + totalVSpacing;
+                    final gridW = cellSize * cols + totalHSpacing;
+                    final gridH = cellSize * rows + totalVSpacing;
 
                     return Center(
                       child: SizedBox(
                         width: gridW,
                         height: gridH,
                         child: GridView.builder(
-                          physics:
-                          const NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.zero,
                           gridDelegate:
                           SliverGridDelegateWithFixedCrossAxisCount(

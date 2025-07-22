@@ -7,19 +7,17 @@ class LevelSelectSoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Arka planı artık dekorasyonla verdiğimiz için renk gerekmiyor
       body: SafeArea(
         child: Stack(
           children: [
-            /* --- Lacivert arka plan + silik desenler --- */
+
             Positioned.fill(
               child: Image.asset(
-                'assets/gif/bgg.gif',   // ← arkaplan görseliniz
+                'assets/gif/bgg.gif',
                 fit: BoxFit.cover,
               ),
             ),
 
-            /* --- Merkezde seviye butonu --- */
             Center(
               child: Semantics(
                 label: 'Seviye 1: Hayvan Sesleri',

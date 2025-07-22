@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
+import 'celebration.dart';
+
 
 class SoundLevel1 extends StatefulWidget {
   const SoundLevel1({super.key});
@@ -25,7 +27,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
     await _audioPlayer.stop();
     await _audioPlayer.play(UrlSource(soundQuestions[_currentQuestionIndex]['sound']));
 
-    // Sadece ilk soruda "Bu neyin sesi?" sesini çal
+
     if (_currentQuestionIndex == 0) {
       await Future.delayed(const Duration(seconds: 3));
       await _audioPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
@@ -56,7 +58,11 @@ class _SoundLevel1State extends State<SoundLevel1> {
         _answered = false;
       });
 
-      if (_currentQuestionIndex < soundQuestions.length) {
+      if (_currentQuestionIndex >= soundQuestions.length) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          showSoundPlanetCelebration(context);
+        });
+      } else {
         _playSoundWithPrompt();
       }
     } else {

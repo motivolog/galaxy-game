@@ -8,7 +8,7 @@ class MatchLevel1 extends StatefulWidget {
   @override
   State<MatchLevel1> createState() => _MatchLevel1State();
 }
-//istediğimiz yazı sese dönüşür.
+
 class _MatchLevel1State extends State<MatchLevel1> {
   final FlutterTts _flutterTts = FlutterTts();
 
@@ -40,7 +40,7 @@ class _MatchLevel1State extends State<MatchLevel1> {
       successSound: 'audio/eslestirme_basarili.mp3',
       failSound: 'audio/tekrar_dene.mp3',
       congratsSound: 'audio/tebrikler.mp3',
-      centerGrid: true, // sadece Level 1'de true
+      centerGrid: true,
     );
 
   }

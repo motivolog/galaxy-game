@@ -143,6 +143,9 @@ flutter:
     - assets/audio/animals_sound/correct_rooster.mp3
     - assets/audio/animals_sound/correct_sheep.mp3
 
+    - assets/animations/celebrate.json
+    - assets/animations/celebrate_baykus.json
+
 
 
 
