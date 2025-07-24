@@ -22,7 +22,7 @@ class MatchLevel2 extends StatelessWidget {
         },
       ],
       pairCount: 3, // 3 çift, yani toplam 6 kart
-      backgroundImage: 'assets/images/space_bg_repeat.png',
+      backgroundImage: 'assets/gif/bgg.gif',
       crossAxisCountPortrait: 2,     // dikeyde 2 sütun → 3x2 yerleşim
       crossAxisCountLandscape: 3,    // yatayda 3 sütun → 2x3 yerleşim
       successSound: 'audio/eslestirme_basarili.mp3',
