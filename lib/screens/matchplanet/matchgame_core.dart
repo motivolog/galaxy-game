@@ -14,6 +14,8 @@ class MatchGameCore extends StatefulWidget {
   final String congratsSound;
   final bool centerGrid;
 
+
+
   const MatchGameCore({
     super.key,
     required this.cards,
@@ -35,6 +37,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     with TickerProviderStateMixin {
   final AudioPlayer _namePlayer = AudioPlayer();
   final AudioPlayer _fxPlayer = AudioPlayer();
+  final AudioPlayer _bgmPlayer = AudioPlayer();
 
   late final List<Map<String, String>> _cards;
   late final List<bool> _revealed;
@@ -55,7 +58,15 @@ class _MatchGameCoreState extends State<MatchGameCore>
         duration: const Duration(milliseconds: 400),
       ),
     );
+    _playBackgroundMusic(); // 🔊 Arka plan müziği başlat
   }
+  void _playBackgroundMusic() async {
+    await _bgmPlayer.setReleaseMode(ReleaseMode.loop); // 🔁 Müzik döngüde
+    await _bgmPlayer.setVolume(0.3); // Hafif ses
+    await _bgmPlayer.play(AssetSource('audio/tick_tok.mp3'));
+  }
+
+
 
   @override
   void dispose() {
@@ -64,6 +75,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     }
     _namePlayer.dispose();
     _fxPlayer.dispose();
+    _bgmPlayer.dispose(); // 🔇 Arka plan sesi kapat
     super.dispose();
   }
 
@@ -108,6 +120,9 @@ class _MatchGameCoreState extends State<MatchGameCore>
           _playFx(widget.congratsSound);
           await Future.delayed(const Duration(milliseconds: 800));
 
+
+
+
           if (!mounted) return;
 
           Navigator.push(
@@ -123,25 +138,30 @@ class _MatchGameCoreState extends State<MatchGameCore>
                 child: Scaffold(
                   backgroundColor: Colors.black.withOpacity(0.8),
                   body: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Lottie.asset(
-                          'assets/animations/celebrate_baykus.json',
-                          width: 400,
-                          height: 400,
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Tebrikler!\nDevam etmek için dokun',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+                        final maxWidth = constraints.maxWidth;
+                        final maxHeight = constraints.maxHeight;
+
+                        final animationSize = isPortrait
+                            ? maxHeight * 0.5
+                            : maxHeight * 0.80;
+
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Lottie.asset(
+                              'assets/animations/celebrate_baykus.json',
+                              width: animationSize,
+                              height: animationSize,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      },
                     ),
+
                   ),
                 ),
               ),
@@ -242,7 +262,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
     return Scaffold(
       body: Stack(
         children: [
-          // — arka plan —
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -253,8 +272,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
               ),
             ),
           ),
-
-          // — kart ızgarası —
           SafeArea(
             child: OrientationBuilder(
               builder: (context, ori) {
