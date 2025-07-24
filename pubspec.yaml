@@ -86,7 +86,7 @@ flutter:
     #level3 kartlar
     - assets/images/yesil_kurbaga.png
     - assets/images/pembe_ucgen.png
-    - assets/images/kirmizi_balon.png
+    - assets/images/red_balloon.png
     - assets/images/turuncu_top.png
     #level1 sesler
     - assets/audio/kirmizi_cicek.mp3
@@ -142,9 +142,12 @@ flutter:
     - assets/audio/animals_sound/correct_hen.mp3
     - assets/audio/animals_sound/correct_rooster.mp3
     - assets/audio/animals_sound/correct_sheep.mp3
-
+    - assets/audio/tick_tok.mp3
+    - assets/animations/sound_backk.json
     - assets/animations/celebrate.json
     - assets/animations/celebrate_baykus.json
+
+
 
 
 
