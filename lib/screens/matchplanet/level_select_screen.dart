@@ -6,7 +6,6 @@ import 'match_level3.dart';
 
 class LevelSelectScreen extends StatefulWidget {
   const LevelSelectScreen({super.key});
-
   @override
   State<LevelSelectScreen> createState() => _LevelSelectScreenState();
 }
@@ -49,12 +48,11 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       });
       await _player.play(AssetSource('audio/harikasin.mp3'));
       if (i + 1 < _unlocked.length) {
-        await Future.delayed(const Duration(milliseconds: 400));
+        await Future.delayed(const Duration(milliseconds: 200));
         _openLevel(i + 1);
       }
     }
   }
-
   @override
   void dispose() {
     _player.dispose();
@@ -65,14 +63,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 🔵 Arka plan görseli — tüm ekranı ve AppBar'ı kaplar
         Positioned.fill(
           child: Image.asset(
             'assets/images/levelsec_back.png',
             fit: BoxFit.cover,
           ),
         ),
-
         Scaffold(
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
@@ -113,8 +109,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
           alignment: Alignment.center,
           children: [
             Container(
-              width: 220,
-              height: 220,
+              width: 230,
+              height: 230,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
               ),
@@ -132,14 +128,14 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
             ),
             if (done)
               const Positioned(
-                top: 10,
-                right: 10,
+                top: 12,
+                right: 12,
                 child: Icon(Icons.star, color: Colors.amber, size: 32),
               ),
             if (locked)
               const Positioned(
-                top: 10,
-                left: 10,
+                top: 12,
+                left: 12,
                 child: Icon(Icons.lock, color: Colors.white70, size: 28),
               ),
           ],
