@@ -19,7 +19,6 @@ class _MatchLevel1State extends State<MatchLevel1> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return MatchGameCore(
@@ -34,7 +33,7 @@ class _MatchLevel1State extends State<MatchLevel1> {
         },
       ],
       pairCount: 2,
-      backgroundImage: 'assets/images/space_bg_repeat.png',
+      backgroundImage:  'assets/gif/bgg.gif',
       crossAxisCountPortrait: 2,
       crossAxisCountLandscape: 4,
       successSound: 'audio/eslestirme_basarili.mp3',
