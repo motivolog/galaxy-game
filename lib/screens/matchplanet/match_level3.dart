@@ -9,7 +9,7 @@ class MatchLevel3 extends StatelessWidget {
     return MatchGameCore(
       cards: const [
         {
-          'image': 'assets/images/kirmizi_balon.png',
+          'image': 'assets/images/red_balloon.png',
           'sound': 'audio/kirmizi_balon.mp3',
         },
         {
@@ -26,7 +26,7 @@ class MatchLevel3 extends StatelessWidget {
         },
       ],
       pairCount: 4,
-      backgroundImage: 'assets/images/space_bg_repeat.png',
+      backgroundImage:  'assets/gif/bgg.gif',
       crossAxisCountPortrait: 2,
       crossAxisCountLandscape: 4,
       successSound: 'audio/eslestirme_basarili.mp3',
