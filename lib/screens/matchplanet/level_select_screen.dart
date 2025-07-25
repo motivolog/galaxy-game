@@ -5,7 +5,9 @@ import 'match_level2.dart';
 import 'match_level3.dart';
 
 class LevelSelectScreen extends StatefulWidget {
-  const LevelSelectScreen({super.key});
+  final AudioPlayer homePlayer;
+  const LevelSelectScreen({super.key, required this.homePlayer});
+
   @override
   State<LevelSelectScreen> createState() => _LevelSelectScreenState();
 }
@@ -17,6 +19,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
 
   Future<void> _openLevel(int i) async {
     if (!_unlocked[i]) return;
+
+    await widget.homePlayer.stop();
 
     bool? finished;
 
@@ -53,6 +57,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       }
     }
   }
+
   @override
   void dispose() {
     _player.dispose();
@@ -92,6 +97,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       ],
     );
   }
+
   Widget _buildBox(int i) {
     final locked = !_unlocked[i];
     final done = _completed[i];

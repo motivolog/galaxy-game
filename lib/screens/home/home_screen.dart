@@ -10,6 +10,7 @@ import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _playWelcomeAudio() async {
+    await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/hosgeldin.mp3'));
   }
 
@@ -50,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const LevelSelectScreen()),
+      MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
     );
   }
 
@@ -74,18 +76,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 1. GEZEGEN – EŞLEŞTİRME (Animasyonlu)
                   GestureDetector(
                     onTap: () async {
-                      await _audioPlayer.stop();
-                      await _audioPlayer.play(
-                        AssetSource('audio/eslestirme_gezegeni.mp3'),
+                       _audioPlayer.stop();
+                       _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'),
                       );
-                      await Future.delayed(const Duration(seconds: 3));
-                      if (!mounted) return;
+
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const LevelSelectScreen()),
+                        MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
                       );
                     },
                     child: const SpinningPlanet(),
@@ -93,15 +92,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 40),
 
-                  // 2. GEZEGEN – BU NEYİN SESİ
+
                   GestureDetector(
                     onTap: () async {
-                      await _audioPlayer.stop();
-                      await _audioPlayer.play(
+                       _audioPlayer.stop();
+                       _audioPlayer.play(
                         AssetSource('audio/ses_gezegeni.mp3'),
                       );
-                      await Future.delayed(const Duration(seconds: 3));
-                      if (!mounted) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const LevelSelectSoundScreen()),

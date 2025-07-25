@@ -38,6 +38,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
   final AudioPlayer _namePlayer = AudioPlayer();
   final AudioPlayer _fxPlayer = AudioPlayer();
   final AudioPlayer _bgmPlayer = AudioPlayer();
+  bool _isMuted = false;
 
   late final List<Map<String, String>> _cards;
   late final List<bool> _revealed;
@@ -58,14 +59,29 @@ class _MatchGameCoreState extends State<MatchGameCore>
         duration: const Duration(milliseconds: 400),
       ),
     );
-    _playBackgroundMusic(); // 🔊 Arka plan müziği başlat
-  }
-  void _playBackgroundMusic() async {
-    await _bgmPlayer.setReleaseMode(ReleaseMode.loop); // 🔁 Müzik döngüde
-    await _bgmPlayer.setVolume(0.3); // Hafif ses
-    await _bgmPlayer.play(AssetSource('audio/tick_tok.mp3'));
+    _playBackgroundMusic();
   }
 
+  void _playBackgroundMusic() async {
+    await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+    await _bgmPlayer.setVolume(0.1);
+    await _bgmPlayer.setSource(
+      UrlSource('https://zeliha-x0st.github.io/game-assets-sound/bg.mp3'),
+    );
+    await _bgmPlayer.resume();
+  }
+
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+    });
+    if (_isMuted) {
+      _bgmPlayer.pause();
+    } else {
+      _bgmPlayer.resume();
+    }
+  }
 
 
   @override
@@ -75,7 +91,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     }
     _namePlayer.dispose();
     _fxPlayer.dispose();
-    _bgmPlayer.dispose(); // 🔇 Arka plan sesi kapat
+    _bgmPlayer.dispose();
     super.dispose();
   }
 
@@ -119,8 +135,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
           await Future.delayed(const Duration(milliseconds: 500));
           _playFx(widget.congratsSound);
           await Future.delayed(const Duration(milliseconds: 800));
-
-
 
 
           if (!mounted) return;
@@ -322,6 +336,24 @@ class _MatchGameCoreState extends State<MatchGameCore>
               },
             ),
           ),
+          Positioned(
+            top: 30,
+            right: 16,
+            child: GestureDetector(
+              onTap: _toggleMute,
+              child: CircleAvatar(
+                backgroundColor: Colors.black.withOpacity(0.1),
+                radius: 22,
+                child: Text(
+                  _isMuted ? '🔇' : '🎶',
+                  style: const TextStyle(
+                    fontSize: 30,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         ],
       ),
     );
