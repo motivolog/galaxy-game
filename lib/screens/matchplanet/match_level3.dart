@@ -32,6 +32,8 @@ class MatchLevel3 extends StatelessWidget {
       successSound: 'audio/eslestirme_basarili.mp3',
       failSound: 'audio/tekrar_dene.mp3',
       congratsSound: 'audio/tebrikler.mp3',
+      flipBackDelayMs: 100,
+
     );
   }
 }

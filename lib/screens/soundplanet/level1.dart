@@ -3,6 +3,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
 import 'celebration.dart';
+import '../soundplanet/level_select_sound.dart';
+
 
 
 class SoundLevel1 extends StatefulWidget {
@@ -20,8 +22,11 @@ class _SoundLevel1State extends State<SoundLevel1> {
   @override
   void initState() {
     super.initState();
-    _playSoundWithPrompt();
+    LevelSelectSoundScreen.introPlayer.pause(); // önce pause
+    LevelSelectSoundScreen.introPlayer.stop(); // 🔇 eklenen satır
+    _playSoundWithPrompt(); // mevcut fonksiyonun
   }
+
 
   Future<void> _playSoundWithPrompt() async {
     await _audioPlayer.stop();

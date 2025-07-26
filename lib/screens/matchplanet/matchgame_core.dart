@@ -13,8 +13,7 @@ class MatchGameCore extends StatefulWidget {
   final String failSound;
   final String congratsSound;
   final bool centerGrid;
-
-
+  final int flipBackDelayMs; // 🔸 Eklendi
 
   const MatchGameCore({
     super.key,
@@ -27,6 +26,7 @@ class MatchGameCore extends StatefulWidget {
     required this.failSound,
     required this.congratsSound,
     this.centerGrid = false,
+    this.flipBackDelayMs = 400, // 🔸 Varsayılan değer
   });
 
   @override
@@ -71,7 +71,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
     await _bgmPlayer.resume();
   }
 
-
   void _toggleMute() {
     setState(() {
       _isMuted = !_isMuted;
@@ -82,7 +81,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
       _bgmPlayer.resume();
     }
   }
-
 
   @override
   void dispose() {
@@ -136,7 +134,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
           _playFx(widget.congratsSound);
           await Future.delayed(const Duration(milliseconds: 800));
 
-
           if (!mounted) return;
 
           Navigator.push(
@@ -147,15 +144,15 @@ class _MatchGameCoreState extends State<MatchGameCore>
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.pop(context, true);
-
                 },
                 child: Scaffold(
                   backgroundColor: Colors.black.withOpacity(0.8),
                   body: Center(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
-                        final maxWidth = constraints.maxWidth;
+                        final isPortrait =
+                            MediaQuery.of(context).orientation ==
+                                Orientation.portrait;
                         final maxHeight = constraints.maxHeight;
 
                         final animationSize = isPortrait
@@ -175,17 +172,15 @@ class _MatchGameCoreState extends State<MatchGameCore>
                         );
                       },
                     ),
-
                   ),
                 ),
               ),
             ),
           );
-
         }
       } else {
         _playFx(widget.failSound);
-        await Future.delayed(const Duration(milliseconds: 400));
+        await Future.delayed(Duration(milliseconds: widget.flipBackDelayMs)); // 🔸 Burada kullanıldı
         setState(() {
           _revealed[i1] = false;
           _revealed[i2] = false;
@@ -201,7 +196,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     required Color backColor,
   }) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 200),
       transitionBuilder: (child, anim) {
         final rot = Tween(begin: pi, end: 0.0).animate(anim);
         return AnimatedBuilder(
@@ -353,7 +348,6 @@ class _MatchGameCoreState extends State<MatchGameCore>
               ),
             ),
           ),
-
         ],
       ),
     );
