@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'match_level1.dart';
 import 'match_level2.dart';
@@ -28,7 +29,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _completed = List.generate(3, (i) => prefs.getBool('completed_$i') ?? false);
-      _unlocked[0] = true; // İlk seviye her zaman açık
+      _unlocked[0] = true;
       for (int i = 0; i < _completed.length; i++) {
         if (_completed[i] && i + 1 < _unlocked.length) {
           _unlocked[i + 1] = true;
@@ -72,12 +73,10 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
 
     if (finished == true) {
       await _saveProgress(i);
-
       setState(() {
         _completed[i] = true;
         if (i + 1 < _unlocked.length) _unlocked[i + 1] = true;
       });
-
       await _player.play(AssetSource('audio/harikasin.mp3'));
     }
   }
@@ -85,6 +84,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   @override
   void dispose() {
     _player.dispose();
+    widget.homePlayer.stop();
     super.dispose();
   }
 
@@ -101,20 +101,37 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         Scaffold(
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: const Text('Seviye Seç'),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
           body: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: List.generate(_unlocked.length, _buildBox),
+            child: Stack(
+              children: [
+
+                Positioned(
+                  top: 20,
+                  left: 10,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Lottie.asset(
+                      'assets/animations/back_arrow.json',
+                      width: 70,
+                      height: 70,
+                      repeat: true,
+                    ),
+                  ),
                 ),
-              ),
+
+
+                Center(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: List.generate(_unlocked.length, _buildBox),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -140,8 +157,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
           alignment: Alignment.center,
           children: [
             Container(
-              width: 230,
-              height: 230,
+              width: 250,
+              height: 250,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
               ),
@@ -149,7 +166,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
                 child: ColorFiltered(
                   colorFilter: locked
                       ? const ColorFilter.mode(Colors.black54, BlendMode.darken)
-                      : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                      : const ColorFilter.mode(
+                      Colors.transparent, BlendMode.multiply),
                   child: Image.asset(
                     planetImages[i],
                     fit: BoxFit.cover,
