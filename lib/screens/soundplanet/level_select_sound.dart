@@ -3,9 +3,9 @@ import 'package:audioplayers/audioplayers.dart';
 import 'level1.dart';
 
 class LevelSelectSoundScreen extends StatefulWidget {
-  const LevelSelectSoundScreen({super.key});
+  final AudioPlayer incomingPlayer;
 
-  static final AudioPlayer introPlayer = AudioPlayer(); // static player
+  const LevelSelectSoundScreen({super.key, required this.incomingPlayer});
 
   @override
   State<LevelSelectSoundScreen> createState() => _LevelSelectSoundScreenState();
@@ -21,7 +21,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
   }
 
   Future<void> _playIntro() async {
-    await LevelSelectSoundScreen.introPlayer.play(
+    await widget.incomingPlayer.play(
       AssetSource('audio/hosgeldin_ses_gezegeni.mp3'),
     );
   }
@@ -29,7 +29,10 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
   Future<void> _stopAndNavigate() async {
     if (_navigated) return;
     _navigated = true;
-    await LevelSelectSoundScreen.introPlayer.stop(); // 🔇 sesi durdur
+
+    await widget.incomingPlayer.stop();
+    await Future.delayed(const Duration(milliseconds: 200));
+
     if (!mounted) return;
     Navigator.push(
       context,
@@ -39,7 +42,6 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
 
   @override
   void dispose() {
-    LevelSelectSoundScreen.introPlayer.dispose();
     super.dispose();
   }
 
@@ -61,7 +63,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                 button: true,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(100),
-                  onTap: _stopAndNavigate, // ⭐️ Gezegen tıklanınca ses durdurulup geçilecek
+                  onTap: _stopAndNavigate,
                   child: ClipOval(
                     child: SizedBox(
                       width: 230,

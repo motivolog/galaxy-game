@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'match_level1.dart';
 import 'match_level2.dart';
 import 'match_level3.dart';
@@ -13,9 +14,33 @@ class LevelSelectScreen extends StatefulWidget {
 }
 
 class _LevelSelectScreenState extends State<LevelSelectScreen> {
-  final _completed = [false, false, false];
-  final _unlocked = [true, false, false];
+  List<bool> _completed = [false, false, false];
+  List<bool> _unlocked = [true, false, false];
   final _player = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _completed = List.generate(3, (i) => prefs.getBool('completed_$i') ?? false);
+      _unlocked[0] = true; // İlk seviye her zaman açık
+      for (int i = 0; i < _completed.length; i++) {
+        if (_completed[i] && i + 1 < _unlocked.length) {
+          _unlocked[i + 1] = true;
+        }
+      }
+    });
+  }
+
+  Future<void> _saveProgress(int i) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('completed_$i', true);
+  }
 
   Future<void> _openLevel(int i) async {
     if (!_unlocked[i]) return;
@@ -46,15 +71,14 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     }
 
     if (finished == true) {
+      await _saveProgress(i);
+
       setState(() {
         _completed[i] = true;
         if (i + 1 < _unlocked.length) _unlocked[i + 1] = true;
       });
+
       await _player.play(AssetSource('audio/harikasin.mp3'));
-      if (i + 1 < _unlocked.length) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        _openLevel(i + 1);
-      }
     }
   }
 
@@ -107,6 +131,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       'assets/images/planet_white.png',
       'assets/images/planet_turquoise.png',
     ];
+
     return GestureDetector(
       onTap: () => _openLevel(i),
       child: Padding(

@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  shared_preferences: ^2.2.0
   path: any
   flutter:
     sdk: flutter
@@ -67,48 +68,67 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    #- assets/images/space_bg_repeat.png
     - assets/animations/space_animation.json
-    - assets/images/gezegen_kartlar.png
-    - assets/images/space_bg_repeat.png
-    - assets/images/planet_turquoise.png
-    - assets/images/planet_yellow.png
-    - assets/images/planet_white.png
+    - assets/animations/sound_backk.json
+    - assets/animations/celebrate.json
+    - assets/animations/celebrate_baykus.json
+    - assets/gif/bgg.gif
+    - assets/gif/back.gif
+
     - assets/images/levelscreen_background.png
-    - assets/images/void_planet.png
-    #level1 kartlar
+    - assets/audio/hosgeldin.mp3
+    #Match planet
     - assets/images/kirmizi_cicek.png
     - assets/images/sari_araba.png
-    #level2 kartlar
     - assets/images/siyah_kedi.png
     - assets/images/yesil_armut.png
     - assets/images/mavi_yildiz.png
-    #level3 kartlar
     - assets/images/yesil_kurbaga.png
     - assets/images/pembe_ucgen.png
     - assets/images/red_balloon.png
     - assets/images/turuncu_top.png
-    #level1 sesler
     - assets/audio/kirmizi_cicek.mp3
     - assets/audio/sari_araba.mp3
-    #level2 sesler
     - assets/audio/mavi_yildiz.mp3
     - assets/audio/siyah_kedi.mp3
     - assets/audio/yesil_armut.mp3
-    #level3 sesler
     - assets/audio/kirmizi_balon.mp3
     - assets/audio/turuncu_top.mp3
     - assets/audio/yesil_kurbaga.mp3
     - assets/audio/pembe_ucgen.mp3
     - assets/audio/tebrikler.mp3
-    - assets/audio/hosgeldin.mp3
+    - assets/images/planet_turquoise.png
+    - assets/images/planet_yellow.png
+    - assets/images/planet_white.png
+    - assets/images/levelsec_back.png
+    - assets/images/gezegen_kartlar.png
+
     - assets/audio/ses_gezegeni.mp3
     - assets/audio/eslestirme_gezegeni.mp3
     - assets/audio/eslestirme_basarili.mp3
     - assets/audio/tekrar_dene.mp3
-    - assets/images/levelsec_back.png
-    - assets/images/soundplanet1.png
-    - assets/images/levelsecsound_bg.png
+
+
+    #Sound planet
+    - assets/audio/animals_sound/correct_antelope.mp3
+    - assets/audio/animals_sound/correct_bat.mp3
+    - assets/audio/animals_sound/correct_cat.mp3
+    - assets/audio/animals_sound/correct_cow.mp3
+    - assets/audio/animals_sound/correct_dog.mp3
+    - assets/audio/animals_sound/correct_duck.mp3
+    - assets/audio/animals_sound/correct_elephant.mp3
+    - assets/audio/animals_sound/correct_bee.mp3
+    - assets/audio/animals_sound/correct_hen.mp3
+    - assets/audio/animals_sound/correct_rooster.mp3
+    - assets/audio/animals_sound/correct_sheep.mp3
+    - assets/audio/game2_tekrar_dene.mp3
+    - assets/audio/neyin_sesi.mp3
+
+    - assets/images/deer.png
+    - assets/images/wolf.png
+    - assets/images/goose.png
+    - assets/images/goat.png
+    - assets/images/housefly.png
     - assets/images/bird.png
     - assets/images/cat.png
     - assets/images/cow.png
@@ -125,32 +145,10 @@ flutter:
     - assets/images/dolphin.png
     - assets/images/sheep.png
     - assets/images/rooster.png
-
-    - assets/audio/game2_tekrar_dene.mp3
-    - assets/audio/neyin_sesi.mp3
+    - assets/images/soundplanet1.png
+    - assets/images/levelsecsound_bg.png
     - assets/images/game2_back.png
-    - assets/gif/bgg.gif
-    - assets/gif/back.gif
-
-    - assets/audio/animals_sound/correct_antelope.mp3
-    - assets/audio/animals_sound/correct_bat.mp3
-    - assets/audio/animals_sound/correct_cat.mp3
-    - assets/audio/animals_sound/correct_cow.mp3
-    - assets/audio/animals_sound/correct_dog.mp3
-    - assets/audio/animals_sound/correct_duck.mp3
-    - assets/audio/animals_sound/correct_elephant.mp3
-    - assets/audio/animals_sound/correct_hen.mp3
-    - assets/audio/animals_sound/correct_rooster.mp3
-    - assets/audio/animals_sound/correct_sheep.mp3
-    - assets/audio/tick_tok.mp3
-    - assets/animations/sound_backk.json
-    - assets/animations/celebrate.json
-    - assets/animations/celebrate_baykus.json
-
-
-
-
-
+    - assets/images/void_planet.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

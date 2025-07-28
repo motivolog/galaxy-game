@@ -6,10 +6,8 @@ import '../../widgets/spinning_sound_planet.dart';
 import '../matchplanet/level_select_screen.dart';
 import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -39,15 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
     super.dispose();
   }
 
-
   Future<void> _navigateToLevelSelect() async {
-     _playGezegenAudio();
-     await Future.delayed(const Duration(
-         seconds: 4));
+    _playGezegenAudio();
+    await Future.delayed(const Duration(seconds: 4));
 
     if (!mounted) return;
     Navigator.push(
@@ -55,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
               repeat: true,
             ),
           ),
-
           Center(
             child: SingleChildScrollView(
               child: Column(
@@ -78,10 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   GestureDetector(
                     onTap: () async {
-                       _audioPlayer.stop();
-                       _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'),
-                      );
-
+                      _audioPlayer.stop();
+                      _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'));
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
@@ -89,17 +80,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const SpinningPlanet(),
                   ),
-
                   const SizedBox(height: 40),
                   GestureDetector(
                     onTap: () async {
-                       _audioPlayer.stop();
-                       _audioPlayer.play(
+                      _audioPlayer.stop();
+                      _audioPlayer.play(
                         AssetSource('audio/ses_gezegeni.mp3'),
                       );
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const LevelSelectSoundScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
+                        ),
                       );
                     },
                     child: const SpinningSoundPlanet(),

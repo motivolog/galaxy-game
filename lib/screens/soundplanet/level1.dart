@@ -5,8 +5,6 @@ import 'question.dart';
 import 'celebration.dart';
 import '../soundplanet/level_select_sound.dart';
 
-
-
 class SoundLevel1 extends StatefulWidget {
   const SoundLevel1({super.key});
 
@@ -22,16 +20,19 @@ class _SoundLevel1State extends State<SoundLevel1> {
   @override
   void initState() {
     super.initState();
-    LevelSelectSoundScreen.introPlayer.pause(); // önce pause
-    LevelSelectSoundScreen.introPlayer.stop(); // 🔇 eklenen satır
-    _playSoundWithPrompt(); // mevcut fonksiyonun
+    _prepareLevel();
   }
 
+  Future<void> _prepareLevel() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    _playSoundWithPrompt();
+  }
 
   Future<void> _playSoundWithPrompt() async {
     await _audioPlayer.stop();
-    await _audioPlayer.play(UrlSource(soundQuestions[_currentQuestionIndex]['sound']));
-
+    await _audioPlayer.play(
+      UrlSource(soundQuestions[_currentQuestionIndex]['sound']),
+    );
 
     if (_currentQuestionIndex == 0) {
       await Future.delayed(const Duration(seconds: 3));
@@ -46,16 +47,13 @@ class _SoundLevel1State extends State<SoundLevel1> {
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
-
-
     if (p.basename(selectedImage) == p.basename(correct)) {
       final correctSound = question['correct_sound'];
+
       if (correctSound != null) {
         await _audioPlayer.play(AssetSource(correctSound));
         await _audioPlayer.onPlayerComplete.first;
       }
-
-      await Future.delayed(const Duration(milliseconds: 20));
 
       if (!mounted) return;
       setState(() {
@@ -64,20 +62,19 @@ class _SoundLevel1State extends State<SoundLevel1> {
       });
 
       if (_currentQuestionIndex >= soundQuestions.length) {
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 100), () {
           showSoundPlanetCelebration(context);
         });
       } else {
-        _playSoundWithPrompt();
+        Future.microtask(() => _playSoundWithPrompt());
       }
     } else {
-      print("❌ YANLIŞ CEVAPLANDI");
+      print("YANLIŞ CEVAPLANDI");
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _audioPlayer.onPlayerComplete.first;
       if (mounted) setState(() => _answered = false);
     }
   }
-
 
   @override
   void dispose() {

@@ -1,14 +1,5 @@
 final List<Map<String, dynamic>> soundQuestions = [
-  {
-    'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/cat.mp3',
-    'correct': 'assets/images/cat.png',
-    'correct_sound': 'audio/animals_sound/correct_cat.mp3',
-    'options': [
-      'assets/images/cow.png',
-      'assets/images/cat.png',
-      'assets/images/bird.png',
-    ],
-  },
+
   {
     'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/dog.mp3',
     'correct': 'assets/images/dog.png',
@@ -16,16 +7,28 @@ final List<Map<String, dynamic>> soundQuestions = [
     'options': [
       'assets/images/dog.png',
       'assets/images/hen.png',
-      'assets/images/horse.png',
+      'assets/images/wolf.png',
     ],
   },
+
+  {
+    'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/bee.mp3',
+    'correct': 'assets/images/bee.png',
+    'correct_sound': 'audio/animals_sound/correct_bee.mp3',
+    'options': [
+      'assets/images/bird.png',
+      'assets/images/housefly.png',
+      'assets/images/bee.png',
+    ],
+  },
+
   {
     'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/antelope.mp3',
     'correct': 'assets/images/antelope.png',
     'correct_sound': 'audio/animals_sound/correct_antelope.mp3',
     'options': [
       'assets/images/elephant.png',
-      'assets/images/cat.png',
+      'assets/images/deer.png',
       'assets/images/antelope.png',
     ],
   },
@@ -44,9 +47,9 @@ final List<Map<String, dynamic>> soundQuestions = [
     'correct': 'assets/images/duck.png',
     'correct_sound': 'audio/animals_sound/correct_duck.mp3',
     'options': [
-      'assets/images/crocodile.png',
       'assets/images/duck.png',
-      'assets/images/antelope.png',
+      'assets/images/crocodile.png',
+      'assets/images/goose.png',
     ],
   },
   {
@@ -70,13 +73,23 @@ final List<Map<String, dynamic>> soundQuestions = [
     ],
   },
   {
+    'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/cat.mp3',
+    'correct': 'assets/images/cat.png',
+    'correct_sound': 'audio/animals_sound/correct_cat.mp3',
+    'options': [
+      'assets/images/cow.png',
+      'assets/images/cat.png',
+      'assets/images/bird.png',
+    ],
+  },
+  {
     'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/sheep.mp3',
     'correct': 'assets/images/sheep.png',
     'correct_sound': 'audio/animals_sound/correct_sheep.mp3',
     'options': [
       'assets/images/bee.png',
       'assets/images/sheep.png',
-      'assets/images/bird.png',
+      'assets/images/goat.png',
     ],
   },
   {
@@ -95,9 +108,11 @@ final List<Map<String, dynamic>> soundQuestions = [
     'correct_sound': 'audio/animals_sound/correct_hen.mp3',
     'options': [
       'assets/images/hen.png',
-      'assets/images/crocodile.png',
-      'assets/images/antelope.png',
+      'assets/images/bat.png',
+      'assets/images/camel.png',
     ],
   },
+
+
 
 ];

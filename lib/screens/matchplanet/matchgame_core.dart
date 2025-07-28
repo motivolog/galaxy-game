@@ -13,7 +13,7 @@ class MatchGameCore extends StatefulWidget {
   final String failSound;
   final String congratsSound;
   final bool centerGrid;
-  final int flipBackDelayMs; // 🔸 Eklendi
+  final int flipBackDelayMs;
 
   const MatchGameCore({
     super.key,
@@ -26,7 +26,7 @@ class MatchGameCore extends StatefulWidget {
     required this.failSound,
     required this.congratsSound,
     this.centerGrid = false,
-    this.flipBackDelayMs = 400, // 🔸 Varsayılan değer
+    this.flipBackDelayMs = 400,
   });
 
   @override
@@ -136,6 +136,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
 
           if (!mounted) return;
 
+
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -180,7 +182,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
         }
       } else {
         _playFx(widget.failSound);
-        await Future.delayed(Duration(milliseconds: widget.flipBackDelayMs)); // 🔸 Burada kullanıldı
+        await Future.delayed(Duration(milliseconds: widget.flipBackDelayMs));
         setState(() {
           _revealed[i1] = false;
           _revealed[i2] = false;
