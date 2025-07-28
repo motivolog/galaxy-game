@@ -31,8 +31,8 @@ class _SpinningSoundPlanetState extends State<SpinningSoundPlanet> with SingleTi
       turns: _controller,
       child: Image.asset(
         'assets/images/void_planet.png',
-        width: 230,
-        height: 230,
+        width: 300,
+        height: 300,
       ),
     );
   }

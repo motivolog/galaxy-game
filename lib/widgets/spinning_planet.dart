@@ -43,8 +43,8 @@ class _SpinningPlanetState extends State<SpinningPlanet>
       },
       child: Image.asset(
         'assets/images/gezegen_kartlar.png',
-        width: 250,
-        height: 250,
+        width: 300,
+        height: 300,
         semanticLabel: 'Eşleştirme gezegeni',
       ),
     );
