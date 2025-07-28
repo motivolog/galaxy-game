@@ -65,10 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Center(
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(width: 30),
                   GestureDetector(
                     onTap: () async {
                       _audioPlayer.stop();
@@ -80,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const SpinningPlanet(),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(width: 50),
                   GestureDetector(
                     onTap: () async {
                       _audioPlayer.stop();
@@ -96,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const SpinningSoundPlanet(),
                   ),
+                  const SizedBox(width: 30),
                 ],
               ),
             ),
