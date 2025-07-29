@@ -125,6 +125,16 @@ flutter:
     - assets/audio/game2_tekrar_dene.mp3
     - assets/audio/neyin_sesi.mp3
 
+    - assets/audio/vehicle/airplane.mp3
+    - assets/audio/vehicle/ambulance.mp3
+    - assets/audio/vehicle/car.mp3
+    - assets/audio/vehicle/firetruck.mp3
+    - assets/audio/vehicle/helicopter.mp3
+    - assets/audio/vehicle/police.mp3
+    - assets/audio/vehicle/tractor.mp3
+    - assets/audio/vehicle/train.mp3
+    - assets/audio/vehicle/tram.mp3
+
     - assets/images/deer.png
     - assets/images/wolf.png
     - assets/images/goose.png
@@ -147,9 +157,27 @@ flutter:
     - assets/images/sheep.png
     - assets/images/rooster.png
     - assets/images/soundplanet1.png
+    - assets/images/soundplanet2.png
     - assets/images/levelsecsound_bg.png
     - assets/images/game2_back.png
     - assets/images/void_planet.png
+
+    - assets/images/planet2/airplane.png
+    - assets/images/planet2/ambulance.png
+    - assets/images/planet2/car.png
+    - assets/images/planet2/firetruck.png
+    - assets/images/planet2/helicopter.png
+    - assets/images/planet2/motorcycle.png
+    - assets/images/planet2/policecar.png
+    - assets/images/planet2/tractor.png
+    - assets/images/planet2/train.png
+    - assets/images/planet2/tram.png
+
+
+
+
+
+
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

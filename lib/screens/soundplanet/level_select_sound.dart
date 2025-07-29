@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'level1.dart';
+import 'level2.dart';
+import 'package:lottie/lottie.dart';
+
 
 class LevelSelectSoundScreen extends StatefulWidget {
   final AudioPlayer incomingPlayer;
@@ -57,29 +60,90 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                 fit: BoxFit.cover,
               ),
             ),
-            Center(
-              child: Semantics(
-                label: 'Seviye 1: Hayvan Sesleri',
-                button: true,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(100),
-                  onTap: _stopAndNavigate,
-                  child: ClipOval(
-                    child: SizedBox(
-                      width: 230,
-                      height: 230,
-                      child: Image.asset(
-                        'assets/images/soundplanet1.png',
-                        fit: BoxFit.cover,
+            Positioned(
+              top: 20,
+                left:10,
+              child: GestureDetector(
+                onTap:() async{
+                  await widget.incomingPlayer.stop();
+                  Navigator.pop(context);
+                },
+                child: Lottie.asset(
+                  'assets/animations/back_arrow.json',
+                  width: 70,
+                  height: 70,
+                  repeat: true,
+                ),
+              ),
+            ),
+
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Semantics(
+                  label: 'Seviye 1: Hayvan Sesleri',
+                  button: true,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(100),
+                    onTap: () async {
+                      await widget.incomingPlayer.stop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SoundLevel1()),
+                      );
+                    },
+                    child: ClipOval(
+                      child: SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Image.asset(
+                          'assets/images/soundplanet1.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+
+
+                Semantics(
+                  label: 'Seviye 2: Taşıt Sesleri',
+                  button: true,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(100),
+                    onTap: () async {
+                      await widget.incomingPlayer.stop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const Level2()),
+                      );
+
+                    },
+                    child: ClipOval(
+                      child: SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Image.asset(
+                          'assets/images/soundplanet2.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
+      ]
+        ),
+    ),
     );
   }
 }
