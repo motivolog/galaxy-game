@@ -1,143 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
-
-final List<Map<String, dynamic>> vehicleQuestions = [
-  {
-    'sound': 'audio/vehicle/train.mp3',
-    'correct': 'assets/images/planet2/train.png',
-    'correct_sound': 'audio/vehicle/correct_train.mp3',
-    'hint': 'audio/vehicle/hint_train.mp3',
-    'options': [
-      'assets/images/planet2/train.png',
-      'assets/images/planet2/tractor.png',
-      'assets/images/planet2/helicopter.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/motorcycle.mp3',
-    'correct': 'assets/images/planet2/motorcycle.png',
-    'correct_sound': 'audio/vehicle/correct_motorcycle.mp3',
-    'hint': 'audio/vehicle/hint_motorcycle.mp3',
-    'options': [
-      'assets/images/planet2/motorcycle.png',
-      'assets/images/planet2/tram.png',
-      'assets/images/planet2/submarine.png',
-    ],
-  },
-
-  {
-    'sound': 'audio/vehicle/helicopter.mp3',
-    'correct': 'assets/images/planet2/helicopter.png',
-    'correct_sound': 'audio/vehicle/correct_helicopter.mp3',
-    'hint': 'audio/vehicle/hint_helicopter.mp3',
-    'options': [
-      'assets/images/planet2/helicopter.png',
-      'assets/images/planet2/train.png',
-      'assets/images/planet2/motorcycle.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/submarine.mp3',
-    'correct': 'assets/images/planet2/submarine.png',
-    'correct_sound': 'audio/vehicle/correct_submarine.mp3',
-    'hint': 'audio/vehicle/hint_submarine.mp3',
-    'options': [
-      'assets/images/planet2/submarine.png',
-      'assets/images/planet2/ship.png',
-      'assets/images/planet2/firetruck.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/car.mp3',
-    'correct': 'assets/images/planet2/car.png',
-    'correct_sound': 'audio/vehicle/correct_car.mp3',
-    'hint': 'audio/vehicle/hint_car.mp3',
-    'options': [
-      'assets/images/planet2/car.png',
-      'assets/images/planet2/policecar.png',
-      'assets/images/planet2/helicopter.png',
-    ],
-  },
-
-  {
-    'sound': 'audio/vehicle/ambulance.mp3',
-    'correct': 'assets/images/planet2/ambulance.png',
-    'correct_sound': 'audio/vehicle/correct_ambulance.mp3',
-    'hint': 'audio/vehicle/hint_ambulance.mp3',
-    'options': [
-      'assets/images/planet2/airplane.png',
-      'assets/images/planet2/ambulance.png',
-      'assets/images/planet2/tram.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/tram.mp3',
-    'correct': 'assets/images/planet2/tram.png',
-    'correct_sound': 'audio/vehicle/correct_tram.mp3',
-    'hint': 'audio/vehicle/hint_helicopter.mp3',
-    'options': [
-      'assets/images/planet2/car.png',
-      'assets/images/planet2/tractor.png',
-      'assets/images/planet2/tram.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/police.mp3',
-    'correct': 'assets/images/planet2/policecar.png',
-    'correct_sound': 'audio/vehicle/correct_policecar.mp3',
-    'hint': 'audio/vehicle/hint_policecar.mp3',
-    'options': [
-      'assets/images/planet2/policecar.png',
-      'assets/images/planet2/airplane.png',
-      'assets/images/planet2/ambulance.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/ship.mp3',
-    'correct': 'assets/images/planet2/ship.png',
-    'correct_sound': 'audio/vehicle/correct_ship.mp3',
-    'hint': 'audio/vehicle/hint_ship.mp3',
-    'options': [
-      'assets/images/planet2/train.png',
-      'assets/images/planet2/ship.png',
-      'assets/images/planet2/tractor.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/firetruck.mp3',
-    'correct': 'assets/images/planet2/firetruck.png',
-    'correct_sound': 'audio/vehicle/correct_firetruck.mp3',
-    'hint': 'audio/vehicle/hint_firetruck.mp3',
-    'options': [
-      'assets/images/planet2/firetruck.png',
-      'assets/images/planet2/ambulance.png',
-      'assets/images/planet2/train.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/airplane.mp3',
-    'correct': 'assets/images/planet2/airplane.png',
-    'correct_sound': 'audio/vehicle/correct_airplane.mp3',
-    'hint': 'audio/vehicle/hint_airplane.mp3',
-    'options': [
-      'assets/images/planet2/helicopter.png',
-      'assets/images/planet2/airplane.png',
-      'assets/images/planet2/train.png',
-    ],
-  },
-  {
-    'sound': 'audio/vehicle/tractor.mp3',
-    'correct': 'assets/images/planet2/tractor.png',
-    'correct_sound': 'audio/vehicle/correct_tractor.mp3',
-    'hint': 'audio/vehicle/hint_tractor.mp3',
-    'options': [
-      'assets/images/planet2/car.png',
-      'assets/images/planet2/firetruck.png',
-      'assets/images/planet2/tractor.png',
-    ],
-  },
-];
+import 'vehicle_questions.dart';
 
 class Level2 extends StatefulWidget {
   const Level2({super.key});
@@ -147,26 +12,38 @@ class Level2 extends StatefulWidget {
 }
 
 class _Level2State extends State<Level2> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  late final AudioPlayer _bgPlayer;      // Background music player
   int _currentQuestionIndex = 0;
   bool _answered = false;
 
   @override
   void initState() {
     super.initState();
+    _initBackgroundMusic();
     _playCurrentSound();
   }
 
+  Future<void> _initBackgroundMusic() async {
+    _bgPlayer = AudioPlayer();
+    // Arka plan müziğini döngüde çal
+    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
+    await _bgPlayer.play(
+      AssetSource('audio/sci-fi.mp3'),
+      volume: 1, // dilersen ses seviyesini ayarlayabilirsin
+    );
+  }
+
   Future<void> _playCurrentSound() async {
-    await _audioPlayer.stop();
-    await _audioPlayer.play(
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(
       AssetSource(vehicleQuestions[_currentQuestionIndex]['sound']),
     );
   }
 
   Future<void> _playHint() async {
-    await _audioPlayer.stop();
-    await _audioPlayer.play(
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(
       AssetSource(vehicleQuestions[_currentQuestionIndex]['hint']),
     );
   }
@@ -176,13 +53,12 @@ class _Level2State extends State<Level2> {
     setState(() => _answered = true);
 
     final q = vehicleQuestions[_currentQuestionIndex];
-    final correct = q['correct'];
-
-    await _audioPlayer.stop();
+    final correct = q['correct'] as String;
+    await _sfxPlayer.stop();
 
     if (p.basename(selectedImage) == p.basename(correct)) {
-      await _audioPlayer.play(AssetSource(q['correct_sound']));
-      await _audioPlayer.onPlayerComplete.first;
+      await _sfxPlayer.play(AssetSource(q['correct_sound']));
+      await _sfxPlayer.onPlayerComplete.first;
 
       if (_currentQuestionIndex < vehicleQuestions.length - 1) {
         await Future.delayed(const Duration(milliseconds: 500));
@@ -190,50 +66,57 @@ class _Level2State extends State<Level2> {
           _currentQuestionIndex++;
           _answered = false;
         });
-        await _audioPlayer.stop();
         await _playCurrentSound();
       } else {
-        setState(() => _answered = false);
-        // 🎉 oyun bitti animasyonu buraya
+        await _showCongratulations();
+        if (mounted) Navigator.of(context).pop();
       }
     } else {
-      await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
-      await _audioPlayer.onPlayerComplete.first;
-
-      // ❗Soruda kalmak için sadece tekrar seçimi açıyoruz
+      await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
+      await _sfxPlayer.onPlayerComplete.first;
       setState(() => _answered = false);
     }
   }
 
+  Future<void> _showCongratulations() async {
+    await Navigator.of(context).push(PageRouteBuilder(
+      opaque: false,
+      barrierColor: Colors.transparent,
+      pageBuilder: (_, __, ___) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.of(context).pop(),
+        child: Container(
+          color: Colors.black,
+          width: double.infinity,
+          height: double.infinity,
+          child: Center(
+            child: Lottie.asset(
+              'assets/animations/alien_transition.json',
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+          ),
+        ),
+      ),
+    ));
+  }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _sfxPlayer.dispose();
+    _bgPlayer.stop();
+    _bgPlayer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final options = vehicleQuestions[_currentQuestionIndex]['options'];
+    final options = vehicleQuestions[_currentQuestionIndex]['options'] as List;
 
     return Scaffold(
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/vehicle_background.png',
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned(
-              top: 20,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
-                onPressed: _playHint,
-              ),
-            ),
             Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
@@ -282,6 +165,14 @@ class _Level2State extends State<Level2> {
                     ],
                   );
                 },
+              ),
+            ),
+            Positioned(
+              top: 20,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
+                onPressed: _playHint,
               ),
             ),
           ],

@@ -74,7 +74,8 @@ flutter:
     - assets/animations/celebrate_baykus.json
     - assets/animations/back_arrow.json
     - assets/animations/bee_transition.json
-    - assets/animations/star_celebrate.json
+    - assets/animations/alien_transition.json
+
     - assets/gif/bgg.gif
     - assets/gif/back.gif
 
@@ -151,6 +152,7 @@ flutter:
     - assets/audio/vehicle/correct_car.mp3
     - assets/audio/vehicle/correct_ship.mp3
     - assets/audio/vehicle/correct_submarine.mp3
+    - assets/audio/vehicle/sci-fi.mp3
 
     - assets/images/deer.png
     - assets/images/wolf.png
