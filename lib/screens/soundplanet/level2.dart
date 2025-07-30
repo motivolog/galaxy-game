@@ -178,29 +178,33 @@ class _Level2State extends State<Level2> {
     final q = vehicleQuestions[_currentQuestionIndex];
     final correct = q['correct'];
 
+    await _audioPlayer.stop();
+
     if (p.basename(selectedImage) == p.basename(correct)) {
-      await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource(q['correct_sound']));
       await _audioPlayer.onPlayerComplete.first;
+
+      if (_currentQuestionIndex < vehicleQuestions.length - 1) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        setState(() {
+          _currentQuestionIndex++;
+          _answered = false;
+        });
+        await _audioPlayer.stop();
+        await _playCurrentSound();
+      } else {
+        setState(() => _answered = false);
+        // 🎉 oyun bitti animasyonu buraya
+      }
     } else {
-      await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _audioPlayer.onPlayerComplete.first;
-    }
 
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (_currentQuestionIndex < vehicleQuestions.length - 1) {
-      setState(() {
-        _currentQuestionIndex++;
-        _answered = false;
-      });
-      _playCurrentSound();
-    } else {
+      // ❗Soruda kalmak için sadece tekrar seçimi açıyoruz
       setState(() => _answered = false);
-      // 🎉 Kutlama animasyonu veya bitiş ekranı buraya eklenecek
     }
   }
+
 
   @override
   void dispose() {

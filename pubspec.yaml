@@ -73,6 +73,8 @@ flutter:
     - assets/animations/celebrate.json
     - assets/animations/celebrate_baykus.json
     - assets/animations/back_arrow.json
+    - assets/animations/bee_transition.json
+    - assets/animations/star_celebrate.json
     - assets/gif/bgg.gif
     - assets/gif/back.gif
 
