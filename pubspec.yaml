@@ -134,6 +134,21 @@ flutter:
     - assets/audio/vehicle/tractor.mp3
     - assets/audio/vehicle/train.mp3
     - assets/audio/vehicle/tram.mp3
+    - assets/audio/vehicle/ship.mp3
+    - assets/audio/vehicle/motorcycle.mp3
+    - assets/audio/vehicle/submarine.mp3
+    - assets/audio/vehicle/correct_airplane.mp3
+    - assets/audio/vehicle/correct_ambulance.mp3
+    - assets/audio/vehicle/correct_firetruck.mp3
+    - assets/audio/vehicle/correct_helicopter.mp3
+    - assets/audio/vehicle/correct_motorcycle.mp3
+    - assets/audio/vehicle/correct_policecar.mp3
+    - assets/audio/vehicle/correct_tractor.mp3
+    - assets/audio/vehicle/correct_train.mp3
+    - assets/audio/vehicle/correct_tram.mp3
+    - assets/audio/vehicle/correct_car.mp3
+    - assets/audio/vehicle/correct_ship.mp3
+    - assets/audio/vehicle/correct_submarine.mp3
 
     - assets/images/deer.png
     - assets/images/wolf.png
@@ -172,6 +187,8 @@ flutter:
     - assets/images/planet2/tractor.png
     - assets/images/planet2/train.png
     - assets/images/planet2/tram.png
+    - assets/images/planet2/ship.png
+    - assets/images/planet2/submarine.png
 
 
 

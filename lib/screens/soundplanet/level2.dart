@@ -15,16 +15,17 @@ final List<Map<String, dynamic>> vehicleQuestions = [
     ],
   },
   {
-    'sound': 'audio/vehicle/motorbike.mp3',
+    'sound': 'audio/vehicle/motorcycle.mp3',
     'correct': 'assets/images/planet2/motorcycle.png',
     'correct_sound': 'audio/vehicle/correct_motorcycle.mp3',
-    'hint': 'audio/vehicle/hint_motorbike.mp3',
+    'hint': 'audio/vehicle/hint_motorcycle.mp3',
     'options': [
       'assets/images/planet2/motorcycle.png',
       'assets/images/planet2/tram.png',
-      'assets/images/planet2/airplane.png',
+      'assets/images/planet2/submarine.png',
     ],
   },
+
   {
     'sound': 'audio/vehicle/helicopter.mp3',
     'correct': 'assets/images/planet2/helicopter.png',
@@ -34,6 +35,106 @@ final List<Map<String, dynamic>> vehicleQuestions = [
       'assets/images/planet2/helicopter.png',
       'assets/images/planet2/train.png',
       'assets/images/planet2/motorcycle.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/submarine.mp3',
+    'correct': 'assets/images/planet2/submarine.png',
+    'correct_sound': 'audio/vehicle/correct_submarine.mp3',
+    'hint': 'audio/vehicle/hint_submarine.mp3',
+    'options': [
+      'assets/images/planet2/submarine.png',
+      'assets/images/planet2/ship.png',
+      'assets/images/planet2/firetruck.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/car.mp3',
+    'correct': 'assets/images/planet2/car.png',
+    'correct_sound': 'audio/vehicle/correct_car.mp3',
+    'hint': 'audio/vehicle/hint_car.mp3',
+    'options': [
+      'assets/images/planet2/car.png',
+      'assets/images/planet2/policecar.png',
+      'assets/images/planet2/helicopter.png',
+    ],
+  },
+
+  {
+    'sound': 'audio/vehicle/ambulance.mp3',
+    'correct': 'assets/images/planet2/ambulance.png',
+    'correct_sound': 'audio/vehicle/correct_ambulance.mp3',
+    'hint': 'audio/vehicle/hint_ambulance.mp3',
+    'options': [
+      'assets/images/planet2/airplane.png',
+      'assets/images/planet2/ambulance.png',
+      'assets/images/planet2/tram.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/tram.mp3',
+    'correct': 'assets/images/planet2/tram.png',
+    'correct_sound': 'audio/vehicle/correct_tram.mp3',
+    'hint': 'audio/vehicle/hint_helicopter.mp3',
+    'options': [
+      'assets/images/planet2/car.png',
+      'assets/images/planet2/tractor.png',
+      'assets/images/planet2/tram.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/police.mp3',
+    'correct': 'assets/images/planet2/policecar.png',
+    'correct_sound': 'audio/vehicle/correct_policecar.mp3',
+    'hint': 'audio/vehicle/hint_policecar.mp3',
+    'options': [
+      'assets/images/planet2/policecar.png',
+      'assets/images/planet2/airplane.png',
+      'assets/images/planet2/ambulance.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/ship.mp3',
+    'correct': 'assets/images/planet2/ship.png',
+    'correct_sound': 'audio/vehicle/correct_ship.mp3',
+    'hint': 'audio/vehicle/hint_ship.mp3',
+    'options': [
+      'assets/images/planet2/train.png',
+      'assets/images/planet2/ship.png',
+      'assets/images/planet2/tractor.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/firetruck.mp3',
+    'correct': 'assets/images/planet2/firetruck.png',
+    'correct_sound': 'audio/vehicle/correct_firetruck.mp3',
+    'hint': 'audio/vehicle/hint_firetruck.mp3',
+    'options': [
+      'assets/images/planet2/firetruck.png',
+      'assets/images/planet2/ambulance.png',
+      'assets/images/planet2/train.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/airplane.mp3',
+    'correct': 'assets/images/planet2/airplane.png',
+    'correct_sound': 'audio/vehicle/correct_airplane.mp3',
+    'hint': 'audio/vehicle/hint_airplane.mp3',
+    'options': [
+      'assets/images/planet2/helicopter.png',
+      'assets/images/planet2/airplane.png',
+      'assets/images/planet2/train.png',
+    ],
+  },
+  {
+    'sound': 'audio/vehicle/tractor.mp3',
+    'correct': 'assets/images/planet2/tractor.png',
+    'correct_sound': 'audio/vehicle/correct_tractor.mp3',
+    'hint': 'audio/vehicle/hint_tractor.mp3',
+    'options': [
+      'assets/images/planet2/car.png',
+      'assets/images/planet2/firetruck.png',
+      'assets/images/planet2/tractor.png',
     ],
   },
 ];
@@ -55,6 +156,7 @@ class _Level2State extends State<Level2> {
     super.initState();
     _playCurrentSound();
   }
+
   Future<void> _playCurrentSound() async {
     await _audioPlayer.stop();
     await _audioPlayer.play(
@@ -78,16 +180,16 @@ class _Level2State extends State<Level2> {
 
     if (p.basename(selectedImage) == p.basename(correct)) {
       await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/game2_tebrikler.mp3'));
-      await _audioPlayer.onPlayerComplete.first;
       await _audioPlayer.play(AssetSource(q['correct_sound']));
+      await _audioPlayer.onPlayerComplete.first;
     } else {
       await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
+      await _audioPlayer.onPlayerComplete.first;
     }
 
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    await Future.delayed(const Duration(seconds: 2));
     if (_currentQuestionIndex < vehicleQuestions.length - 1) {
       setState(() {
         _currentQuestionIndex++;
@@ -95,7 +197,8 @@ class _Level2State extends State<Level2> {
       });
       _playCurrentSound();
     } else {
-      //  Kutlama animasyonu eklenecek
+      setState(() => _answered = false);
+      // 🎉 Kutlama animasyonu veya bitiş ekranı buraya eklenecek
     }
   }
 
@@ -123,19 +226,16 @@ class _Level2State extends State<Level2> {
               top: 20,
               right: 20,
               child: IconButton(
-                icon: const Icon(Icons.info_outline,
-                    size: 40, color: Colors.orange),
+                icon: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
                 onPressed: _playHint,
               ),
             ),
             Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
-                  final bool isPortrait =
-                      orientation == Orientation.portrait;
-
+                  final isPortrait = orientation == Orientation.portrait;
                   final shortestSide = MediaQuery.of(context).size.shortestSide;
-                  final double cardSize = isPortrait
+                  final cardSize = isPortrait
                       ? shortestSide * 0.45
                       : shortestSide * 0.50;
 
@@ -155,8 +255,7 @@ class _Level2State extends State<Level2> {
                         const SizedBox(height: 30),
                         IconButton(
                           onPressed: _playCurrentSound,
-                          icon: const Icon(Icons.volume_up,
-                              size: 48, color: Colors.white),
+                          icon: const Icon(Icons.volume_up, size: 48, color: Colors.white),
                         ),
                       ],
                     );
@@ -174,8 +273,7 @@ class _Level2State extends State<Level2> {
                       const SizedBox(height: 20),
                       IconButton(
                         onPressed: _playCurrentSound,
-                        icon: const Icon(Icons.volume_up,
-                            size: 60, color: Colors.white),
+                        icon: const Icon(Icons.volume_up, size: 60, color: Colors.white),
                       ),
                     ],
                   );
@@ -190,7 +288,7 @@ class _Level2State extends State<Level2> {
 
   Widget _buildOption(String imagePath, double size) {
     return GestureDetector(
-      onTap: () => _checkAnswer(imagePath),
+      onTap: _answered ? null : () => _checkAnswer(imagePath),
       child: Container(
         width: size,
         height: size,
@@ -205,4 +303,5 @@ class _Level2State extends State<Level2> {
         ),
       ),
     );
-  }}
+  }
+}
