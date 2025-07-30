@@ -11,7 +11,7 @@ const List<Map<String, dynamic>> vehicleQuestions = [
       'assets/images/planet2/helicopter.png',
     ],
   },
-  /*{
+  {
     'sound': 'audio/vehicle/motorcycle.mp3',
     'correct': 'assets/images/planet2/motorcycle.png',
     'correct_sound': 'audio/vehicle/correct_motorcycle.mp3',
@@ -131,5 +131,5 @@ const List<Map<String, dynamic>> vehicleQuestions = [
       'assets/images/planet2/firetruck.png',
       'assets/images/planet2/tractor.png',
     ],
-  },*/
+  },
 ];
