@@ -14,8 +14,11 @@ class SoundLevel1 extends StatefulWidget {
 
 class _SoundLevel1State extends State<SoundLevel1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _neyinSesiPlayer = AudioPlayer();
+
   int _currentQuestionIndex = 0;
   bool _answered = false;
+  bool _neyinSesiBekleniyor = false;
 
   @override
   void initState() {
@@ -30,26 +33,37 @@ class _SoundLevel1State extends State<SoundLevel1> {
 
   Future<void> _playSoundWithPrompt() async {
     await _audioPlayer.stop();
+    await _neyinSesiPlayer.stop();
+
     await _audioPlayer.play(
       UrlSource(soundQuestions[_currentQuestionIndex]['sound']),
     );
 
     if (_currentQuestionIndex == 0) {
+      _neyinSesiBekleniyor = true;
       await Future.delayed(const Duration(seconds: 3));
-      await _audioPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
+
+      if (_neyinSesiBekleniyor) {
+        await _neyinSesiPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
+      }
     }
   }
 
   Future<void> _handleAnswer(String selectedImage) async {
     if (_answered) return;
-    setState(() => _answered = true);
+
+    _neyinSesiBekleniyor = false;
+    await _neyinSesiPlayer.stop();
 
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
     if (p.basename(selectedImage) == p.basename(correct)) {
-      final correctSound = question['correct_sound'];
+      await _audioPlayer.stop();
 
+      setState(() => _answered = true);
+
+      final correctSound = question['correct_sound'];
       if (correctSound != null) {
         await _audioPlayer.play(AssetSource(correctSound));
         await _audioPlayer.onPlayerComplete.first;
@@ -69,7 +83,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
         Future.microtask(() => _playSoundWithPrompt());
       }
     } else {
-      print("YANLIŞ CEVAPLANDI");
+      await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _audioPlayer.onPlayerComplete.first;
       if (mounted) setState(() => _answered = false);
@@ -79,6 +93,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _neyinSesiPlayer.dispose(); 
     super.dispose();
   }
 
@@ -102,10 +117,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain,
-               width: size, height: size),
+          child: Image.asset(imagePath, fit: BoxFit.contain, width: size, height: size),
         ),
       ),
     );
@@ -115,10 +127,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
   Widget build(BuildContext context) {
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-
-    final double cardSize = isPortrait
-        ? shortestSide * 0.45
-        : shortestSide * 0.50;
+    final double cardSize = isPortrait ? shortestSide * 0.45 : shortestSide * 0.50;
 
     if (_currentQuestionIndex >= soundQuestions.length) {
       return const Scaffold(
@@ -139,9 +148,11 @@ class _SoundLevel1State extends State<SoundLevel1> {
         children: [
           Positioned.fill(
             child: Image.asset(
-                'assets/gif/back.gif',
-                fit: BoxFit.cover,
-                 width: cardSize, height: cardSize),
+              'assets/gif/back.gif',
+              fit: BoxFit.cover,
+              width: cardSize,
+              height: cardSize,
+            ),
           ),
           SafeArea(
             child: Center(
