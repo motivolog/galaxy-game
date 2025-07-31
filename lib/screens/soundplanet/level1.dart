@@ -103,9 +103,9 @@ class _SoundLevel1State extends State<SoundLevel1> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
-          ),
+              imagePath,
+              fit: BoxFit.contain,
+               width: size, height: size),
         ),
       ),
     );
@@ -113,6 +113,13 @@ class _SoundLevel1State extends State<SoundLevel1> {
 
   @override
   Widget build(BuildContext context) {
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final shortestSide = MediaQuery.of(context).size.shortestSide;
+
+    final double cardSize = isPortrait
+        ? shortestSide * 0.45
+        : shortestSide * 0.50;
+
     if (_currentQuestionIndex >= soundQuestions.length) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -132,9 +139,9 @@ class _SoundLevel1State extends State<SoundLevel1> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/gif/back.gif',
-              fit: BoxFit.cover,
-            ),
+                'assets/gif/back.gif',
+                fit: BoxFit.cover,
+                 width: cardSize, height: cardSize),
           ),
           SafeArea(
             child: Center(
