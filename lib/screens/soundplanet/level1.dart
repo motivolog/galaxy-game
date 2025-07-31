@@ -14,11 +14,11 @@ class SoundLevel1 extends StatefulWidget {
 
 class _SoundLevel1State extends State<SoundLevel1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final AudioPlayer _neyinSesiPlayer = AudioPlayer();
+  final AudioPlayer _neyinSesiPlayer = AudioPlayer(); // 🎧 Ek ses player
 
   int _currentQuestionIndex = 0;
   bool _answered = false;
-  bool _neyinSesiBekleniyor = false;
+  bool _neyinSesiBekleniyor = false; // ⏳ Bekliyor mu kontrolü
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
 
     if (_currentQuestionIndex == 0) {
       _neyinSesiBekleniyor = true;
-      await Future.delayed(const Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 2));
 
       if (_neyinSesiBekleniyor) {
         await _neyinSesiPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
@@ -52,14 +52,14 @@ class _SoundLevel1State extends State<SoundLevel1> {
   Future<void> _handleAnswer(String selectedImage) async {
     if (_answered) return;
 
-    _neyinSesiBekleniyor = false;
-    await _neyinSesiPlayer.stop();
+    _neyinSesiBekleniyor = false; // ❌ Bekleme iptal
+    await _neyinSesiPlayer.stop(); // 🔇 Sence bu ses... iptal
 
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
     if (p.basename(selectedImage) == p.basename(correct)) {
-      await _audioPlayer.stop();
+      await _audioPlayer.stop(); // önceki sesi kes
 
       setState(() => _answered = true);
 
@@ -93,7 +93,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
   @override
   void dispose() {
     _audioPlayer.dispose();
-    _neyinSesiPlayer.dispose(); 
+    _neyinSesiPlayer.dispose(); // 💥 Ek player dispose edilmeli
     super.dispose();
   }
 

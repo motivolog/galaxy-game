@@ -24,7 +24,6 @@ class _Level2State extends State<Level2> {
     _playCurrentSound();
   }
 
-
   Future<void> _playCurrentSound() async {
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
@@ -41,13 +40,15 @@ class _Level2State extends State<Level2> {
 
   Future<void> _checkAnswer(String selectedImage) async {
     if (_answered) return;
-    setState(() => _answered = true);
 
     final q = vehicleQuestions[_currentQuestionIndex];
     final correct = q['correct'] as String;
-    await _sfxPlayer.stop();
+
+    await _sfxPlayer.stop(); // 🔇 Önceki sesi hemen kes
 
     if (p.basename(selectedImage) == p.basename(correct)) {
+      _answered = true; // ✅ Yalnızca doğruysa cevaplandı
+
       await _sfxPlayer.play(AssetSource(q['correct_sound']));
       await _sfxPlayer.onPlayerComplete.first;
 
@@ -63,11 +64,14 @@ class _Level2State extends State<Level2> {
         if (mounted) Navigator.of(context).pop();
       }
     } else {
+      // ❌ Yanlışa tıkladı ama _answered true olmadı, tekrar tıklanabilir
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
-      setState(() => _answered = false);
+
+      // tekrar false'e alma yok çünkü zaten true olmamıştı
     }
   }
+
 
   Future<void> _showCongratulations() async {
     _congratsPlayer = AudioPlayer();
@@ -101,7 +105,6 @@ class _Level2State extends State<Level2> {
     ));
   }
 
-
   @override
   void dispose() {
     _sfxPlayer.dispose();
@@ -111,7 +114,6 @@ class _Level2State extends State<Level2> {
     _congratsPlayer?.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
