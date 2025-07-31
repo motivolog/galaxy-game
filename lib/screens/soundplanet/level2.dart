@@ -44,10 +44,9 @@ class _Level2State extends State<Level2> {
     final q = vehicleQuestions[_currentQuestionIndex];
     final correct = q['correct'] as String;
 
-    await _sfxPlayer.stop(); // 🔇 Önceki sesi hemen kes
-
+    await _sfxPlayer.stop();
     if (p.basename(selectedImage) == p.basename(correct)) {
-      _answered = true; // ✅ Yalnızca doğruysa cevaplandı
+      _answered = true;
 
       await _sfxPlayer.play(AssetSource(q['correct_sound']));
       await _sfxPlayer.onPlayerComplete.first;
@@ -64,11 +63,10 @@ class _Level2State extends State<Level2> {
         if (mounted) Navigator.of(context).pop();
       }
     } else {
-      // ❌ Yanlışa tıkladı ama _answered true olmadı, tekrar tıklanabilir
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
 
-      // tekrar false'e alma yok çünkü zaten true olmamıştı
+
     }
   }
 

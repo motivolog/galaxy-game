@@ -3,7 +3,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
 import 'celebration.dart';
-import '../soundplanet/level_select_sound.dart';
 
 class SoundLevel1 extends StatefulWidget {
   const SoundLevel1({super.key});
@@ -14,11 +13,11 @@ class SoundLevel1 extends StatefulWidget {
 
 class _SoundLevel1State extends State<SoundLevel1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final AudioPlayer _neyinSesiPlayer = AudioPlayer(); // 🎧 Ek ses player
+  final AudioPlayer _neyinSesiPlayer = AudioPlayer();
 
   int _currentQuestionIndex = 0;
   bool _answered = false;
-  bool _neyinSesiBekleniyor = false; // ⏳ Bekliyor mu kontrolü
+  bool _neyinSesiBekleniyor = false;
 
   @override
   void initState() {
@@ -52,14 +51,14 @@ class _SoundLevel1State extends State<SoundLevel1> {
   Future<void> _handleAnswer(String selectedImage) async {
     if (_answered) return;
 
-    _neyinSesiBekleniyor = false; // ❌ Bekleme iptal
-    await _neyinSesiPlayer.stop(); // 🔇 Sence bu ses... iptal
+    _neyinSesiBekleniyor = false;
+    await _neyinSesiPlayer.stop();
 
     final question = soundQuestions[_currentQuestionIndex];
     final correct = question['correct'];
 
     if (p.basename(selectedImage) == p.basename(correct)) {
-      await _audioPlayer.stop(); // önceki sesi kes
+      await _audioPlayer.stop();
 
       setState(() => _answered = true);
 
@@ -93,7 +92,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
   @override
   void dispose() {
     _audioPlayer.dispose();
-    _neyinSesiPlayer.dispose(); // 💥 Ek player dispose edilmeli
+    _neyinSesiPlayer.dispose();
     super.dispose();
   }
 
