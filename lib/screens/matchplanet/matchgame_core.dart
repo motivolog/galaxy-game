@@ -111,6 +111,9 @@ class _MatchGameCoreState extends State<MatchGameCore>
     setState(() => _revealed[idx] = true);
     _selected.add(idx);
 
+    await _fxPlayer.stop();
+    await _namePlayer.stop();
+
     await _playName(_cards[idx]['sound']!);
 
     if (_selected.length == 2) {
@@ -158,8 +161,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
                         final maxHeight = constraints.maxHeight;
 
                         final animationSize = isPortrait
-                            ? maxHeight * 0.5
-                            : maxHeight * 0.80;
+                            ? maxHeight * 0.75
+                            : maxHeight * 0.90;
 
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
