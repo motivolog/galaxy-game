@@ -13,26 +13,17 @@ class Level2 extends StatefulWidget {
 
 class _Level2State extends State<Level2> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  late final AudioPlayer _bgPlayer;      // Background music player
+  late final AudioPlayer _bgPlayer;
+  AudioPlayer? _congratsPlayer;
   int _currentQuestionIndex = 0;
   bool _answered = false;
 
   @override
   void initState() {
     super.initState();
-    _initBackgroundMusic();
     _playCurrentSound();
   }
 
-  Future<void> _initBackgroundMusic() async {
-    _bgPlayer = AudioPlayer();
-    // Arka plan müziğini döngüde çal
-    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
-    await _bgPlayer.play(
-      AssetSource('audio/sci-fi.mp3'),
-      volume: 1, // dilersen ses seviyesini ayarlayabilirsin
-    );
-  }
 
   Future<void> _playCurrentSound() async {
     await _sfxPlayer.stop();
@@ -79,12 +70,19 @@ class _Level2State extends State<Level2> {
   }
 
   Future<void> _showCongratulations() async {
+    _congratsPlayer = AudioPlayer();
+    await _congratsPlayer!.setReleaseMode(ReleaseMode.loop);
+    await _congratsPlayer!.play(AssetSource('audio/vehicle/sci-fi.mp3'));
+
     await Navigator.of(context).push(PageRouteBuilder(
       opaque: false,
       barrierColor: Colors.transparent,
       pageBuilder: (_, __, ___) => GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.of(context).pop(),
+        onTap: () {
+          _congratsPlayer?.stop();
+          Navigator.of(context).pop();
+        },
         child: Container(
           color: Colors.black,
           width: double.infinity,
@@ -92,6 +90,8 @@ class _Level2State extends State<Level2> {
           child: Center(
             child: Lottie.asset(
               'assets/animations/alien_transition.json',
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.6,
               fit: BoxFit.contain,
               repeat: true,
             ),
@@ -101,13 +101,17 @@ class _Level2State extends State<Level2> {
     ));
   }
 
+
   @override
   void dispose() {
     _sfxPlayer.dispose();
     _bgPlayer.stop();
     _bgPlayer.dispose();
+    _congratsPlayer?.stop();
+    _congratsPlayer?.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
