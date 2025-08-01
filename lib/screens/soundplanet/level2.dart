@@ -15,13 +15,25 @@ class _Level2State extends State<Level2> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
   late final AudioPlayer _bgPlayer;
   AudioPlayer? _congratsPlayer;
+
   int _currentQuestionIndex = 0;
   bool _answered = false;
+
+  final Map<int, List<String>> _shuffledOptionsMap = {};
 
   @override
   void initState() {
     super.initState();
+    _generateShuffledOptionsForIndex(_currentQuestionIndex);
     _playCurrentSound();
+  }
+
+  void _generateShuffledOptionsForIndex(int index) {
+    if (!_shuffledOptionsMap.containsKey(index)) {
+      final rawOptions = vehicleQuestions[index]['options'] as List<String>;
+      final shuffled = List<String>.from(rawOptions)..shuffle();
+      _shuffledOptionsMap[index] = shuffled;
+    }
   }
 
   Future<void> _playCurrentSound() async {
@@ -34,7 +46,7 @@ class _Level2State extends State<Level2> {
   Future<void> _playHint() async {
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
-      AssetSource(vehicleQuestions[_currentQuestionIndex]['hint']),
+      UrlSource(vehicleQuestions[_currentQuestionIndex]['hint']),
     );
   }
 
@@ -57,6 +69,7 @@ class _Level2State extends State<Level2> {
           _currentQuestionIndex++;
           _answered = false;
         });
+        _generateShuffledOptionsForIndex(_currentQuestionIndex);
         await _playCurrentSound();
       } else {
         await _showCongratulations();
@@ -112,13 +125,12 @@ class _Level2State extends State<Level2> {
 
   @override
   Widget build(BuildContext context) {
-    final options = vehicleQuestions[_currentQuestionIndex]['options'] as List;
+    final options = _shuffledOptionsMap[_currentQuestionIndex]!;
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
     final cardSize = isPortrait
         ? shortestSide * 0.45
         : shortestSide * 0.50;
-
 
     return Scaffold(
       body: SafeArea(
@@ -140,7 +152,7 @@ class _Level2State extends State<Level2> {
                         ),
                         const SizedBox(height: 20),
                         _buildOption(options[2], cardSize),
-                        const SizedBox(height: 80), // Butonlara yer bırak
+                        const SizedBox(height: 80),
                       ],
                     );
                   }
@@ -154,24 +166,20 @@ class _Level2State extends State<Level2> {
                             .map<Widget>((img) => _buildOption(img, cardSize))
                             .toList(),
                       ),
-                      const SizedBox(height: 80), // Butonlara yer bırak
+                      const SizedBox(height: 80),
                     ],
                   );
                 },
               ),
             ),
-
-            // Bilgi butonu
             Positioned(
               top: 20,
               right: 20,
               child: GestureDetector(
                 onTap: _playHint,
-                child: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
+                child: const Icon(Icons.info_outline, size: 45, color: Colors.orange),
               ),
             ),
-
-            // Geri ve Ses butonları - hizalanmış!
             Positioned(
               bottom: 30,
               left: 0,
@@ -196,7 +204,7 @@ class _Level2State extends State<Level2> {
                       ),
                     )
                   else
-                    const SizedBox(width: 60), // yer tutucu
+                    const SizedBox(width: 60),
 
                   GestureDetector(
                     onTap: _playCurrentSound,
