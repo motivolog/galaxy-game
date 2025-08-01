@@ -115,11 +115,10 @@ class _Level2State extends State<Level2> {
     final options = vehicleQuestions[_currentQuestionIndex]['options'] as List;
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final isTablet = shortestSide > 600;
-
     final cardSize = isPortrait
-        ? shortestSide * (isTablet ? 0.7 : 0.45)
-        : shortestSide * (isTablet ? 0.65 : 0.50);
+        ? shortestSide * 0.45
+        : shortestSide * 0.50;
+
 
     return Scaffold(
       body: SafeArea(

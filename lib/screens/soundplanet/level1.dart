@@ -128,11 +128,10 @@ class _Level1State extends State<Level1> {
 
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final isTablet = shortestSide > 600;
+    final cardSize = isPortrait
+        ? shortestSide * 0.45
+        : shortestSide * 0.50;
 
-    final double cardSize = isPortrait
-        ? shortestSide * (isTablet ? 0.6 : 0.45)
-        : shortestSide * (isTablet ? 0.65 : 0.50);
 
     return Scaffold(
       body: SafeArea(
