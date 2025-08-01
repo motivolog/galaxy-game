@@ -4,19 +4,17 @@ import 'level1.dart';
 import 'level2.dart';
 import 'package:lottie/lottie.dart';
 
-
 class LevelSelectSoundScreen extends StatefulWidget {
   final AudioPlayer incomingPlayer;
 
   const LevelSelectSoundScreen({super.key, required this.incomingPlayer});
 
   @override
-  State<LevelSelectSoundScreen> createState() => _LevelSelectSoundScreenState();
+  State<LevelSelectSoundScreen> createState() =>
+      _LevelSelectSoundScreenState();
 }
 
 class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
-
-
   @override
   void initState() {
     super.initState();
@@ -67,41 +65,44 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
               ),
             ),
             Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildLevelButton(
-                        label: 'Seviye 1: Hayvan Sesleri',
-                        imagePath: 'assets/images/soundplanet1.png',
-                        onTap: () async {
-                          await widget.incomingPlayer.stop();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SoundLevel1()),
-                          );
-                        },
-                        size: buttonSize,
-                      ),
-                      _buildLevelButton(
-                        label: 'Seviye 2: Taşıt Sesleri',
-                        imagePath: 'assets/images/soundplanet2.png',
-                        onTap: () async {
-                          await widget.incomingPlayer.stop();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const Level2()),
-                          );
-                        },
-                        size: buttonSize,
-                      ),
-                    ],
-                  ),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 16), // Sol boşluk
+                    _buildLevelButton(
+                      label: 'Seviye 1: Hayvan Sesleri',
+                      imagePath: 'assets/images/soundplanet1.png',
+                      onTap: () async {
+                        await widget.incomingPlayer.stop();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const Level1(),
+                          ),
+                        );
+                      },
+                      size: buttonSize,
+                    ),
+                    const SizedBox(width: 32),
+                    _buildLevelButton(
+                      label: 'Seviye 2: Taşıt Sesleri',
+                      imagePath: 'assets/images/soundplanet2.png',
+                      onTap: () async {
+                        await widget.incomingPlayer.stop();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const Level2(),
+                          ),
+                        );
+                      },
+                      size: buttonSize,
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                ),
               ),
             ),
           ],
@@ -110,7 +111,6 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
     );
   }
 
-// 👇 Bu yardımcı metod sayfanın altına ekle:
   Widget _buildLevelButton({
     required String label,
     required String imagePath,
@@ -136,5 +136,4 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
       ),
     );
   }
-
 }

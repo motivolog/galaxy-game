@@ -4,17 +4,16 @@ import 'package:path/path.dart' as p;
 import 'question.dart';
 import 'celebration.dart';
 
-class SoundLevel1 extends StatefulWidget {
-  const SoundLevel1({super.key});
+class Level1 extends StatefulWidget {
+  const Level1({super.key});
 
   @override
-  State<SoundLevel1> createState() => _SoundLevel1State();
+  State<Level1> createState() => _Level1State();
 }
 
-class _SoundLevel1State extends State<SoundLevel1> {
+class _Level1State extends State<Level1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioPlayer _neyinSesiPlayer = AudioPlayer();
-
   int _currentQuestionIndex = 0;
   bool _answered = false;
   bool _neyinSesiBekleniyor = false;
@@ -116,7 +115,7 @@ class _SoundLevel1State extends State<SoundLevel1> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: Image.asset(imagePath, fit: BoxFit.contain, width: size, height: size),
+          child: Image.asset(imagePath, fit: BoxFit.contain),
         ),
       ),
     );
@@ -124,80 +123,106 @@ class _SoundLevel1State extends State<SoundLevel1> {
 
   @override
   Widget build(BuildContext context) {
+    final question = soundQuestions[_currentQuestionIndex];
+    final options = question['options'] as List;
+
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final double cardSize = isPortrait ? shortestSide * 0.45 : shortestSide * 0.50;
+    final isTablet = shortestSide > 600;
 
-    if (_currentQuestionIndex >= soundQuestions.length) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Text(
-            "Tüm sorular bitti!",
-            style: TextStyle(color: Colors.white, fontSize: 22),
-          ),
-        ),
-      );
-    }
-
-    final question = soundQuestions[_currentQuestionIndex];
+    final double cardSize = isPortrait
+        ? shortestSide * (isTablet ? 0.6 : 0.45)
+        : shortestSide * (isTablet ? 0.65 : 0.50);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/gif/back.gif',
-              fit: BoxFit.cover,
-              width: cardSize,
-              height: cardSize,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Arka Plan
+            Positioned.fill(
+              child: Image.asset(
+                'assets/gif/back.gif',
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          SafeArea(
-            child: Center(
+
+
+            Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
-                  final isPortrait = orientation == Orientation.portrait;
-                  final double cardSize = isPortrait ? 180 : 230;
+                  if (orientation == Orientation.portrait) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildImage(options[0], size: cardSize),
+                            _buildImage(options[1], size: cardSize),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildImage(options[2], size: cardSize),
+                        const SizedBox(height: 80),
+                      ],
+                    );
+                  }
 
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (isPortrait) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildImage(question['options'][0], size: cardSize),
-                            _buildImage(question['options'][1], size: cardSize),
-                          ],
-                        ),
-                        _buildImage(question['options'][2], size: cardSize),
-                      ] else ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildImage(question['options'][0], size: cardSize),
-                            _buildImage(question['options'][1], size: cardSize),
-                            _buildImage(question['options'][2], size: cardSize),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 30),
-                      IconButton(
-                        onPressed: _playSoundWithPrompt,
-                        icon: const Icon(
-                          Icons.volume_up,
-                          size: 70,
-                          color: Colors.white,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: options
+                            .map<Widget>((img) => _buildImage(img, size: cardSize))
+                            .toList(),
                       ),
+                      const SizedBox(height: 80),
                     ],
                   );
                 },
               ),
             ),
-          ),
-        ],
+
+            Positioned(
+              bottom: 24,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 20),
+                  if (_currentQuestionIndex > 0)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _currentQuestionIndex--;
+                          _answered = false;
+                        });
+                        _playSoundWithPrompt();
+                      },
+                      child: Image.asset(
+                        'assets/images/planet2/back_arrow.png',
+                        width: 55,
+                        height: 55,
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 55),
+                  GestureDetector(
+                    onTap: _playSoundWithPrompt,
+                    child: Image.asset(
+                      'assets/images/planet2/sound_button.png',
+                      width: 60,
+                      height: 60,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -65,11 +65,8 @@ class _Level2State extends State<Level2> {
     } else {
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
-
-
     }
   }
-
 
   Future<void> _showCongratulations() async {
     _congratsPlayer = AudioPlayer();
@@ -116,6 +113,13 @@ class _Level2State extends State<Level2> {
   @override
   Widget build(BuildContext context) {
     final options = vehicleQuestions[_currentQuestionIndex]['options'] as List;
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final shortestSide = MediaQuery.of(context).size.shortestSide;
+    final isTablet = shortestSide > 600;
+
+    final cardSize = isPortrait
+        ? shortestSide * (isTablet ? 0.7 : 0.45)
+        : shortestSide * (isTablet ? 0.65 : 0.50);
 
     return Scaffold(
       body: SafeArea(
@@ -124,12 +128,6 @@ class _Level2State extends State<Level2> {
             Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
-                  final isPortrait = orientation == Orientation.portrait;
-                  final shortestSide = MediaQuery.of(context).size.shortestSide;
-                  final cardSize = isPortrait
-                      ? shortestSide * 0.45
-                      : shortestSide * 0.50;
-
                   if (isPortrait) {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -143,11 +141,7 @@ class _Level2State extends State<Level2> {
                         ),
                         const SizedBox(height: 20),
                         _buildOption(options[2], cardSize),
-                        const SizedBox(height: 30),
-                        IconButton(
-                          onPressed: _playCurrentSound,
-                          icon: const Icon(Icons.volume_up, size: 48, color: Colors.white),
-                        ),
+                        const SizedBox(height: 80), // Butonlara yer bırak
                       ],
                     );
                   }
@@ -161,22 +155,60 @@ class _Level2State extends State<Level2> {
                             .map<Widget>((img) => _buildOption(img, cardSize))
                             .toList(),
                       ),
-                      const SizedBox(height: 20),
-                      IconButton(
-                        onPressed: _playCurrentSound,
-                        icon: const Icon(Icons.volume_up, size: 60, color: Colors.white),
-                      ),
+                      const SizedBox(height: 80), // Butonlara yer bırak
                     ],
                   );
                 },
               ),
             ),
+
+            // Bilgi butonu
             Positioned(
               top: 20,
               right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
-                onPressed: _playHint,
+              child: GestureDetector(
+                onTap: _playHint,
+                child: const Icon(Icons.info_outline, size: 40, color: Colors.orange),
+              ),
+            ),
+
+            // Geri ve Ses butonları - hizalanmış!
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 20),
+                  if (_currentQuestionIndex > 0)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _currentQuestionIndex--;
+                          _answered = false;
+                        });
+                        _playCurrentSound();
+                      },
+                      child: Image.asset(
+                        'assets/images/planet2/back_arrow.png',
+                        width: 60,
+                        height: 60,
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 60), // yer tutucu
+
+                  GestureDetector(
+                    onTap: _playCurrentSound,
+                    child: Image.asset(
+                      'assets/images/planet2/sound_button.png',
+                      width: 60,
+                      height: 60,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
               ),
             ),
           ],

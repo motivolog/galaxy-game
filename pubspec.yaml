@@ -37,9 +37,6 @@ dependencies:
   lottie: ^3.2.0
 
 
-
-
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -193,6 +190,8 @@ flutter:
     - assets/images/planet2/tram.png
     - assets/images/planet2/ship.png
     - assets/images/planet2/submarine.png
+    - assets/images/planet2/back_arrow.png
+    - assets/images/planet2/sound_button.png
 
 
 
