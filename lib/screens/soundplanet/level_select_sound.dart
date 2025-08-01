@@ -15,7 +15,7 @@ class LevelSelectSoundScreen extends StatefulWidget {
 }
 
 class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
-  bool _navigated = false;
+
 
   @override
   void initState() {
@@ -29,27 +29,17 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
     );
   }
 
-  Future<void> _stopAndNavigate() async {
-    if (_navigated) return;
-    _navigated = true;
-
-    await widget.incomingPlayer.stop();
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const SoundLevel1()),
-    );
-  }
-
   @override
   void dispose() {
+    widget.incomingPlayer.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final shortestSide = MediaQuery.of(context).size.shortestSide;
+    final double buttonSize = shortestSide * 0.65;
+
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -62,9 +52,9 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
             ),
             Positioned(
               top: 20,
-                left:10,
+              left: 10,
               child: GestureDetector(
-                onTap:() async{
+                onTap: () async {
                   await widget.incomingPlayer.stop();
                   Navigator.pop(context);
                 },
@@ -76,74 +66,75 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                 ),
               ),
             ),
-
-      Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Semantics(
-                  label: 'Seviye 1: Hayvan Sesleri',
-                  button: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(100),
-                    onTap: () async {
-                      await widget.incomingPlayer.stop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const SoundLevel1()),
-                      );
-                    },
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 150,
-                        height: 150,
-                        child: Image.asset(
-                          'assets/images/soundplanet1.png',
-                          fit: BoxFit.cover,
-                        ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildLevelButton(
+                        label: 'Seviye 1: Hayvan Sesleri',
+                        imagePath: 'assets/images/soundplanet1.png',
+                        onTap: () async {
+                          await widget.incomingPlayer.stop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SoundLevel1()),
+                          );
+                        },
+                        size: buttonSize,
                       ),
-                    ),
-                  ),
-                ),
-
-
-                Semantics(
-                  label: 'Seviye 2: Taşıt Sesleri',
-                  button: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(100),
-                    onTap: () async {
-                      await widget.incomingPlayer.stop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const Level2()),
-                      );
-
-                    },
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 150,
-                        height: 150,
-                        child: Image.asset(
-                          'assets/images/soundplanet2.png',
-                          fit: BoxFit.cover,
-                        ),
+                      _buildLevelButton(
+                        label: 'Seviye 2: Taşıt Sesleri',
+                        imagePath: 'assets/images/soundplanet2.png',
+                        onTap: () async {
+                          await widget.incomingPlayer.stop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const Level2()),
+                          );
+                        },
+                        size: buttonSize,
                       ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
-      ]
-        ),
-    ),
     );
   }
+
+// 👇 Bu yardımcı metod sayfanın altına ekle:
+  Widget _buildLevelButton({
+    required String label,
+    required String imagePath,
+    required VoidCallback onTap,
+    required double size,
+  }) {
+    return Semantics(
+      label: label,
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(100),
+        onTap: onTap,
+        child: ClipOval(
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 }
