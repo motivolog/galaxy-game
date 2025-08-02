@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/home/intro_screen.dart';
 
 void main() {
   runApp(const GalaksimdeOgreniyorumApp());
@@ -14,7 +15,7 @@ class GalaksimdeOgreniyorumApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Galaksimde Öğreniyorum',
       theme: ThemeData.dark(),
-      home: const HomeScreen(),
+      home: const IntroScreen(),
     );
   }
 }

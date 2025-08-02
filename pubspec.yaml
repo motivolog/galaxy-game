@@ -36,7 +36,6 @@ dependencies:
   audioplayers: ^5.2.1
   lottie: ^3.2.0
 
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -72,9 +71,12 @@ flutter:
     - assets/animations/back_arrow.json
     - assets/animations/bee_transition.json
     - assets/animations/alien_transition.json
+    - assets/animations/intro_screen.json
+
 
     - assets/gif/bgg.gif
     - assets/gif/back.gif
+    - assets/gif/intro_space.gif
 
     - assets/images/levelscreen_background.png
     - assets/audio/hosgeldin.mp3
