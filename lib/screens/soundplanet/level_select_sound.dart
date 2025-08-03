@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'level1.dart';
 import 'level2.dart';
+import 'level3.dart';
 import 'package:lottie/lottie.dart';
 
 class LevelSelectSoundScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 16), // Sol boşluk
+                    const SizedBox(width: 16),
                     _buildLevelButton(
                       label: 'Seviye 1: Hayvan Sesleri',
                       imagePath: 'assets/images/soundplanet1.png',
@@ -95,6 +96,21 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const Level2(),
+                          ),
+                        );
+                      },
+                      size: buttonSize,
+                    ),
+                    const SizedBox(width: 32),
+                    _buildLevelButton(
+                      label: 'Seviye 3: Müzik Aletleri',
+                      imagePath: 'assets/images/soundplanet3.png',
+                      onTap: () async {
+                        await widget.incomingPlayer.stop();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const Level3(),
                           ),
                         );
                       },
