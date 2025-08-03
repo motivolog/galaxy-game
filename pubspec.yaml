@@ -72,7 +72,7 @@ flutter:
     - assets/animations/bee_transition.json
     - assets/animations/alien_transition.json
     - assets/animations/intro_screen.json
-
+    - assets/animations/rocket_launch.json
 
     - assets/gif/bgg.gif
     - assets/gif/back.gif
@@ -153,47 +153,75 @@ flutter:
     - assets/audio/vehicle/correct_submarine.mp3
     - assets/audio/vehicle/sci-fi.mp3
 
-    - assets/images/deer.png
-    - assets/images/wolf.png
-    - assets/images/goose.png
-    - assets/images/goat.png
-    - assets/images/housefly.png
-    - assets/images/bird.png
-    - assets/images/cat.png
-    - assets/images/cow.png
-    - assets/images/dog.png
-    - assets/images/horse.png
-    - assets/images/hen.png
-    - assets/images/antelope.png
-    - assets/images/bat.png
-    - assets/images/bee.png
-    - assets/images/duck.png
-    - assets/images/elephant.png
-    - assets/images/camel.png
-    - assets/images/crocodile.png
-    - assets/images/dolphin.png
-    - assets/images/sheep.png
-    - assets/images/rooster.png
+    - assets/audio/intruments/bateri.mp3
+    - assets/audio/intruments/cello.mp3
+    - assets/audio/intruments/davul.mp3
+    - assets/audio/intruments/gitar.mp3
+    - assets/audio/intruments/handpan.mp3
+    - assets/audio/intruments/kalimba.mp3
+    - assets/audio/intruments/keman.mp3
+    - assets/audio/intruments/marakas.mp3
+    - assets/audio/intruments/piyano.mp3
+    - assets/audio/intruments/saksafon.mp3
+    - assets/audio/intruments/sitar.mp3
+    - assets/audio/intruments/tulum.mp3
+    - assets/audio/intruments/ukulele.mp3
+
+    - assets/images/planet2/level1/deer.png
+    - assets/images/planet2/level1/wolf.png
+    - assets/images/planet2/level1/goose.png
+    - assets/images/planet2/level1/goat.png
+    - assets/images/planet2/level1/housefly.png
+    - assets/images/planet2/level1/bird.png
+    - assets/images/planet2/level1/cat.png
+    - assets/images/planet2/level1/cow.png
+    - assets/images/planet2/level1/dog.png
+    - assets/images/planet2/level1/horse.png
+    - assets/images/planet2/level1/hen.png
+    - assets/images/planet2/level1/antelope.png
+    - assets/images/planet2/level1/bat.png
+    - assets/images/planet2/level1/bee.png
+    - assets/images/planet2/level1/duck.png
+    - assets/images/planet2/level1/elephant.png
+    - assets/images/planet2/level1/camel.png
+    - assets/images/planet2/level1/crocodile.png
+    - assets/images/planet2/level1/dolphin.png
+    - assets/images/planet2/level1/sheep.png
+    - assets/images/planet2/level1/rooster.png
     - assets/images/soundplanet1.png
     - assets/images/soundplanet2.png
-    - assets/images/levelsecsound_bg.png
-    - assets/images/game2_back.png
+    - assets/images/soundplanet3.png
     - assets/images/void_planet.png
 
-    - assets/images/planet2/airplane.png
-    - assets/images/planet2/ambulance.png
-    - assets/images/planet2/car.png
-    - assets/images/planet2/firetruck.png
-    - assets/images/planet2/helicopter.png
-    - assets/images/planet2/motorcycle.png
-    - assets/images/planet2/policecar.png
-    - assets/images/planet2/tractor.png
-    - assets/images/planet2/train.png
-    - assets/images/planet2/tram.png
-    - assets/images/planet2/ship.png
-    - assets/images/planet2/submarine.png
+    - assets/images/planet2/level2/airplane.png
+    - assets/images/planet2/level2/ambulance.png
+    - assets/images/planet2/level2/car.png
+    - assets/images/planet2/level2/firetruck.png
+    - assets/images/planet2/level2/helicopter.png
+    - assets/images/planet2/level2/motorcycle.png
+    - assets/images/planet2/level2/policecar.png
+    - assets/images/planet2/level2/tractor.png
+    - assets/images/planet2/level2/train.png
+    - assets/images/planet2/level2/tram.png
+    - assets/images/planet2/level2/ship.png
+    - assets/images/planet2/level2/submarine.png
     - assets/images/planet2/back_arrow.png
     - assets/images/planet2/sound_button.png
+
+    - assets/images/planet2/level3/bateri.png
+    - assets/images/planet2/level3/davul.png
+    - assets/images/planet2/level3/gitar.png
+    - assets/images/planet2/level3/handpan.png
+    - assets/images/planet2/level3/kalimba.png
+    - assets/images/planet2/level3/keman.png
+    - assets/images/planet2/level3/marakas.png
+    - assets/images/planet2/level3/piyano.png
+    - assets/images/planet2/level3/saksafon.png
+    - assets/images/planet2/level3/sitar.png
+    - assets/images/planet2/level3/tulum.png
+    - assets/images/planet2/level3/ukulele.png
+    - assets/images/planet2/level3/çello.png
+    - assets/images/planet2/level3/flüt.png
 
 
 
