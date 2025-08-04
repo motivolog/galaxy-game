@@ -37,7 +37,10 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
   @override
   Widget build(BuildContext context) {
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final double buttonSize = shortestSide * 0.65;
+    final bool isTablet = shortestSide >= 600;
+
+    final double buttonSize = isTablet ? shortestSide * 0.50 : shortestSide * 0.40;
+    final double spacing = isTablet ? 48 : 60;
 
     return Scaffold(
       body: SafeArea(
@@ -74,7 +77,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                     const SizedBox(width: 16),
                     _buildLevelButton(
                       label: 'Seviye 1: Hayvan Sesleri',
-                      imagePath: 'assets/images/soundplanet1.png',
+                      imagePath: 'assets/images/planet2/hayvanplnt.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         Navigator.push(
@@ -86,10 +89,10 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       },
                       size: buttonSize,
                     ),
-                    const SizedBox(width: 32),
+                    SizedBox(width: spacing),
                     _buildLevelButton(
                       label: 'Seviye 2: Taşıt Sesleri',
-                      imagePath: 'assets/images/soundplanet2.png',
+                      imagePath: 'assets/images/planet2/vehicleplanet.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         Navigator.push(
@@ -101,10 +104,10 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       },
                       size: buttonSize,
                     ),
-                    const SizedBox(width: 32),
+                    SizedBox(width: spacing),
                     _buildLevelButton(
                       label: 'Seviye 3: Müzik Aletleri',
-                      imagePath: 'assets/images/soundplanet3.png',
+                      imagePath: 'assets/images/planet2/instrument_planet.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         Navigator.push(

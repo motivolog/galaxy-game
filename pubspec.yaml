@@ -181,6 +181,10 @@ flutter:
     - assets/audio/intruments/correct_ukulele.mp3
 
 
+    - assets/images/planet2/hayvanplnt.png
+    - assets/images/planet2/vehicleplanet.png
+    - assets/images/planet2/instrument_planet.png
+
     - assets/images/planet2/level1/deer.png
     - assets/images/planet2/level1/wolf.png
     - assets/images/planet2/level1/goose.png
@@ -202,9 +206,6 @@ flutter:
     - assets/images/planet2/level1/dolphin.png
     - assets/images/planet2/level1/sheep.png
     - assets/images/planet2/level1/rooster.png
-    - assets/images/soundplanet1.png
-    - assets/images/soundplanet2.png
-    - assets/images/soundplanet3.png
     - assets/images/void_planet.png
 
     - assets/images/planet2/level2/airplane.png
@@ -236,13 +237,6 @@ flutter:
     - assets/images/planet2/level3/ukulele.png
     - assets/images/planet2/level3/çello.png
     - assets/images/planet2/level3/flüt.png
-
-
-
-
-
-
-
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
