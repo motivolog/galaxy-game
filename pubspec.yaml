@@ -166,6 +166,20 @@ flutter:
     - assets/audio/intruments/sitar.mp3
     - assets/audio/intruments/tulum.mp3
     - assets/audio/intruments/ukulele.mp3
+    - assets/audio/intruments/correct_bateri.mp3
+    - assets/audio/intruments/correct_cello.mp3
+    - assets/audio/intruments/correct_davul.mp3
+    - assets/audio/intruments/correct_gitar.mp3
+    - assets/audio/intruments/correct_handpan.mp3
+    - assets/audio/intruments/correct_kalimba.mp3
+    - assets/audio/intruments/correct_keman.mp3
+    - assets/audio/intruments/correct_marakas.mp3
+    - assets/audio/intruments/correct_piyano.mp3
+    - assets/audio/intruments/correct_saksafon.mp3
+    - assets/audio/intruments/correct_sitar.mp3
+    - assets/audio/intruments/correct_tulum.mp3
+    - assets/audio/intruments/correct_ukulele.mp3
+
 
     - assets/images/planet2/level1/deer.png
     - assets/images/planet2/level1/wolf.png
