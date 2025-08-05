@@ -179,6 +179,9 @@ flutter:
     - assets/audio/intruments/correct_sitar.mp3
     - assets/audio/intruments/correct_tulum.mp3
     - assets/audio/intruments/correct_ukulele.mp3
+    - assets/audio/animal_yonlendirme.mp3
+    - assets/audio/intrument_yonlendirme.mp3
+    - assets/audio/vehicle_yonlendirme.mp3
 
 
     - assets/images/planet2/hayvanplnt.png

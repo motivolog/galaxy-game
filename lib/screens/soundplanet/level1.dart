@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
-import 'celebration.dart';
+import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
+
 
 class Level1 extends StatefulWidget {
   const Level1({super.key});
@@ -14,9 +16,12 @@ class Level1 extends StatefulWidget {
 class _Level1State extends State<Level1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioPlayer _neyinSesiPlayer = AudioPlayer();
+  final AudioPlayer _congratsPlayer = AudioPlayer(); // 🎉 kutlama player'ı
+
   int _currentQuestionIndex = 0;
   bool _answered = false;
   bool _neyinSesiBekleniyor = false;
+  bool _showCelebration = false;
 
   @override
   void initState() {
@@ -74,8 +79,8 @@ class _Level1State extends State<Level1> {
       });
 
       if (_currentQuestionIndex >= soundQuestions.length) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          showSoundPlanetCelebration(context);
+        setState(() {
+          _showCelebration = true;
         });
       } else {
         Future.microtask(() => _playSoundWithPrompt());
@@ -88,10 +93,23 @@ class _Level1State extends State<Level1> {
     }
   }
 
+  Future<void> _playCelebrationAndExit() async {
+    await _congratsPlayer.setReleaseMode(ReleaseMode.stop);
+    await _congratsPlayer.play(AssetSource('audio/vehicle/sci-fi.mp3'));
+    await Future.delayed(const Duration(seconds: 4));
+    await _congratsPlayer.stop();
+    await _congratsPlayer.dispose();
+
+    if (mounted) {
+      Navigator.pop(context); // Oyun sonrası geri dönüş
+    }
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
     _neyinSesiPlayer.dispose();
+    _congratsPlayer.dispose();
     super.dispose();
   }
 
@@ -123,29 +141,53 @@ class _Level1State extends State<Level1> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showCelebration) {
+      _congratsPlayer.setReleaseMode(ReleaseMode.loop);
+      _congratsPlayer.play(AssetSource('audio/vehicle/sci-fi.mp3'));
+
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: () {
+            _congratsPlayer.stop();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LevelSelectSoundScreen(incomingPlayer: _congratsPlayer),
+              ),
+            );
+          },
+
+          child: Center(
+            child: Lottie.asset(
+              'assets/animations/alien_transition.json',
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: MediaQuery.of(context).size.height * 0.8,
+              repeat: true,
+            ),
+          ),
+        ),
+      );
+    }
+
+
     final question = soundQuestions[_currentQuestionIndex];
     final options = question['options'] as List;
 
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final cardSize = isPortrait
-        ? shortestSide * 0.45
-        : shortestSide * 0.50;
-
+    final cardSize = isPortrait ? shortestSide * 0.45 : shortestSide * 0.50;
 
     return Scaffold(
       body: SafeArea(
         child: Stack(
           children: [
-            // Arka Plan
             Positioned.fill(
               child: Image.asset(
                 'assets/gif/back.gif',
                 fit: BoxFit.cover,
               ),
             ),
-
-
             Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
@@ -182,7 +224,6 @@ class _Level1State extends State<Level1> {
                 },
               ),
             ),
-
             Positioned(
               bottom: 24,
               left: 0,

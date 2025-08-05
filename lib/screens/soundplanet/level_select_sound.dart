@@ -80,6 +80,9 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       imagePath: 'assets/images/planet2/hayvanplnt.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
+                        final player = AudioPlayer();
+                        await player.play(AssetSource('audio/animal_yonlendirme.mp3'));
+                        await player.onPlayerComplete.first;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -95,6 +98,9 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       imagePath: 'assets/images/planet2/vehicleplanet.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
+                        final player = AudioPlayer();
+                        await player.play(AssetSource('audio/vehicle_yonlendirme.mp3'));
+                        await player.onPlayerComplete.first;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -110,6 +116,9 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       imagePath: 'assets/images/planet2/instrument_planet.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
+                        final player = AudioPlayer();
+                        await player.play(AssetSource('audio/intrument_yonlendirme.mp3'));
+                        await player.onPlayerComplete.first;
                         Navigator.push(
                           context,
                           MaterialPageRoute(

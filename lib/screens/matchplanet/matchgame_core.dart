@@ -66,7 +66,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
     await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
     await _bgmPlayer.setVolume(0.1);
     await _bgmPlayer.setSource(
-      UrlSource('https://zeliha-x0st.github.io/game-assets-sound/bg.mp3'),
+      UrlSource('https://zelihausta.github.io/game-assets-sound/bg.mp3'),
     );
     await _bgmPlayer.resume();
   }

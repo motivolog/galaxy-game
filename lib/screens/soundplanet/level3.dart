@@ -55,7 +55,7 @@ class _Level3State extends State<Level3> {
     final q = instrumentQuestions[_currentQuestionIndex];
     final correct = q['correct'] as String;
 
-    await _sfxPlayer.stop(); // Önceki sesleri durdur
+    await _sfxPlayer.stop();
 
     if (p.basename(selectedImage) == p.basename(correct)) {
       _answered = true;
@@ -68,7 +68,7 @@ class _Level3State extends State<Level3> {
         setState(() {
           _currentQuestionIndex++;
           _answered = false;
-          _generateShuffledOptionsForIndex(_currentQuestionIndex); // BURADA çağır
+          _generateShuffledOptionsForIndex(_currentQuestionIndex);
         });
         await _playCurrentSound();
 
