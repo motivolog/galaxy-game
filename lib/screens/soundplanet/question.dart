@@ -11,7 +11,7 @@ final List<Map<String, dynamic>> soundQuestions = [
     ],
   },
 
-  /*{
+  {
     'sound': 'https://cdn.popygame.net/galaxy-app/animal_sounds/bee.mp3',
     'correct': 'assets/images/planet2/level1/bee.png',
     'correct_sound': 'audio/animals_sound/correct_bee.mp3',
@@ -112,7 +112,5 @@ final List<Map<String, dynamic>> soundQuestions = [
       'assets/images/planet2/level1/camel.png',
     ],
   },
-*/
-
-
+  
 ];
