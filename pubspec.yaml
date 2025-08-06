@@ -90,6 +90,13 @@ flutter:
     - assets/images/pembe_ucgen.png
     - assets/images/red_balloon.png
     - assets/images/turuncu_top.png
+    - assets/images/planet1/ahtapot.png
+    - assets/images/planet1/roket.png
+    - assets/images/planet1/bulut.png
+    - assets/images/planet1/gunes.png
+    - assets/images/planet1/agac.png
+    - assets/images/planet1/kelebek.png
+
     - assets/audio/kirmizi_cicek.mp3
     - assets/audio/sari_araba.mp3
     - assets/audio/mavi_yildiz.mp3
@@ -100,9 +107,16 @@ flutter:
     - assets/audio/yesil_kurbaga.mp3
     - assets/audio/pembe_ucgen.mp3
     - assets/audio/tebrikler.mp3
+    - assets/audio/planet1/agac.mp3
+    - assets/audio/planet1/ahtapot.mp3
+    - assets/audio/planet1/bulut.mp3
+    - assets/audio/planet1/gunes.mp3
+    - assets/audio/planet1/roket.mp3
+    - assets/audio/planet1/kelebek.mp3
     - assets/images/planet_turquoise.png
     - assets/images/planet_yellow.png
     - assets/images/planet_white.png
+    - assets/images/planet_pink.png
     - assets/images/levelsec_back.png
     - assets/images/gezegen_kartlar.png
 
