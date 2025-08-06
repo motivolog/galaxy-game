@@ -6,6 +6,7 @@ import 'match_level1.dart';
 import 'match_level2.dart';
 import 'match_level3.dart';
 import 'match_level4.dart';
+import 'match_level5.dart';
 
 class LevelSelectScreen extends StatefulWidget {
   final AudioPlayer homePlayer;
@@ -16,8 +17,8 @@ class LevelSelectScreen extends StatefulWidget {
 }
 
 class _LevelSelectScreenState extends State<LevelSelectScreen> {
-  List<bool> _completed = [false, false, false,false];
-  List<bool> _unlocked = [true, false, false, false];
+  List<bool> _completed = [false, false, false, false, false];
+  List<bool> _unlocked = [true, false, false, false, false];
   final _player = AudioPlayer();
 
   @override
@@ -29,7 +30,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   Future<void> _loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _completed = List.generate(4, (i) => prefs.getBool('completed_$i') ?? false);
+      _completed = List.generate(5, (i) => prefs.getBool('completed_$i') ?? false);
       _unlocked[0] = true;
       for (int i = 0; i < _completed.length; i++) {
         if (_completed[i] && i + 1 < _unlocked.length) {
@@ -74,6 +75,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         finished = await Navigator.push<bool>(
           context,
           MaterialPageRoute(builder: (_) => const MatchLevel4()),
+        );
+        break;
+      case 4:
+        finished = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(builder: (_) => const MatchLevel5()),
         );
         break;
     }
@@ -155,6 +162,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       'assets/images/planet_white.png',
       'assets/images/planet_turquoise.png',
       'assets/images/planet_pink.png',
+      'assets/images/planet_green.png',
     ];
 
     return GestureDetector(

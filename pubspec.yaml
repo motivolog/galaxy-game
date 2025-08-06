@@ -96,6 +96,12 @@ flutter:
     - assets/images/planet1/gunes.png
     - assets/images/planet1/agac.png
     - assets/images/planet1/kelebek.png
+    - assets/images/planet1/astronot.png
+    - assets/images/planet1/cilek.png
+    - assets/images/planet1/zambak.png
+    - assets/images/planet1/mantar.png
+    - assets/images/planet1/ordek.png
+    - assets/images/planet1/salyangoz.png
 
     - assets/audio/kirmizi_cicek.mp3
     - assets/audio/sari_araba.mp3
@@ -113,10 +119,17 @@ flutter:
     - assets/audio/planet1/gunes.mp3
     - assets/audio/planet1/roket.mp3
     - assets/audio/planet1/kelebek.mp3
+    - assets/audio/planet1/astronot.mp3
+    - assets/audio/planet1/cilek.mp3
+    - assets/audio/planet1/mantar.mp3
+    - assets/audio/planet1/ordek.mp3
+    - assets/audio/planet1/salyangoz.mp3
+    - assets/audio/planet1/zambak.mp3
     - assets/images/planet_turquoise.png
     - assets/images/planet_yellow.png
     - assets/images/planet_white.png
     - assets/images/planet_pink.png
+    - assets/images/planet_green.png
     - assets/images/levelsec_back.png
     - assets/images/gezegen_kartlar.png
 
