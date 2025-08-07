@@ -14,6 +14,7 @@ class MatchGameCore extends StatefulWidget {
   final String congratsSound;
   final bool centerGrid;
   final int flipBackDelayMs;
+  final double? cardSize;
 
   const MatchGameCore({
     super.key,
@@ -27,6 +28,7 @@ class MatchGameCore extends StatefulWidget {
     required this.congratsSound,
     this.centerGrid = false,
     this.flipBackDelayMs = 400,
+    this.cardSize,
   });
 
   @override
@@ -307,11 +309,15 @@ class _MatchGameCoreState extends State<MatchGameCore>
                     final cellHeight = (maxH - totalVSpacing) / rows;
 
                     final cellSize = min(cellWidth, cellHeight);
+                    final effectiveSize = widget.cardSize ?? cellSize;
 
-                    final gridW = cellSize * cols + totalHSpacing;
-                    final gridH = cellSize * rows + totalVSpacing;
 
-                    return Center(
+                    final gridW = effectiveSize * cols + totalHSpacing;
+                    final gridH = effectiveSize * rows + totalVSpacing;
+
+
+                    return Align(
+                      alignment: Alignment.centerLeft,
                       child: SizedBox(
                         width: gridW,
                         height: gridH,
