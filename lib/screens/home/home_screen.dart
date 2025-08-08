@@ -3,7 +3,10 @@ import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../widgets/spinning_planet.dart';
 import '../../widgets/spinning_sound_planet.dart';
+import '../../widgets/spinning_math_planet.dart';
 import '../matchplanet/level_select_screen.dart';
+import '../math_planet/level_select_math.dart';
+
 import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -98,6 +101,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const SpinningSoundPlanet(),
                   ),
                   const SizedBox(width: 30),
+                  GestureDetector(
+                    onTap: () async {
+                      _audioPlayer.stop();
+                      _audioPlayer.play(
+                        AssetSource('audio/ses_gezegeni.mp3'),
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => LevelSelectMathScreen(incomingPlayer: _audioPlayer),
+                        ),
+                      );
+                    },
+                    child: const SpinningMathPlanet(),
+                  ),
                 ],
               ),
             ),

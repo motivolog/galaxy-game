@@ -148,7 +148,8 @@ flutter:
     - assets/images/planet_green.png
     - assets/images/planet_purple.png
     - assets/images/levelsec_back.png
-    - assets/images/gezegen_kartlar.png
+
+    - assets/images/match_planet.png
 
     - assets/audio/ses_gezegeni.mp3
     - assets/audio/eslestirme_gezegeni.mp3
@@ -228,9 +229,9 @@ flutter:
     - assets/audio/vehicle_yonlendirme.mp3
 
 
-    - assets/images/planet2/hayvanplnt.png
-    - assets/images/planet2/vehicleplanet.png
-    - assets/images/planet2/instrument_planet.png
+    - assets/images/planet_animal.png
+    - assets/images/vehicleplanet.png
+    - assets/images/planetiki.png
 
     - assets/images/planet2/level1/deer.png
     - assets/images/planet2/level1/wolf.png
@@ -284,6 +285,9 @@ flutter:
     - assets/images/planet2/level3/ukulele.png
     - assets/images/planet2/level3/çello.png
     - assets/images/planet2/level3/flüt.png
+
+      #Math planet
+    - assets/images/planet3.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

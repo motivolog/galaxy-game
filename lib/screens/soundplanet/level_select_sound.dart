@@ -39,7 +39,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
     final shortestSide = MediaQuery.of(context).size.shortestSide;
     final bool isTablet = shortestSide >= 600;
 
-    final double buttonSize = isTablet ? shortestSide * 0.50 : shortestSide * 0.40;
+    final double buttonSize = isTablet ? shortestSide * 0.60 : shortestSide * 0.80;
     final double spacing = isTablet ? 48 : 60;
 
     return Scaffold(
@@ -77,7 +77,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                     const SizedBox(width: 16),
                     _buildLevelButton(
                       label: 'Seviye 1: Hayvan Sesleri',
-                      imagePath: 'assets/images/planet2/hayvanplnt.png',
+                      imagePath: 'assets/images/planet_animal.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
@@ -95,7 +95,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                     SizedBox(width: spacing),
                     _buildLevelButton(
                       label: 'Seviye 2: Taşıt Sesleri',
-                      imagePath: 'assets/images/planet2/vehicleplanet.png',
+                      imagePath: 'assets/images/vehicleplanet.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
@@ -113,7 +113,7 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                     SizedBox(width: spacing),
                     _buildLevelButton(
                       label: 'Seviye 3: Müzik Aletleri',
-                      imagePath: 'assets/images/planet2/instrument_planet.png',
+                      imagePath: 'assets/images/planetiki.png',
                       onTap: () async {
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
@@ -149,19 +149,17 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
       label: label,
       button: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(100),
         onTap: onTap,
-        child: ClipOval(
           child: SizedBox(
             width: size,
             height: size,
             child: Image.asset(
               imagePath,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
             ),
           ),
         ),
-      ),
+
     );
   }
 }

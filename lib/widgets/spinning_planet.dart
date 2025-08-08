@@ -42,7 +42,7 @@ class _SpinningPlanetState extends State<SpinningPlanet>
         );
       },
       child: Image.asset(
-        'assets/images/gezegen_kartlar.png',
+        'assets/images/match_planet.png',
         width: 300,
         height: 300,
         semanticLabel: 'Eşleştirme gezegeni',
