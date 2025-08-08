@@ -6,7 +6,7 @@ class MatchLevel6 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalCardWidth = ((140 * 8) + (15 * 7)).toDouble();
+    final totalCardWidth = ((175 * 8) + (15 * 7)).toDouble();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -57,8 +57,8 @@ class MatchLevel6 extends StatelessWidget {
               successSound: 'audio/eslestirme_basarili.mp3',
               failSound: 'audio/tekrar_dene.mp3',
               congratsSound: 'audio/tebrikler.mp3',
-              flipBackDelayMs: 100,
-              cardSize: 150,
+              flipBackDelayMs: 60,
+              cardSize: 175,
             ),
           ),
         ),
