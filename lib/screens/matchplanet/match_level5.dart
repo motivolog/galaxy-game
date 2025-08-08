@@ -6,39 +6,54 @@ class MatchLevel5 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context){
-    return MatchGameCore(cards: const[
-      {
-        'image': 'assets/images/planet1/astronot.png',
-        'sound': 'audio/planet1/astronot.mp3',
-      },
-      {
-        'image': 'assets/images/planet1/cilek.png',
-        'sound': 'audio/planet1/cilek.mp3',
-      },
-      {
-        'image': 'assets/images/planet1/mantar.png',
-        'sound': 'audio/planet1/mantar.mp3',
-      },
-      {
-        'image': 'assets/images/planet1/ordek.png',
-        'sound': 'audio/planet1/ordek.mp3',
-      },{
-        'image': 'assets/images/planet1/zambak.png',
-        'sound': 'audio/planet1/zambak.mp3',
-      },{
-        'image': 'assets/images/planet1/salyangoz.png',
-        'sound': 'audio/planet1/salyangoz.mp3',
-      },
-    ],
-        pairCount: 6,
-        backgroundImage: 'assets/gif/bgg.gif',
-        crossAxisCountPortrait: 2,
-        crossAxisCountLandscape: 6,
-        successSound: 'audio/eslestirme_basarili.mp3',
-        failSound: 'audio/tekrar_dene.mp3',
-        congratsSound: 'audio/tebrikler.mp3',
-        flipBackDelayMs: 60,
-    );
-  }
+    final totalCardWidth = ((175*6) + (15*5)).toDouble();
 
-}
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: totalCardWidth,
+              child: MatchGameCore(cards: const[
+                {
+                  'image': 'assets/images/planet1/astronot.png',
+                  'sound': 'audio/planet1/astronot.mp3',
+                },
+                {
+                  'image': 'assets/images/planet1/cilek.png',
+                  'sound': 'audio/planet1/cilek.mp3',
+                },
+                {
+                  'image': 'assets/images/planet1/mantar.png',
+                  'sound': 'audio/planet1/mantar.mp3',
+                },
+                {
+                  'image': 'assets/images/planet1/ordek.png',
+                  'sound': 'audio/planet1/ordek.mp3',
+                },{
+                  'image': 'assets/images/planet1/zambak.png',
+                  'sound': 'audio/planet1/zambak.mp3',
+                },{
+                  'image': 'assets/images/planet1/salyangoz.png',
+                  'sound': 'audio/planet1/salyangoz.mp3',
+                },
+              ],
+                  pairCount: 6,
+                  backgroundImage: 'assets/gif/bgg.gif',
+                  crossAxisCountPortrait: 2,
+                  crossAxisCountLandscape: 6,
+                  successSound: 'audio/eslestirme_basarili.mp3',
+                  failSound: 'audio/tekrar_dene.mp3',
+                  congratsSound: 'audio/tebrikler.mp3',
+                  flipBackDelayMs: 60,
+                  cardSize: 175,
+            ),
+          ),
+    ),
+      ),
+    );
+
+
+    }
+    }
