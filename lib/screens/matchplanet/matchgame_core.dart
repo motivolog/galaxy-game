@@ -15,6 +15,8 @@ class MatchGameCore extends StatefulWidget {
   final bool centerGrid;
   final int flipBackDelayMs;
   final double? cardSize;
+  final Function()? onExit;
+
 
   const MatchGameCore({
     super.key,
@@ -29,6 +31,8 @@ class MatchGameCore extends StatefulWidget {
     this.centerGrid = false,
     this.flipBackDelayMs = 400,
     this.cardSize,
+    this.onExit,
+
   });
 
   @override
@@ -141,14 +145,13 @@ class _MatchGameCoreState extends State<MatchGameCore>
 
           if (!mounted) return;
 
-
-
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
+                  widget.onExit?.call();
                   Navigator.pop(context);
                   Navigator.pop(context, true);
                 },
@@ -317,7 +320,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
 
 
                     return Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: widget.centerGrid ? Alignment.center : Alignment.centerLeft,
                       child: SizedBox(
                         width: gridW,
                         height: gridH,
