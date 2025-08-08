@@ -21,13 +21,15 @@ class MatchLevel2 extends StatelessWidget {
           'sound': 'audio/mavi_yildiz.mp3',
         },
       ],
-      pairCount: 3, // 3 çift, yani toplam 6 kart
+      pairCount: 3,
       backgroundImage: 'assets/gif/bgg.gif',
-      crossAxisCountPortrait: 2,     // dikeyde 2 sütun → 3x2 yerleşim
-      crossAxisCountLandscape: 3,    // yatayda 3 sütun → 2x3 yerleşim
+      crossAxisCountPortrait: 2,
+      crossAxisCountLandscape: 3,
       successSound: 'audio/eslestirme_basarili.mp3',
       failSound: 'audio/tekrar_dene.mp3',
       congratsSound: 'audio/tebrikler.mp3',
+      centerGrid: true,
+
     );
   }
 }
