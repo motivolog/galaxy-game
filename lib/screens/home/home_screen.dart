@@ -109,10 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => LevelSelectMathScreen(incomingPlayer: _audioPlayer),
-                        ),
+                        MaterialPageRoute(builder: (_) => const LevelSelectMathScreen()),
                       );
+
                     },
                     child: const SpinningMathPlanet(),
                   ),
