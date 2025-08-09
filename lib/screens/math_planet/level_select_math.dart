@@ -12,7 +12,7 @@ class LevelSelectMathScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: GridView(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // gelecekte Level 2-3-4 de ekleriz
+            crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 1.1,
@@ -28,7 +28,7 @@ class LevelSelectMathScreen extends StatelessWidget {
                 );
               },
             ),
-            // gelecek: Level 2, Level 3...
+            
           ],
         ),
       ),
