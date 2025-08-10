@@ -7,7 +7,6 @@ class LevelSelectMathScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Matematik Gezegeni")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: GridView(
@@ -15,7 +14,7 @@ class LevelSelectMathScreen extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.1,
+            childAspectRatio: 2,
           ),
           children: [
             _LevelCard(

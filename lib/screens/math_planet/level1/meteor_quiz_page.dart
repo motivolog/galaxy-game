@@ -48,7 +48,7 @@ class _MeteorQuizPageState extends State<MeteorQuizPage> {
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("Ana ekrana dön"),
+                      child: const Text("Level ekranına dön"),
                     ),
                   ],
                 ),

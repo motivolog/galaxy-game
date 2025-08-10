@@ -152,6 +152,13 @@ class Level1MeteorQuizGame extends FlameGame {
     ]);
     a.add(hitPulse);
 
+    await _shootStarWarsLaser(
+      a.position.clone() + Vector2(40, 0),
+      m.position.clone(),
+      color: Colors.yellowAccent,
+    );
+
+
     m.explodeThenRemove(onDone: () {});
 
     final moveBackToIdleY = MoveToEffect(
@@ -164,6 +171,60 @@ class Level1MeteorQuizGame extends FlameGame {
     _startIdleFloat();
     _isAttacking = false;
   }
+
+  Future<void> _shootStarWarsLaser(Vector2 from, Vector2 to, {Color color = Colors.green}) async {
+    final dir = to - from;
+    final angle = math.atan2(dir.y, dir.x);
+    final length = dir.length;
+
+    // İnce lazer ışını
+    final laserPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          color.withOpacity(0.9),
+          color.withOpacity(0.5),
+          color.withOpacity(0.9),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, length, 4))
+      ..blendMode = BlendMode.plus;
+
+    final laser = RectangleComponent(
+      size: Vector2(length, 6),
+      position: from,
+      anchor: Anchor.centerLeft,
+      angle: angle,
+      paint: laserPaint,
+    )..priority = 50;
+    add(laser);
+
+    final glow = CircleComponent(
+      radius: 12,
+      position: to,
+      anchor: Anchor.center,
+      paint: Paint()
+        ..shader = RadialGradient(
+          colors: [
+            color.withOpacity(0.9),
+            Colors.white.withOpacity(0.6),
+            Colors.transparent,
+          ],
+        ).createShader(const Rect.fromLTWH(-12, -12, 24, 24)),
+    )..priority = 51;
+    add(glow);
+
+
+    laser.add(OpacityEffect.to(
+      0,
+      EffectController(duration: 0.3, curve: Curves.easeOut),
+      onComplete: () => laser.removeFromParent(),
+    ));
+    glow.add(OpacityEffect.to(
+      0,
+      EffectController(duration: 0.15, curve: Curves.easeOut),
+      onComplete: () => glow.removeFromParent(),
+    ));
+  }
+
 
   Future<void> onAnswerSelected(int val) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
@@ -295,7 +356,7 @@ class Meteor extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(120, 64);//meteorumuzun boyutu
+    size = Vector2(120, 64);
     currentSpeed = baseSpeed;
   }
 
@@ -316,7 +377,7 @@ class Meteor extends PositionComponent {
       onMissed();
     }
   }
-//şimdilik meteor görseli eklemedim. Yapı şuan kutucuk olsun
+
   @override
   void render(Canvas canvas) {
     final r = RRect.fromRectAndRadius(
@@ -346,7 +407,7 @@ class Meteor extends PositionComponent {
   }
 }
 
-// Basit yıldız arkaplanı
+//  yıldız arkaplanı
 class _Starfield extends Component {
   _Starfield(this.screenSize);
   final Vector2 screenSize;
