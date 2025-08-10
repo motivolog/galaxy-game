@@ -157,10 +157,18 @@ packages:
     dependency: "direct main"
     description:
       name: flame
-      sha256: "0bd0d5bfaf270e4c1624f8d966ca42951479d1b59371058898bdd6ce41bce27a"
+      sha256: c50e2f39e118f5f6a6f3339ce6825ee803c7e5fada95ec50fb02eb27944e0e76
       url: "https://pub.dev"
     source: hosted
-    version: "1.23.0"
+    version: "1.30.1"
+  flame_lottie:
+    dependency: "direct main"
+    description:
+      name: flame_lottie
+      sha256: f264cdc1c9e58692a66eb683948dc0710cbc1c4ac151acb2dcd064748dc35941
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2+14"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -284,10 +292,10 @@ packages:
     dependency: transitive
     description:
       name: ordered_set
-      sha256: fc861bb51fc863cd3e0718e21768af9586e0d5022b91a0fd4437636456cdb7d0
+      sha256: d6c1d053a533e84931a388cbf03f1ad21a0543bf06c7a281859d3ffacd8e15f2
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.1"
+    version: "8.0.0"
   path:
     dependency: "direct main"
     description:
@@ -535,4 +543,4 @@ packages:
     version: "1.1.0"
 sdks:
   dart: ">=3.7.0-0 <4.0.0"
-  flutter: ">=3.24.0"
+  flutter: ">=3.27.1"
