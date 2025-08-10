@@ -1,7 +1,10 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import 'package:flame_lottie/flame_lottie.dart';
 
 enum QuizState { presenting, resolving, finished }
 
@@ -18,23 +21,30 @@ class Level1MeteorQuizGame extends FlameGame {
   final VoidCallback onFinished;
   final VoidCallback onUiRefresh;
 
-
   QuizState state = QuizState.presenting;
   final int totalQuestions = 10;
   int currentIndex = 0;
   int correctCount = 0;
 
-
-  final double baseMeteorSpeed = 120;
+  final double baseMeteorSpeed = 80;
   final double boostMultiplier = 2.0;
 
-
   Meteor? activeMeteor;
-  late List<Question> questions;
-  late AnimatedAstronaut astronaut;
+  List<Question> questions = const [];
+
+  LottieComponent? astronaut;
+
+  double? _idleTopY;
+  double? _idleBottomY;
+  MoveToEffect? _idleMoveEffect;
+  final double _astronautX = 80;
+  bool _isAttacking = false;
+  bool _isSpawning = false;
 
   Question? get currentQuestion =>
-      (currentIndex < questions.length) ? questions[currentIndex] : null;
+      (questions.isNotEmpty && currentIndex < questions.length)
+          ? questions[currentIndex]
+          : null;
 
   @override
   Future<void> onLoad() async {
@@ -42,19 +52,120 @@ class Level1MeteorQuizGame extends FlameGame {
 
     add(_Starfield(size)..priority = -10);
 
-    astronaut = AnimatedAstronaut()
-      ..position = Vector2(80, size.y * 0.65)
+    final lottie = await loadLottie(
+      Lottie.asset('assets/animations/astronot_math.json'),
+    );
+    final a = LottieComponent(
+      lottie,
+      size: Vector2(160, 160),
+      position: Vector2(_astronautX, size.y * 0.65),
+      repeating: true,
+    )
       ..priority = 5
       ..anchor = Anchor.center;
-    add(astronaut);
+    astronaut = a;
+    add(a);
 
+    _idleTopY = size.y * 0.25;
+    _idleBottomY = size.y * 0.75;
+    a.position = Vector2(_astronautX, _idleBottomY!);
+    _startIdleFloat();
 
     questions = _generateQuestions(totalQuestions);
+    onUiRefresh();
 
     _spawnNextMeteor();
   }
 
-  void onAnswerSelected(int val) {
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _idleTopY = this.size.y * 0.25;
+    _idleBottomY = this.size.y * 0.75;
+
+    final a = astronaut;
+    if (a != null && a.isMounted) {
+      final clampedY =
+      a.y.clamp(_idleTopY ?? a.y, _idleBottomY ?? a.y).toDouble();
+      a.position = Vector2(_astronautX, clampedY);
+    }
+  }
+
+  void _startIdleFloat() {
+    _stopIdleFloat();
+
+    if (astronaut == null || _idleTopY == null) return;
+
+    _idleMoveEffect = MoveToEffect(
+      Vector2(_astronautX, _idleTopY!),
+      EffectController(
+        duration: 2.4,
+        curve: Curves.easeInOut,
+        alternate: true,
+        infinite: true,
+      ),
+    );
+    astronaut!.add(_idleMoveEffect!);
+
+    astronaut!.add(
+      RotateEffect.by(
+        0.03,
+        EffectController(
+          duration: 1.6,
+          curve: Curves.easeInOut,
+          alternate: true,
+          infinite: true,
+        ),
+      ),
+    );
+  }
+
+  void _stopIdleFloat() {
+    _idleMoveEffect?.removeFromParent();
+    _idleMoveEffect = null;
+    astronaut?.children.whereType<Effect>().toList().forEach(
+          (e) => e.removeFromParent(),
+    );
+  }
+
+  Future<void> _attackMeteorAndExplode() async {
+    final a = astronaut;
+    final m = activeMeteor;
+    if (a == null || m == null || _isAttacking) return;
+    _isAttacking = true;
+
+    _stopIdleFloat();
+
+    final moveToMeteorY = MoveToEffect(
+      Vector2(a.x, m.y),
+      EffectController(duration: 0.35, curve: Curves.easeInOut),
+    );
+    a.add(moveToMeteorY);
+    await moveToMeteorY.completed;
+
+
+    final hitPulse = SequenceEffect([
+      ScaleEffect.to(Vector2.all(1.08),
+          EffectController(duration: 0.12, curve: Curves.easeOut)),
+      ScaleEffect.to(Vector2.all(1.0),
+          EffectController(duration: 0.10, curve: Curves.easeIn)),
+    ]);
+    a.add(hitPulse);
+
+    m.explodeThenRemove(onDone: () {});
+
+    final moveBackToIdleY = MoveToEffect(
+      Vector2(a.x, size.y * 0.65),
+      EffectController(duration: 0.35, curve: Curves.easeInOut),
+    );
+    a.add(moveBackToIdleY);
+    await moveBackToIdleY.completed;
+
+    _startIdleFloat();
+    _isAttacking = false;
+  }
+
+  Future<void> onAnswerSelected(int val) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
 
     final isCorrect = (val == currentQuestion!.answer);
@@ -62,13 +173,11 @@ class Level1MeteorQuizGame extends FlameGame {
 
     if (isCorrect) {
       correctCount++;
-      astronaut.cheer();
-      activeMeteor?.explodeThenRemove(onDone: () {
-        currentIndex++;
-        _spawnNextMeteor();
-      });
-    } else {
 
+      await _attackMeteorAndExplode();
+      currentIndex++;
+      _spawnNextMeteor();
+    } else {
       activeMeteor?.speedBoost(multiplier: boostMultiplier, duration: 0.6);
       Future.delayed(const Duration(milliseconds: 650), () {
         state = QuizState.presenting;
@@ -76,6 +185,19 @@ class Level1MeteorQuizGame extends FlameGame {
       });
     }
     onUiRefresh();
+  }
+
+  void _respawnSameQuestion() {
+    if (_isSpawning || state == QuizState.finished) return;
+    _isSpawning = true;
+
+    activeMeteor?.removeFromParent();
+    activeMeteor = null;
+
+    Future.microtask(() {
+      _spawnNextMeteor();
+      _isSpawning = false;
+    });
   }
 
   void _spawnNextMeteor() {
@@ -92,6 +214,12 @@ class Level1MeteorQuizGame extends FlameGame {
     activeMeteor = Meteor(
       label: q.text,
       baseSpeed: baseMeteorSpeed,
+      onMissed: () {
+        if (state != QuizState.finished) {
+          state = QuizState.presenting;
+          _respawnSameQuestion();
+        }
+      },
     )
       ..position = Vector2(size.x + 80, y)
       ..anchor = Anchor.center;
@@ -100,25 +228,24 @@ class Level1MeteorQuizGame extends FlameGame {
     state = QuizState.presenting;
     onUiRefresh();
   }
-
+  //soru ürettiğimiz alan
   List<Question> _generateQuestions(int n) {
     final rnd = math.Random();
     final List<Question> list = [];
     for (int i = 0; i < n; i++) {
-
-      final opIndex = math.min(i ~/ 3, 3);
+      final opIndex = math.min(i ~/ 2, 3);
       late int a, b, answer;
       late String text;
 
       switch (opIndex) {
         case 0:
           a = rnd.nextInt(21);
-          b = rnd.nextInt(21);
+          b = rnd.nextInt(41);
           answer = a + b;
           text = "$a + $b = ?";
           break;
         case 1:
-          a = rnd.nextInt(21);
+          a = rnd.nextInt(31);
           b = rnd.nextInt(a + 1);
           answer = a - b;
           text = "$a − $b = ?";
@@ -144,133 +271,31 @@ class Level1MeteorQuizGame extends FlameGame {
   }
 
   List<int> _buildOptions(int answer, math.Random rnd) {
-    final set = {answer};
+    final set = <int>{answer};
     while (set.length < 3) {
       final delta = 1 + rnd.nextInt(6);
-      set.add(rnd.nextBool() ? answer + delta : (answer - delta).clamp(0, 100));
+      final candidate = rnd.nextBool() ? (answer + delta) : (answer - delta);
+      set.add(candidate.clamp(0, 100));
     }
     final list = set.toList()..shuffle(rnd);
     return list;
   }
 }
 
-class AnimatedAstronaut extends PositionComponent {
-  double _t = 0;
-  double _cheerTimer = 0;
-  final double _bodyW = 70;
-  final double _bodyH = 64;
-
-  @override
-  Future<void> onLoad() async {
-    size = Vector2(_bodyW, _bodyH);
-    anchor = Anchor.center;
-  }
-
-  void cheer() {
-    _cheerTimer = 0.35; // ~350ms
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-    _t += dt;
-    if (_cheerTimer > 0) _cheerTimer -= dt;
-
-
-    final baseY = y;
-    final bob = math.sin(_t * 2.0) * 2.5; // ±2.5px
-    position.y = baseY + bob;
-
-
-    angle = math.sin(_t * 1.6) * 0.02; // ± ~1.1°
-    if (_cheerTimer > 0) {
-
-      final k = (_cheerTimer / 0.35); // 1..0
-      scale = Vector2.all(1.0 + 0.08 * k);
-      angle += 0.08 * (1 - k);
-    } else {
-      scale = Vector2.all(1.0);
-    }
-  }
-
-  @override
-  void render(Canvas canvas) {
-    // Gövde
-    final bodyRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(-_bodyW/2, -_bodyH/2, _bodyW, _bodyH),
-      const Radius.circular(18),
-    );
-    canvas.drawRRect(bodyRect, Paint()..color = const Color(0xFF8EC5FF));
-
-
-    final visor = RRect.fromRectAndRadius(
-      Rect.fromLTWH(-24, -16, 48, 28), const Radius.circular(12),
-    );
-    canvas.drawRRect(visor, Paint()..color = const Color(0xFF1B2A4A));
-
-
-    final limbPaint = Paint()..color = const Color(0xFF6EA9E8);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(-_bodyW/2-6, -8, 12, 22), const Radius.circular(6)),
-      limbPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(_bodyW/2-6, -8, 12, 22), const Radius.circular(6)),
-      limbPaint,
-    );
-
-
-    final pack = RRect.fromRectAndRadius(
-      Rect.fromLTWH(-_bodyW/2-10, -10, 16, 28), const Radius.circular(6),
-    );
-    canvas.drawRRect(pack, Paint()..color = const Color(0xFF445D7A));
-
-    final flameLen = 10 + 6 * (0.5 + 0.5 * math.sin(_t * 20));
-    final flamePath = Path()
-      ..moveTo(-_bodyW/2 - 10 + 8, 12)
-      ..lineTo(-_bodyW/2 - 10 + 8 - flameLen, 12 + 4)
-      ..lineTo(-_bodyW/2 - 10 + 8, 12 + 8)
-      ..close();
-    canvas.drawPath(flamePath, Paint()..color = const Color(0xFFFFA726));
-
-    canvas.drawPath(flamePath.shift(const Offset(-2, 0)), Paint()..color = const Color(0xFFFFECB3).withOpacity(0.7));
-
-    if (((_t * 3) % 2.0) < 0.12) {
-      final starPaint = Paint()..color = Colors.white.withOpacity(0.9);
-      _drawStar(canvas, const Offset(20, -26), 4, starPaint);
-    }
-  }
-
-  void _drawStar(Canvas canvas, Offset c, double r, Paint p) {
-    final path = Path();
-    for (int i = 0; i < 8; i++) {
-      final a = i * math.pi / 4;
-      final rr = (i % 2 == 0) ? r : r * 0.45;
-      final x = c.dx + rr * math.cos(a);
-      final y = c.dy + rr * math.sin(a);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, p);
-  }
-}
-
 class Meteor extends PositionComponent {
-  Meteor({required this.label, required this.baseSpeed});
+  Meteor({required this.label, required this.baseSpeed,required this.onMissed,});
 
   final String label;
   final double baseSpeed;
+  final VoidCallback onMissed;
+
 
   double currentSpeed = 0;
   double _boostTimer = 0;
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(120, 64);
+    size = Vector2(120, 64);//meteorumuzun boyutu
     currentSpeed = baseSpeed;
   }
 
@@ -288,12 +313,12 @@ class Meteor extends PositionComponent {
 
     if (position.x < -200) {
       removeFromParent();
+      onMissed();
     }
   }
-
+//şimdilik meteor görseli eklemedim. Yapı şuan kutucuk olsun
   @override
   void render(Canvas canvas) {
-
     final r = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.x, size.y),
       const Radius.circular(18),
@@ -315,14 +340,13 @@ class Meteor extends PositionComponent {
     _boostTimer = duration;
   }
 
-
   void explodeThenRemove({required VoidCallback onDone}) {
     removeFromParent();
     onDone();
   }
 }
 
-// basit yıldız arkaplan
+// Basit yıldız arkaplanı
 class _Starfield extends Component {
   _Starfield(this.screenSize);
   final Vector2 screenSize;
