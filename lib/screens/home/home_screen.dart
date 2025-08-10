@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () async {
                       _audioPlayer.stop();
                       _audioPlayer.play(
-                        AssetSource('audio/ses_gezegeni.mp3'),
+                        AssetSource('audio/sesi.mp3'),
                       );
                       Navigator.push(
                         context,
