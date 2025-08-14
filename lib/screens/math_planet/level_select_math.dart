@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'level1/meteor_quiz_page.dart';
+import 'level1_addition/addition_difficulty.dart';
+import 'level5_quiz/level5_meteor_quiz_page.dart';
+
 
 class LevelSelectMathScreen extends StatelessWidget {
   const LevelSelectMathScreen({super.key});
@@ -7,11 +9,11 @@ class LevelSelectMathScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final levels = <_LevelInfo>[
-      _LevelInfo(number: 1, title: 'Meteor Quiz', unlocked: true,  progress: 0.7),
-      _LevelInfo(number: 2, title: 'Toplama',     unlocked: false, progress: 0.0),
-      _LevelInfo(number: 3, title: 'Çıkarma',     unlocked: false, progress: 0.0),
-      _LevelInfo(number: 4, title: 'Çarpma',      unlocked: false, progress: 0.0),
-      _LevelInfo(number: 5, title: 'Bölme',       unlocked: false, progress: 0.0),
+      _LevelInfo(number: 1, title: 'Toplama', unlocked: true,  progress: 0.7),
+      _LevelInfo(number: 2, title: 'Çıkarma',     unlocked: false, progress: 0.0),
+      _LevelInfo(number: 3, title: 'Çarpma',     unlocked: false, progress: 0.0),
+      _LevelInfo(number: 4, title: 'Bölme',      unlocked: false, progress: 0.0),
+      _LevelInfo(number: 5, title: 'Meteor Quiz',       unlocked: false, progress: 0.0),
     ];
 
     final w = MediaQuery.of(context).size.width;
@@ -44,12 +46,31 @@ class LevelSelectMathScreen extends StatelessWidget {
               info: levels[i],
               onTap: () {
                 if (!levels[i].unlocked) return;
-                if (levels[i].number == 1) {
-                  Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const MeteorQuizPage()),
-                  );
+
+                switch (levels[i].number) {
+                  case 1:
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AdditionDifficultyPage(),
+                      ),
+                    );
+                    break;
+
+
+
+
+                  case 5: // Meteor Quiz
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) =>  Level5MeteorQuizPage()),
+                    );
+                    break;
+
+
                 }
               },
+
             ),
           ),
         ),
