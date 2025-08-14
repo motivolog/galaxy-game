@@ -291,6 +291,14 @@ flutter:
       #Math planet
     - assets/images/planet3.png
     - assets/animations/astronot_math.json
+    - assets/images/planet3/asteroid.png
+    - assets/images/planet3/meteor.png
+    - assets/images/planet3/monster.png
+    - assets/images/planet3/planet.png
+    - assets/images/planet3/alien.png
+    - assets/images/planet3/ship.png
+    - assets/images/planet3/space.png
+    - assets/images/planet3/star.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
