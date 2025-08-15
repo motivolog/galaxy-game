@@ -10,10 +10,10 @@ class LevelSelectMathScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final levels = <_LevelInfo>[
       _LevelInfo(number: 1, title: 'Toplama', unlocked: true,  progress: 0.7),
-      _LevelInfo(number: 2, title: 'Çıkarma',     unlocked: false, progress: 0.0),
-      _LevelInfo(number: 3, title: 'Çarpma',     unlocked: false, progress: 0.0),
-      _LevelInfo(number: 4, title: 'Bölme',      unlocked: false, progress: 0.0),
-      _LevelInfo(number: 5, title: 'Meteor Quiz',       unlocked: false, progress: 0.0),
+      _LevelInfo(number: 2, title: 'Çıkarma',     unlocked: true, progress: 0.0),
+      _LevelInfo(number: 3, title: 'Çarpma',     unlocked: true, progress: 0.0),
+      _LevelInfo(number: 4, title: 'Bölme',      unlocked: true, progress: 0.0),
+      _LevelInfo(number: 5, title: 'Meteor Quiz',       unlocked: true, progress: 0.0),
     ];
 
     final w = MediaQuery.of(context).size.width;
