@@ -40,7 +40,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flame: ^1.23.0
+  flame: ^1.8.1
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +75,7 @@ flutter:
     - assets/animations/alien_transition.json
     - assets/animations/intro_screen.json
     - assets/animations/rocket_launch.json
+    - assets/animations/choise_monster.json
 
     - assets/gif/bgg.gif
     - assets/gif/back.gif
@@ -152,6 +153,9 @@ flutter:
     - assets/images/levelsec_back.png
 
     - assets/images/match_planet.png
+
+    # Çıkarma oyunu için canavar resmi
+    - assets/images/secenek_alien.png
 
     - assets/audio/ses_gezegeni.mp3
     - assets/audio/eslestirme_gezegeni.mp3
