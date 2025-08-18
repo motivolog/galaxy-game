@@ -1,8 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'space_background.dart';
+import 'subtraction_question.dart';
+import 'operation_panel.dart';
+import 'monster_choice.dart';
 
 class SubtractionLevelPage extends StatefulWidget {
   const SubtractionLevelPage({
@@ -20,44 +24,85 @@ class SubtractionLevelPage extends StatefulWidget {
   State<SubtractionLevelPage> createState() => _SubtractionLevelPageState();
 }
 
-class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
+class _SubtractionLevelPageState extends State<SubtractionLevelPage>
+    with TickerProviderStateMixin {
   final Random _random = Random();
-  late _SubtractionQuestion question;
+  late SubtractionQuestion question;
   int correct = 0;
   bool lockingUi = false;
+
   bool pulseHint = false;
+  int? shakeIndex;
+  int? popIndex;
+
+  AnimationController? _qmPulseCtrl;
+  AnimationController? _rewardCtrl;
+
+  void _ensureControllers() {
+    _qmPulseCtrl ??= AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _rewardCtrl ??= AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 320),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    question = _SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+    question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+    _ensureControllers();
   }
 
-  Future<void> _onPick(int value) async {
+  @override
+  void dispose() {
+    _qmPulseCtrl?.dispose();
+    _rewardCtrl?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onPickAt(int index) async {
     if (lockingUi) return;
+    final value = question.options[index];
     final isRight = value == question.answer;
 
     if (isRight) {
-      setState(() { lockingUi = true; correct++; });
-      await Future.delayed(const Duration(milliseconds: 500));
+      setState(() {
+        lockingUi = true;
+        popIndex = index;
+        correct++;
+      });
+      _rewardCtrl!.forward(from: 0);
+      await Future.delayed(const Duration(milliseconds: 320));
 
+      if (!mounted) return;
       if (correct >= widget.targetCorrect) {
         await _completeLevel();
         return;
       }
-
       setState(() {
-        question = _SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+        question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
         lockingUi = false;
+        popIndex = null;
       });
     } else {
-      setState(() => pulseHint = true);
-      await Future.delayed(const Duration(milliseconds: 350));
-      if (mounted) setState(() => pulseHint = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Bir daha dene ')));
-      }
+      HapticFeedback.lightImpact();
+      setState(() { pulseHint = true; shakeIndex = index; });
+      await Future.delayed(const Duration(milliseconds: 260));
+      if (!mounted) return;
+      setState(() { pulseHint = false; shakeIndex = null; });
+
+      final size = MediaQuery.of(context).size;
+      final isTablet = size.shortestSide >= 600;
+      final panelH = isTablet ? 180.0 : 150.0;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Bir daha dene'),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(bottom: panelH + 16, left: 16, right: 16),
+        ),
+      );
     }
   }
 
@@ -81,10 +126,14 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
 
   @override
   Widget build(BuildContext context) {
+    _ensureControllers();
+
     final size = MediaQuery.of(context).size;
-    final shortest = size.shortestSide;
-    final isTablet = shortest >= 600;
-    final titleFs = isTablet ? 44.0 : (size.width < 600 ? 32.0 : 36.0);
+    final isTablet = size.shortestSide >= 600;
+
+    final double panelH = isTablet ? 180 : 150;
+    final double gap = isTablet ? 16 : 12;
+    final double bottomPad = 18;
 
     return Scaffold(
       body: SafeArea(
@@ -92,7 +141,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
           children: [
             const SpaceBackground(),
 
-            // Üst bar
+            // üst bar
             Positioned(
               top: 8, left: 8, right: 8,
               child: Row(
@@ -108,14 +157,13 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
                         LinearProgressIndicator(
                           value: correct / widget.targetCorrect,
                           minHeight: isTablet ? 14 : 10,
+                          backgroundColor: Colors.white10,
+                          valueColor: const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: isTablet ? 18 : 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: isTablet ? 18 : 14),
                         ),
                       ],
                     ),
@@ -125,84 +173,40 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
             ),
 
             Align(
-              alignment: Alignment.center,
-              child: Container(
-                width: size.width * (isTablet ? 0.8 : 0.88),
-                padding: EdgeInsets.all(isTablet ? 20 : 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E2148).withOpacity(0.55),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: titleFs,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            children: [
-                              TextSpan(text: '${question.a}', style: const TextStyle(color: Color(0xFF9AE6FF))),
-                              const TextSpan(text: '  -  ', style: TextStyle(color: Colors.white)),
-                              TextSpan(text: '${question.b}', style: const TextStyle(color: Color(0xFFFF84B8))),
-                              const TextSpan(text: '  =  ?', style: TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              alignment: const Alignment(0, -0.45),
+              child: OperationPanel(
+                a: question.a,
+                b: question.b,
+                qmPulse: CurvedAnimation(parent: _qmPulseCtrl!, curve: Curves.easeInOut),
+                reward: _rewardCtrl!,
+                isTablet: isTablet,
+                pulseHint: pulseHint,
               ),
             ),
 
             Positioned(
-              right: 12, top: 0, bottom: 0,
-              child: SafeArea(
-                child: LayoutBuilder(
-                  builder: (_, cons) {
-                    final colH = cons.maxHeight;
-                    final btnH = isTablet ? 88.0 : (colH < 260 ? 56.0 : 70.0);
-                    final btnW = isTablet ? 130.0 : (colH < 260 ? 96.0 : 110.0);
-                    final spacing = isTablet ? 16.0 : (colH < 260 ? 8.0 : 14.0);
-                    final fs = isTablet ? 28.0 : (colH < 260 ? 20.0 : 24.0);
-
-                    return Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.22),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.05)),
+              left: 12, right: 12, bottom: bottomPad,
+              child: SizedBox(
+                height: panelH,
+                child: Row(
+                  children: [
+                    for (int i = 0; i < question.options.length; i++) ...[
+                      Expanded(
+                        child: MonsterChoice(
+                          label: '${question.options[i]}',
+                          palette: _paletteFor(i),
+                          shaking: shakeIndex == i,
+                          popping:  popIndex == i,
+                          glowing:  popIndex == i,
+                          phase: i * 0.9,
+                          onTap: lockingUi ? null : () => _onPickAt(i),
+                          fontSize: isTablet ? 22.0 : 18.0,
+                          height: panelH,
+                        ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (int idx = 0; idx < question.options.length; idx++) ...[
-                            SizedBox(
-                              width: btnW,
-                              height: btnH,
-                              child: ElevatedButton(
-                                onPressed: lockingUi ? null : () => _onPick(question.options[idx]),
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: Text('${question.options[idx]}', style: TextStyle(fontSize: fs)),
-                              ),
-                            ),
-                            if (idx != question.options.length - 1) SizedBox(height: spacing),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
+                      if (i != question.options.length - 1) SizedBox(width: gap),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -211,29 +215,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage> {
       ),
     );
   }
-}
 
-class _SubtractionQuestion {
-  final int a, b, answer;
-  final List<int> options;
-  _SubtractionQuestion(this.a, this.b, this.answer, this.options);
-
-  static _SubtractionQuestion generate(Random rnd, int maxA, int maxB) {
-    int a = rnd.nextInt(maxA + 1);
-    int b = rnd.nextInt(maxB + 1);
-    if (b > a) { final t = a; a = b; b = t; }
-    final ans = a - b;
-
-    final set = <int>{ans};
-    final span = max(3, (ans.abs() * 0.15).round());
-    int jitter() => rnd.nextInt(span * 2 + 1) - span;
-    while (set.length < 3) {
-      final d = ans + jitter();
-      if (d >= 0) set.add(d);
+  List<Color> _paletteFor(int i) {
+    switch (i % 3) {
+      case 0: return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
+      case 1: return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
+      default: return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
     }
-    final opts = set.toList()..shuffle(rnd);
-    return _SubtractionQuestion(a, b, ans, opts);
   }
 }
-
-
