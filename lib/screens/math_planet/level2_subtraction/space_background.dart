@@ -98,9 +98,8 @@ class _StarField extends StatelessWidget {
             ),
           );
         });
-        return Stack(children: stars);
+        return SizedBox.expand(child: Stack(children: stars));
       },
     );
   }
 }
-
