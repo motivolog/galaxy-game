@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'level1_addition/addition_difficulty.dart';
+
 import 'level5_quiz/level5_meteor_quiz_page.dart';
+import 'level2_subtraction/subtraction_difficulty.dart';
 
 
 class LevelSelectMathScreen extends StatelessWidget {
@@ -57,8 +59,14 @@ class LevelSelectMathScreen extends StatelessWidget {
                     );
                     break;
 
-
-
+                  case 2:
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SubtractionDifficultyPage(),
+                      ),
+                    );
+                    break;
 
                   case 5: // Meteor Quiz
                     Navigator.push(
@@ -66,8 +74,6 @@ class LevelSelectMathScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (_) =>  Level5MeteorQuizPage()),
                     );
                     break;
-
-
                 }
               },
 
