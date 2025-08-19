@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'level1_addition/addition_difficulty.dart';
-
-import 'level5_quiz/level5_meteor_quiz_page.dart';
 import 'level2_subtraction/subtraction_difficulty.dart';
+import 'level3_multiplication/multiplication_difficulty.dart';
+import 'level3_multiplication/multiplication_question_generator.dart' show Difficulty;
+import 'level5_quiz/level5_meteor_quiz_page.dart';
+
 
 
 class LevelSelectMathScreen extends StatelessWidget {
@@ -67,6 +69,14 @@ class LevelSelectMathScreen extends StatelessWidget {
                       ),
                     );
                     break;
+
+                  case 3:
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MultiplicationDifficultyPage()),
+                    );
+                    break;
+
 
                   case 5: // Meteor Quiz
                     Navigator.push(
