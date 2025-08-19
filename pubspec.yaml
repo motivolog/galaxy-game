@@ -303,6 +303,14 @@ flutter:
     - assets/images/planet3/ship.png
     - assets/images/planet3/space.png
     - assets/images/planet3/star.png
+    - assets/images/planet3/enemy1.png
+    - assets/images/planet3/enemy2.png
+    - assets/images/planet3/enemy3.png
+    - assets/images/planet3/enemy4.png
+    - assets/images/planet3/enemy5.png
+    - assets/animations/astronaut_plnt3.json
+    - assets/images/planet3/math_back.png
+    - assets/images/planet3/plnt3_back.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
