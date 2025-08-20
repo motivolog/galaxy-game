@@ -45,30 +45,37 @@ class _AlienLottieState extends State<AlienLottie>
     super.dispose();
   }
 
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final start = size.width * .05;
-    final end   = size.width * .80;
+    final isTablet = _isTablet(context);
+    final double spriteSize = isTablet ? 290 : 140;
+    final double bottom     = isTablet ? 90  : 55;
+    final double start      = size.width * (isTablet ? .04 : .05);
+    final double end        = size.width * .80;
+
     final progress = widget.progressX.clamp(0.0, 1.0);
     final xBase = start + (end - start) * progress;
 
     return AnimatedBuilder(
       animation: _t,
       builder: (context, child) {
-        final amp = 10.0 * (1 - _t.value);
+        final amp = (spriteSize * 0.07) * (1 - _t.value);
         final dx  = math.sin(_t.value * math.pi * 8) * amp;
         final rot = math.sin(_t.value * math.pi * 8) * (1 - _t.value) * 0.03;
 
         return Positioned(
           left: xBase + dx,
-          bottom: 55,
+          bottom: bottom,
           child: Transform.rotate(
             angle: rot,
-            child: const SizedBox(
-              width: 140,
-              height: 140,
-              child: _AlienSprite(),
+            child: SizedBox(
+              width: spriteSize,
+              height: spriteSize,
+              child: const _AlienSprite(),
             ),
           ),
         );
@@ -85,6 +92,7 @@ class _AlienSprite extends StatelessWidget {
     return Lottie.asset('assets/animations/division_monster.json');
   }
 }
+
 class DoorView extends StatelessWidget {
   const DoorView({
     super.key,
@@ -101,13 +109,25 @@ class DoorView extends StatelessWidget {
   final bool disabled;
   final double width;
   final double height;
+
   final String imageAsset;
+
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
 
   @override
   Widget build(BuildContext context) {
-    final Radius r = const Radius.circular(18);
+    final bool isTablet = _isTablet(context);
+    final double scale = isTablet ? 1.0 : 1.0;
+
+    final double effWidth  = width  * scale;
+    final double effHeight = height * scale;
+
+    final Radius r = Radius.circular(18 * scale);
     final BorderRadius radius = BorderRadius.all(r);
-    final double fontSize = (height * 0.28).clamp(18.0, 40.0).toDouble();
+    final double fontSize = (effHeight * 0.28)
+        .clamp(18.0, isTablet ? 56.0 : 40.0)
+        .toDouble();
 
     Widget body = ClipRRect(
       borderRadius: radius,
@@ -115,13 +135,13 @@ class DoorView extends StatelessWidget {
         children: [
           Image.asset(
             imageAsset,
-            width: width,
-            height: height,
+            width: effWidth,
+            height: effHeight,
             fit: BoxFit.cover,
           ),
           Container(
-            width: width,
-            height: height,
+            width: effWidth,
+            height: effHeight,
             color: Colors.black.withOpacity(disabled ? 0.20 : 0.08),
           ),
         ],
@@ -131,8 +151,8 @@ class DoorView extends StatelessWidget {
     return Opacity(
       opacity: disabled ? 0.7 : 1,
       child: SizedBox(
-        width: width,
-        height: height,
+        width: effWidth,
+        height: effHeight,
         child: Material(
           color: Colors.transparent,
           child: InkWell(

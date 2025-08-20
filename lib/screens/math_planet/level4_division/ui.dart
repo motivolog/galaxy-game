@@ -22,16 +22,31 @@ class DivisionHud extends StatelessWidget {
   final bool showProgress;
   final bool prominent;
 
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isTablet = _isTablet(context);
     final double qFont = compact
-        ? (size.shortestSide * 0.065).clamp(22.0, 40.0).toDouble()
+        ? (size.shortestSide * (isTablet ? 0.075 : 0.065)).clamp(22.0, isTablet ? 56.0 : 40.0).toDouble()
         : prominent
-        ? (size.shortestSide * 0.075).clamp(28.0, 52.0).toDouble()
-        : 28.0;
-    final double maxW = compact ? size.width * 0.45 : size.width * 0.85;
-    final double maxWClamped = compact ? maxW.clamp(220.0, 380.0) : maxW;
+        ? (size.shortestSide * (isTablet ? 0.085 : 0.075)).clamp(28.0, isTablet ? 64.0 : 52.0).toDouble()
+        : (isTablet ? 34.0 : 28.0);
+
+    // Kapsül genişlik/padding ayarları
+    final double maxW = compact
+        ? size.width * (isTablet ? 0.55 : 0.45)
+        : size.width * (isTablet ? 0.70 : 0.85);
+    final double maxWClamped = compact
+        ? maxW.clamp(240.0, isTablet ? 520.0 : 380.0)
+        : maxW;
+
+    final double padH = compact ? (isTablet ? 20 : 16) : (isTablet ? 26 : 22);
+    final double padV = compact ? (isTablet ? 10 : 8) : (isTablet ? 14 : 10);
+    final double borderW = isTablet ? 1.2 : 1.0;
+    final double shadowBlur = isTablet ? 14 : 12;
 
     Widget title = Text(
       questionText,
@@ -50,16 +65,13 @@ class DivisionHud extends StatelessWidget {
       title = ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWClamped),
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 16 : 22,
-            vertical: compact ? 8 : 10,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.35),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
+            border: Border.all(color: Colors.white.withOpacity(0.25), width: borderW),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 12, offset: const Offset(0, 6)),
+              BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: shadowBlur, offset: const Offset(0, 6)),
             ],
           ),
           child: Column(
@@ -67,18 +79,25 @@ class DivisionHud extends StatelessWidget {
             children: [
               title,
               if (showProgress) ...[
-                const SizedBox(height: 6),
+                SizedBox(height: isTablet ? 8 : 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: progress,
-                    minHeight: compact ? 6 : 8, // mini bar
+                    minHeight: compact ? (isTablet ? 8 : 6) : (isTablet ? 10 : 8),
                     backgroundColor: Colors.white12,
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF4FA6)), // pembe
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF4FA6)),
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(stepLabel, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(
+                  stepLabel,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: isTablet ? 14 : 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ],
           ),
@@ -89,6 +108,7 @@ class DivisionHud extends StatelessWidget {
     return title;
   }
 }
+
 class DoorsOverlay extends StatelessWidget {
   const DoorsOverlay({
     super.key,
@@ -98,6 +118,9 @@ class DoorsOverlay extends StatelessWidget {
 
   final DivisionGame game;
   final double gap;
+
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +133,8 @@ class DoorsOverlay extends StatelessWidget {
       'assets/images/planet3/door3.png',
     ];
 
+    final isTablet = _isTablet(context);
+
     return Align(
       alignment: Alignment.centerRight,
       child: SafeArea(
@@ -118,14 +143,19 @@ class DoorsOverlay extends StatelessWidget {
           builder: (context, constraints) {
             final availH = constraints.maxHeight;
             final doorCount = q.options.length;
-            final spacing = gap;
+            final spacing = isTablet ? gap + 2 : gap;
+            double idealDoorH =
+            doorCount > 0 ? ((availH - spacing * (doorCount - 1)) / doorCount) : 0.0;
+            final maxDoorH = isTablet ? 200.0 : 160.0;
+            final minDoorH = 80.0;
 
-            double doorH = doorCount > 0
-                ? ((availH - spacing * (doorCount - 1)) / doorCount).floorToDouble()
-                : 0.0;
-            doorH = doorH.clamp(80.0, 180.0);
+            double doorH = idealDoorH.clamp(minDoorH, maxDoorH);
+            double contentH = doorCount * doorH + (doorCount - 1) * spacing;
+            if (contentH > availH) {
+              doorH = ((availH - spacing * (doorCount - 1)) / doorCount).clamp(minDoorH, maxDoorH);
+              contentH = doorCount * doorH + (doorCount - 1) * spacing;
+            }
 
-            final contentH = doorCount * doorH + (doorCount - 1) * spacing;
             final doorW = doorH * 0.62;
 
             return SizedBox(
@@ -134,7 +164,7 @@ class DoorsOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(doorCount, (i) {
-                  final opt   = q.options[i];
+                  final opt = q.options[i];
                   final asset = doorAssets[i % doorAssets.length];
 
                   final door = DoorView(
@@ -160,6 +190,7 @@ class DoorsOverlay extends StatelessWidget {
     );
   }
 }
+
 class TopRightMiniProgressBar extends StatelessWidget {
   const TopRightMiniProgressBar({
     super.key,
@@ -172,10 +203,18 @@ class TopRightMiniProgressBar extends StatelessWidget {
   final String stepLabel;
   final double width;
 
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.shortestSide >= 600;
+
   @override
   Widget build(BuildContext context) {
+    final isTablet = _isTablet(context);
+    final barWidth = isTablet ? (width * 1.5) : (width * 1.2);
+    final minH = isTablet ? 20.0 : 10.0;
+    final stepFont = isTablet ? 18.0 : 12.0;
+
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: width),
+      constraints: BoxConstraints(maxWidth: barWidth),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -184,13 +223,16 @@ class TopRightMiniProgressBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 8,
+              minHeight: minH,
               backgroundColor: Colors.white12,
               valueColor: const AlwaysStoppedAnimation(Color(0xFFFF4FA6)),
             ),
           ),
           const SizedBox(height: 4),
-          Text(stepLabel, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            stepLabel,
+            style: TextStyle(color: Colors.white70, fontSize: stepFont),
+          ),
         ],
       ),
     );

@@ -15,6 +15,12 @@ class DivisionPage extends StatefulWidget {
 class _DivisionPageState extends State<DivisionPage> {
   late DivisionGame game;
 
+  bool get isTablet {
+    final mq = MediaQuery.maybeOf(context);
+    if (mq == null) return false;
+    return mq.size.shortestSide >= 600;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,13 +30,14 @@ class _DivisionPageState extends State<DivisionPage> {
       onFinished: _onFinished,
     );
   }
+
   void _onFinished() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: const Text('Tebrikler!'),
-        content: const Text('Uzay canavarı kapıdan kaçtı 🚀'),
+        content: const Text('Uzay canavarı kapıdan kaçtı '),
         actions: [
           TextButton(
             onPressed: () {
@@ -48,11 +55,17 @@ class _DivisionPageState extends State<DivisionPage> {
   Widget build(BuildContext context) {
     final qText = game.current?.text ?? '';
 
+    final double rightPad = isTablet ? 160 : 120;
+    final double backSize = isTablet ? 64 : 44;
+    final double backIcon = isTablet ? 30 : 24;
+    final double backPad = isTablet ? 16 : 12;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1D),
       body: SafeArea(
         child: Stack(
           children: [
+
             Positioned.fill(
               child: Image.asset(
                 'assets/images/planet3/dvsn_bg.png',
@@ -79,13 +92,14 @@ class _DivisionPageState extends State<DivisionPage> {
                 ),
               ),
             ),
+
             Positioned.fill(
               child: IgnorePointer(
                 child: SafeArea(
                   child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 120),
+                      padding: EdgeInsets.only(top: 8, right: rightPad),
                       child: TopRightMiniProgressBar(
                         progress: game.progress,
                         stepLabel: '${game.correctCount} / ${game.totalQuestions}',
@@ -96,9 +110,49 @@ class _DivisionPageState extends State<DivisionPage> {
                 ),
               ),
             ),
+
+            // Kapılar
             DoorsOverlay(
               game: game,
               gap: 2.0,
+            ),
+            Positioned(
+              top: backPad,
+              left: backPad,
+              child: SafeArea(
+                child: Semantics(
+                  label: 'Geri',
+                  button: true,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: backSize,
+                        height: backSize,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC160A0),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: isTablet ? 10 : 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: backIcon,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
