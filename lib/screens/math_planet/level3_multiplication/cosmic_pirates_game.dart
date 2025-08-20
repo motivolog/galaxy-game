@@ -11,13 +11,13 @@ class Monster extends SpriteComponent {
     required Vector2 start,
     required this.speed,
     required Sprite sprite,
+    required double worldScale,
   }) : super(
     sprite: sprite,
     position: start,
-    size: Vector2(80, 80),
+    size: Vector2(80, 80) * worldScale,
     anchor: Anchor.center,
   );
-
   final double speed;
 
   @override
@@ -28,18 +28,24 @@ class Monster extends SpriteComponent {
 
   bool get isOutOfScreen => x + width < -16;
 }
+
 class PiratesMultiplyGame extends FlameGame {
   PiratesMultiplyGame({
     required this.targetCorrect,
     required this.difficulty,
     required this.onUiRefresh,
     required this.onFinished,
-  });
+    double? worldScale,
+    this.scaleSpeedWithWorld = false,
+  }) : worldScaleOverride = worldScale;
 
   final int targetCorrect;
   final Difficulty difficulty;
   final VoidCallback onUiRefresh;
   final VoidCallback onFinished;
+  final double? worldScaleOverride;
+  late double worldScale;
+  final bool scaleSpeedWithWorld;
 
   QuizState state = QuizState.presenting;
   int correctCount = 0;
@@ -49,12 +55,12 @@ class PiratesMultiplyGame extends FlameGame {
 
   late List<Sprite> monsterSprites;
   late RectangleComponent playerAnchor;
+
   Monster? monster;
 
   @override
   Color backgroundColor() => Colors.transparent;
-
-  double get monsterSpeed {
+  double get _baseMonsterSpeed {
     switch (difficulty) {
       case Difficulty.easy:
         return 55;
@@ -65,9 +71,28 @@ class PiratesMultiplyGame extends FlameGame {
     }
   }
 
+  double get monsterSpeed =>
+      scaleSpeedWithWorld ? _baseMonsterSpeed * worldScale : _baseMonsterSpeed;
+  double _autoScale() {
+    final shortest = math.min(size.x, size.y); // DOĞRU
+
+    final bool isTablet = shortest >= 600;
+    if (isTablet) return 1.70;
+
+    // Telefon kademeleri
+    if (shortest < 360) return 1.10;  // çok küçük telefon
+    if (shortest < 390) return 1.18;  // küçük
+    if (shortest < 430) return 1.24;  // orta (çoğu telefon)
+    return 1.28;                      // büyük telefon
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Ölçek: varsa UI’dan geleni kullan, yoksa otomatik hesapla
+    worldScale = worldScaleOverride ?? _autoScale();
+
     monsterSprites = [
       await Sprite.load('planet3/enemy1.png'),
       await Sprite.load('planet3/enemy2.png'),
@@ -76,10 +101,13 @@ class PiratesMultiplyGame extends FlameGame {
       await Sprite.load('planet3/enemy5.png'),
     ];
 
+    // Oyun hattı (y ekseni)
     final laneY = size.y * 0.58;
+
+    // Astronot referans komponenti — BOYUT ve POZİSYON ölçekli
     playerAnchor = RectangleComponent(
-      position: Vector2(24, laneY - 28),
-      size: Vector2(56, 56),
+      position: Vector2(24 * worldScale, laneY - 28 * worldScale),
+      size: Vector2(56, 56) * worldScale, // telefon orta, tablette daha büyük
       paint: Paint()..color = const Color(0x00000000),
       anchor: Anchor.topLeft,
     );
@@ -120,9 +148,10 @@ class PiratesMultiplyGame extends FlameGame {
     final sprite = monsterSprites[math.Random().nextInt(monsterSprites.length)];
 
     monster = Monster(
-      start: Vector2(size.x + 80, laneY - 6),
+      start: Vector2(size.x + 80 * worldScale, laneY - 6 * worldScale),
       speed: monsterSpeed,
       sprite: sprite,
+      worldScale: worldScale,
     );
     add(monster!);
   }
@@ -138,11 +167,12 @@ class PiratesMultiplyGame extends FlameGame {
       lives = (lives - 1).clamp(0, 3);
 
       final x = playerAnchor.x;
+      final double shake = 6 * worldScale; // titreşim şiddeti ölçekli
       playerAnchor.add(
         SequenceEffect([
-          MoveToEffect(Vector2(x + 6, playerAnchor.y),
+          MoveToEffect(Vector2(x + shake, playerAnchor.y),
               EffectController(duration: 0.05)),
-          MoveToEffect(Vector2(x - 6, playerAnchor.y),
+          MoveToEffect(Vector2(x - shake, playerAnchor.y),
               EffectController(duration: 0.05)),
           MoveToEffect(Vector2(x, playerAnchor.y),
               EffectController(duration: 0.05)),
@@ -169,16 +199,17 @@ class PiratesMultiplyGame extends FlameGame {
       final dy = to.y - from.y;
       final len = math.sqrt(dx * dx + dy * dy);
 
+      final double beamThickness = 2 * worldScale; // lazer kalınlığı ölçekli
       final beam = RectangleComponent(
         position: from,
-        size: Vector2(2, 2),
+        size: Vector2(beamThickness, beamThickness),
         paint: Paint()..color = const Color(0xFF80DEEA),
         anchor: Anchor.centerLeft,
       )..angle = math.atan2(dy, dx);
       add(beam);
 
       beam.add(SequenceEffect([
-        SizeEffect.to(Vector2(len, 2),
+        SizeEffect.to(Vector2(len, beamThickness),
             EffectController(duration: 0.12, curve: Curves.easeOut)),
         OpacityEffect.to(0, EffectController(duration: 0.12)),
         RemoveEffect(),

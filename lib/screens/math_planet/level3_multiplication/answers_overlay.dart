@@ -4,20 +4,43 @@ import 'multiplication_question_generator.dart';
 import 'cosmic_pirates_game.dart';
 
 class AnswersOverlay extends StatelessWidget {
-  const AnswersOverlay({super.key, required this.game});
+  const AnswersOverlay({
+    super.key,
+    required this.game,
+    this.uiScale,
+  });
+
   final PiratesMultiplyGame game;
+  final double? uiScale;
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final shortest = media.size.shortestSide;
+    final bool isTablet = shortest >= 600;
+    final double autoPhoneScale = () {
+      if (shortest < 360) return 1.08;
+      if (shortest < 390) return 1.16;
+      if (shortest < 430) return 1.22;
+      return 1.28;
+    }();
+
+    final double s = uiScale ?? (isTablet ? 1.70 : autoPhoneScale);
+
     final q = game.currentQuestion;
     final disabled = game.state != QuizState.presenting || q == null;
     final options = q?.options ?? const <int>[];
+    final visibleOptions = options.take(3).toList();
+
+    final double padH = 16 * s;
+    final double padV = 12 * s;
+    final double radiusLg = 18 * s;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -25,10 +48,11 @@ class AnswersOverlay extends StatelessWidget {
                 children: List.generate(3, (i) {
                   final filled = i < game.lives;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: EdgeInsets.only(right: 6 * s),
                     child: Icon(
                       filled ? Icons.favorite : Icons.favorite_border,
                       color: filled ? Colors.pinkAccent : Colors.white54,
+                      size: 22 * s,
                     ),
                   );
                 }),
@@ -39,15 +63,19 @@ class AnswersOverlay extends StatelessWidget {
                 final done = game.correctCount.clamp(0, total);
                 final ratio = done / total;
 
-                final screenW = MediaQuery.of(context).size.width;
-                final double barWidth = (screenW > 700) ? 240.0 : 180.0;
-                const double barHeight = 12.0;
+                final screenW = media.size.width;
+                final double baseW = isTablet
+                    ? (screenW > 1000 ? 320.0 : 260.0)
+                    : (screenW > 380 ? 200.0 : 180.0);
+
+                final double barWidth = baseW * (isTablet ? (0.95 + 0.1 * (s / 1.7)) : (0.95 + 0.08 * (s / 1.22)));
+                final double barHeight = 12.0 * s;
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6 * s, vertical: 4 * s),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12 * s),
                   ),
                   child: Stack(
                     alignment: Alignment.centerRight,
@@ -58,43 +86,36 @@ class AnswersOverlay extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0x22000000),
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFFFA726), width: 2),
+                          border: Border.all(color: const Color(0xFFFFA726), width: 2 * s),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          children: [
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                                width: barWidth * ratio,
-                                height: barHeight,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(999),
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                    colors: [
-                                      Color(0xFFFFA726),
-                                      Color(0xFFFFD180),
-                                    ],
-                                  ),
-                                ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            width: barWidth * ratio,
+                            height: barHeight,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              gradient: const LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [Color(0xFFFFA726), Color(0xFFFFD180)],
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(right: 6),
+                        padding: EdgeInsets.only(right: 6 * s),
                         child: Text(
                           "$done/$total",
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 12,
+                            fontSize: 12 * s,
                             fontWeight: FontWeight.w600,
-                            shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                            shadows: const [Shadow(blurRadius: 4, color: Colors.black54)],
                           ),
                         ),
                       ),
@@ -105,20 +126,19 @@ class AnswersOverlay extends StatelessWidget {
             ],
           ),
         ),
-
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: padH),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(radiusLg),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                constraints: const BoxConstraints(minHeight: 64),
+                padding: EdgeInsets.symmetric(vertical: 18 * s, horizontal: 20 * s),
+                constraints: BoxConstraints(minHeight: 64 * s),
                 decoration: BoxDecoration(
                   color: const Color(0xB30B0F1D),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+                  borderRadius: BorderRadius.circular(radiusLg),
+                  border: Border.all(color: Colors.white.withOpacity(0.12), width: 1 * s),
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -127,8 +147,8 @@ class AnswersOverlay extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      blurRadius: 16 * s,
+                      offset: Offset(0, 8 * s),
                     ),
                   ],
                 ),
@@ -138,12 +158,12 @@ class AnswersOverlay extends StatelessWidget {
                     child: Text(
                       q?.text ?? "",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
+                        fontSize: (isTablet ? 40 : 32) * s,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.8,
-                        shadows: [
+                        shadows: const [
                           Shadow(blurRadius: 6, color: Color(0x6600D1FF), offset: Offset(0, 1)),
                         ],
                       ),
@@ -156,20 +176,19 @@ class AnswersOverlay extends StatelessWidget {
         ),
 
         const Spacer(),
-
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+          padding: EdgeInsets.fromLTRB(12 * s, 6 * s, 12 * s, 12 * s),
           child: Row(
-            children: List.generate(options.length.clamp(0, 3), (i) {
-              final opt = options[i];
+            children: List.generate(visibleOptions.length, (i) {
+              final opt = visibleOptions[i];
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    left: i == 0 ? 4 : 8,
-                    right: i == (options.length.clamp(0, 3) - 1) ? 4 : 8,
+                    left: i == 0 ? 4 * s : 8 * s,
+                    right: i == (visibleOptions.length - 1) ? 4 * s : 8 * s,
                   ),
                   child: SizedBox(
-                    height: 48,
+                    height: (isTablet ? 55 : 45) * s,
                     child: ElevatedButton(
                       onPressed: disabled ? null : () => game.onAnswerSelected(opt),
                       style: ElevatedButton.styleFrom(
@@ -178,14 +197,17 @@ class AnswersOverlay extends StatelessWidget {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                          borderRadius: BorderRadius.circular(16 * s),
+                          side: BorderSide(color: Colors.white.withOpacity(0.08), width: 1 * s),
                         ),
                         padding: EdgeInsets.zero,
                       ),
                       child: Text(
                         "$opt",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: (isTablet ? 28 : 18) * s,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),

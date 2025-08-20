@@ -20,19 +20,26 @@ class MultiplicationLevelPage extends StatefulWidget {
 }
 
 class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
-  late final PiratesMultiplyGame game;
+  PiratesMultiplyGame? _game;
+  double? _lastWorldScale;
 
   static const String playerLottiePath = 'assets/animations/astronaut_plnt3.json';
 
-  @override
-  void initState() {
-    super.initState();
-    game = PiratesMultiplyGame(
+  PiratesMultiplyGame _buildGame(double worldScale) {
+    return PiratesMultiplyGame(
       targetCorrect: widget.targetCorrect,
       difficulty: widget.difficulty,
       onUiRefresh: () => setState(() {}),
       onFinished: _showFinishDialog,
+      worldScale: worldScale,
+      // scaleSpeedWithWorld: true,
     );
+  }
+  void _ensureGame(double worldScale) {
+    if (_game == null || _lastWorldScale != worldScale) {
+      _game = _buildGame(worldScale);
+      _lastWorldScale = worldScale;
+    }
   }
   void _showFinishDialog() {
     showDialog(
@@ -42,7 +49,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
         backgroundColor: const Color(0xFF0E1224),
         title: const Text('Bravo!', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Seviyeyi tamamladın: ${game.correctCount}/${game.targetCorrect}',
+          'Seviyeyi tamamladın: ${_game!.correctCount}/${_game!.targetCorrect}',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -57,12 +64,24 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
-    final screen = MediaQuery.of(context).size;
-    final laneY = screen.height * 0.58;
+    final size = MediaQuery.of(context).size;
+    final shortest = size.shortestSide;
+    final bool isTablet = shortest >= 600;
+    final double worldScale = isTablet ? 1.70 : (
+        shortest < 360 ? 1.10 :
+        shortest < 390 ? 1.18 :
+        shortest < 430 ? 1.24 :
+        1.28
+    );
+    _ensureGame(worldScale);
+    final double lottieSize = isTablet
+        ? (shortest * 0.38).clamp(96.0, 220.0)
+        : (shortest * 0.30).clamp(64.0, 150.0);
 
-    final lottieSize = (screen.shortestSide * 0.3).clamp(64.0, 140.0);
+    final double laneY = size.height * (isTablet ? 0.56 : 0.58);
 
     return Scaffold(
       body: Container(
@@ -75,7 +94,6 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
         child: SafeArea(
           child: Stack(
             children: [
-
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -89,18 +107,16 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                   ),
                 ),
               ),
-
               GameWidget(
-                game: game,
+                game: _game!,
                 overlayBuilderMap: {
-                  'hud': (ctx, _) => AnswersOverlay(game: game),
+                  'hud': (ctx, _) => AnswersOverlay(game: _game!, uiScale: worldScale),
                 },
                 initialActiveOverlays: const ['hud'],
               ),
-
               Positioned(
-                left: 24,
-                top: laneY - (lottieSize * 0.5),
+                left: 24 * worldScale,
+                top: laneY - (lottieSize * 0.55),
                 width: lottieSize,
                 height: lottieSize,
                 child: IgnorePointer(
@@ -111,7 +127,6 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                   ),
                 ),
               ),
-
             ],
           ),
         ),
