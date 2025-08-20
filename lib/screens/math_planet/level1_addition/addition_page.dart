@@ -114,10 +114,42 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const AlertDialog(
-        title: Text('Tebrikler!'),
-        content: Text('Toplama seviyesini tamamladın.'),
-      ),
+      builder: (dialogCtx) {
+        final size = MediaQuery.of(dialogCtx).size;
+        final isTablet = size.shortestSide >= 600;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text(
+            'Tebrikler!',
+            style: TextStyle(fontSize: isTablet ? 28 : 22, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Toplama seviyesini tamamladın.',
+            style: TextStyle(fontSize: isTablet ? 20 : 16),
+          ),
+          actionsPadding: EdgeInsets.only(
+            left: isTablet ? 24 : 16,
+            right: isTablet ? 24 : 16,
+            bottom: isTablet ? 20 : 12,
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, isTablet ? 60 : 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  'Seviye ekranına dön',
+                  style: TextStyle(fontSize: isTablet ? 20 : 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     if (!mounted) return;
@@ -129,7 +161,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     final size = MediaQuery.of(context).size;
     final shortest = size.shortestSide;
     final isTablet = shortest >= 600;
-    final titleFs = isTablet ? 44.0 : (size.width < 600 ? 32.0 : 36.0);
+    final titleFs = isTablet ? 56.0 : (size.width < 360 ? 30.0 : 38.0);
 
     return Scaffold(
       body: SafeArea(
@@ -172,7 +204,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
             Align(
               alignment: Alignment.center,
               child: Container(
-                width: size.width * (isTablet ? 0.8 : 0.88),
+                width: size.width * (isTablet ? 0.92 : 0.96),
                 padding: EdgeInsets.all(isTablet ? 20 : 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0E2148).withOpacity(0.55),
@@ -211,7 +243,9 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                             child: ObjectPanel(
                               count: q.a,
                               asset: _leftAsset,
-                              maxTargetSize: isTablet ? widget.objectSize * 1.2 : widget.objectSize,
+                              maxTargetSize: isTablet
+                                  ? widget.objectSize * 1.8
+                                  : widget.objectSize * 1.1,
                               semantic: 'Birinci sayı ${q.a}',
                               pulse: pulseHint,
                             ),
@@ -221,7 +255,9 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                             child: ObjectPanel(
                               count: q.b,
                               asset: _rightAsset,
-                              maxTargetSize: isTablet ? widget.objectSize * 1.2 : widget.objectSize,
+                              maxTargetSize: isTablet
+                                  ? widget.objectSize * 1.8
+                                  : widget.objectSize * 1.1,
                               semantic: 'İkinci sayı ${q.b}',
                               pulse: pulseHint,
                             ),
@@ -238,43 +274,49 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
             ),
 
             Positioned(
-              right: 12, top: 0, bottom: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: SafeArea(
+                minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
                 child: LayoutBuilder(
                   builder: (_, cons) {
-                    final colH = cons.maxHeight;
-                    final btnH = isTablet ? 88.0 : (colH < 260 ? 56.0 : 70.0);
-                    final btnW = isTablet ? 130.0 : (colH < 260 ? 96.0 : 110.0);
-                    final spacing = isTablet ? 16.0 : (colH < 260 ? 8.0 : 14.0);
-                    final fs = isTablet ? 28.0 : (colH < 260 ? 20.0 : 24.0);
+                    final btnH = isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
+                    final btnW = isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
+                    final spacing = isTablet ? 20.0 : 14.0;
+                    final fs = isTablet ? 32.0 : 24.0;
 
-                    return Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.22),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.05)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (int idx = 0; idx < q.options.length; idx++) ...[
-                            SizedBox(
-                              width: btnW,
-                              height: btnH,
-                              child: ElevatedButton(
-                                onPressed: lockingUi ? null : () => _onPick(q.options[idx]),
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: size.width),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.24),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.05)),
+                        ),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: spacing,
+                          runSpacing: 10,
+                          children: [
+                            for (int idx = 0; idx < q.options.length; idx++)
+                              SizedBox(
+                                width: btnW,
+                                height: btnH,
+                                child: ElevatedButton(
+                                  onPressed: lockingUi ? null : () => _onPick(q.options[idx]),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
+                                  child: Text('${q.options[idx]}', style: TextStyle(fontSize: fs)),
                                 ),
-                                child: Text('${q.options[idx]}', style: TextStyle(fontSize: fs)),
                               ),
-                            ),
-                            if (idx != q.options.length - 1) SizedBox(height: spacing),
                           ],
-                        ],
+                        ),
                       ),
                     );
                   },
