@@ -3,6 +3,8 @@ import 'level1_addition/addition_difficulty.dart';
 import 'level2_subtraction/subtraction_difficulty.dart';
 import 'level3_multiplication/multiplication_difficulty.dart';
 import 'level3_multiplication/multiplication_question_generator.dart' show Difficulty;
+import 'level4_division/division_difficulty.dart';
+
 import 'level5_quiz/level5_meteor_quiz_page.dart';
 
 
@@ -74,6 +76,13 @@ class LevelSelectMathScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const MultiplicationDifficultyPage()),
+                    );
+                    break;
+
+                  case 4: // Bölme
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DivisionDifficultyPage()),
                     );
                     break;
 

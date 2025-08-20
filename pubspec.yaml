@@ -311,7 +311,11 @@ flutter:
     - assets/animations/astronaut_plnt3.json
     - assets/images/planet3/math_back.png
     - assets/images/planet3/plnt3_back.png
-
+    - assets/animations/division_monster.json
+    - assets/images/planet3/dvsn_bg.png
+    - assets/images/planet3/door1.png
+    - assets/images/planet3/door2.png
+    - assets/images/planet3/door3.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
