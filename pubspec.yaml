@@ -152,7 +152,7 @@ flutter:
     - assets/images/planet_purple.png
     - assets/images/levelsec_back.png
 
-    - assets/images/planet1/eslestirme_gzgn.png
+    - assets/images/planet1/planet1.png
 
     # Çıkarma oyunu için canavar resmi
     - assets/images/secenek_alien.png
