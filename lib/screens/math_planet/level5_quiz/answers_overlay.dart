@@ -10,6 +10,10 @@ class AnswersOverlay extends StatelessWidget {
     final q = game.currentQuestion;
     final disabled = game.state != QuizState.presenting || q == null;
 
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final buttonSize = isTablet ? const Size(180, 80) : const Size(120, 56);
+    final fontSize = isTablet ? 26.0 : 20.0;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -23,16 +27,18 @@ class AnswersOverlay extends StatelessWidget {
                 (opt) => ElevatedButton(
               onPressed: disabled ? null : () => game.onAnswerSelected(opt),
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(120, 56),
+                minimumSize: buttonSize,
+                backgroundColor: Colors.greenAccent.shade100,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: Text(
                 opt.toString(),
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w700,
+                  color: Colors.black,
                 ),
               ),
             ),

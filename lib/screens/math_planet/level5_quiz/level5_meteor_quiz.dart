@@ -1,11 +1,11 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flame_lottie/flame_lottie.dart';
 import 'package:lottie/lottie.dart';
-
 
 enum QuizState { presenting, resolving, finished }
 class Question {
@@ -14,13 +14,13 @@ class Question {
   final List<int> options;
   Question(this.text, this.answer, this.options);
 }
-
 class Level5MeteorQuizGame extends FlameGame {
-  Level5MeteorQuizGame({required this.onFinished, required this.onUiRefresh});
-
+  Level5MeteorQuizGame({
+    required this.onFinished,
+    required this.onUiRefresh,
+  });
   final VoidCallback onFinished;
   final VoidCallback onUiRefresh;
-
 
   QuizState state = QuizState.presenting;
   final int totalQuestions = 10;
@@ -41,6 +41,8 @@ class Level5MeteorQuizGame extends FlameGame {
   final double _astronautX = 80;
   bool _isAttacking = false;
   bool _isSpawning = false;
+  bool get isTablet => math.min(size.x, size.y) >= 600;
+  double get uiScale => isTablet ? 1.6 : 1.0;
 
   Question? get currentQuestion =>
       (questions.isNotEmpty && currentIndex < questions.length)
@@ -51,15 +53,15 @@ class Level5MeteorQuizGame extends FlameGame {
   Future<void> onLoad() async {
     await super.onLoad();
 
-
     add(_Starfield(size)..priority = -10);
 
     final lottie = await loadLottie(
       Lottie.asset('assets/animations/astronot_math.json'),
     );
+
     final a = LottieComponent(
       lottie,
-      size: Vector2(160, 160),
+      size: Vector2(160 * uiScale, 160 * uiScale),
       position: Vector2(_astronautX, size.y * 0.65),
       repeating: true,
     )
@@ -90,8 +92,10 @@ class Level5MeteorQuizGame extends FlameGame {
       final clampedY =
       a.y.clamp(_idleTopY ?? a.y, _idleBottomY ?? a.y).toDouble();
       a.position = Vector2(_astronautX, clampedY);
+      a.size = Vector2(160 * uiScale, 160 * uiScale);
     }
   }
+
   void _startIdleFloat() {
     _stopIdleFloat();
     if (astronaut == null || _idleTopY == null) return;
@@ -143,7 +147,6 @@ class Level5MeteorQuizGame extends FlameGame {
     a.add(moveToMeteorY);
     await moveToMeteorY.completed;
 
-    // 2) hafif pulse
     final hitPulse = SequenceEffect([
       ScaleEffect.to(
         Vector2.all(1.08),
@@ -160,7 +163,7 @@ class Level5MeteorQuizGame extends FlameGame {
       a.position.clone() + Vector2(40, 0),
       m.position.clone(),
       color: Colors.green,
-      travelDuration: 0.22,       // hız: 0.10 hızlı, 0.30 daha yavaş
+      travelDuration: 0.22,
     );
 
     m.explodeThenRemove(onDone: () {});
@@ -180,7 +183,7 @@ class Level5MeteorQuizGame extends FlameGame {
       Vector2 from,
       Vector2 to, {
         Color color = Colors.green,
-        double travelDuration = 0.18,
+        double travelDuration = 0.12,
       }) async {
     final dir = to - from;
     final angle = math.atan2(dir.y, dir.x);
@@ -229,7 +232,9 @@ class Level5MeteorQuizGame extends FlameGame {
       EffectController(duration: travelDuration, curve: Curves.linear),
     ));
 
-    await Future.delayed(Duration(milliseconds: (travelDuration * 1000).round()));
+    await Future.delayed(
+      Duration(milliseconds: (travelDuration * 1000).round()),
+    );
 
     laser.add(OpacityEffect.to(
       0,
@@ -242,6 +247,7 @@ class Level5MeteorQuizGame extends FlameGame {
       onComplete: () => glow.removeFromParent(),
     ));
   }
+
   Future<void> onAnswerSelected(int val) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
 
@@ -290,6 +296,7 @@ class Level5MeteorQuizGame extends FlameGame {
     activeMeteor = Meteor(
       label: q.text,
       baseSpeed: baseMeteorSpeed,
+      uiScale: uiScale,
       onMissed: () {
         if (state != QuizState.finished) {
           state = QuizState.presenting;
@@ -363,18 +370,22 @@ class Meteor extends PositionComponent {
     required this.label,
     required this.baseSpeed,
     required this.onMissed,
+    required this.uiScale,
   });
 
   final String label;
   final double baseSpeed;
   final VoidCallback onMissed;
+  final double uiScale;
 
   double currentSpeed = 0;
   double _boostTimer = 0;
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(120, 64);
+    final w = 140.0 * uiScale;
+    final h = 80.0 * uiScale;
+    size = Vector2(w, h);
     currentSpeed = baseSpeed;
   }
 
@@ -393,23 +404,49 @@ class Meteor extends PositionComponent {
       onMissed();
     }
   }
-
   @override
   void render(Canvas canvas) {
-    final r = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.x, size.y),
-      const Radius.circular(18),
+    final shadowRect = Rect.fromLTWH(4, 6, size.x - 8, size.y - 8);
+    final shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.25)
+      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(shadowRect, Radius.circular(18 * uiScale)),
+      shadowPaint,
     );
-    canvas.drawRRect(r, Paint()..color = const Color(0xFFFFAB91));
+    final bgRect = Rect.fromLTWH(0, 0, size.x, size.y);
+    final bgPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFCDDC39),
+          Color(0xFF8BC34A),
+        ],
+      ).createShader(bgRect);
+    final rrect =
+    RRect.fromRectAndRadius(bgRect, Radius.circular(18 * uiScale));
+    canvas.drawRRect(rrect, bgPaint);
+
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xFF7A4A00).withOpacity(0.35),
+    );
 
     final tp = TextPaint(
-      style: const TextStyle(
+      style: TextStyle(
         color: Colors.black87,
-        fontSize: 18,
+        fontSize: 22 * uiScale,
         fontWeight: FontWeight.w700,
       ),
     );
-    tp.render(canvas, label, Vector2(10, size.y / 2 - 12));
+    final textPainter = tp.toTextPainter(label)..layout();
+    final dx = (size.x - textPainter.width) / 2;
+    final dy = (size.y - textPainter.height) / 2;
+    textPainter.paint(canvas, Offset(dx, dy));
   }
 
   void speedBoost({required double multiplier, required double duration}) {
@@ -422,7 +459,6 @@ class Meteor extends PositionComponent {
     onDone();
   }
 }
-
 
 class _Starfield extends Component {
   _Starfield(this.screenSize);
