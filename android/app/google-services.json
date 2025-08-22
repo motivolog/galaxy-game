@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "609448429265",
+    "project_id": "spaceedugame",
+    "storage_bucket": "spaceedugame.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:609448429265:android:6d60c40b9220ddca8967f0",
+        "android_client_info": {
+          "package_name": "com.example.flutter_projects"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChq5xJLOIevJiSm2NVyLAra6UAFjY_Xkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
