@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'home_screen.dart';
+import '../home/home_screen.dart';
+import '../../analytics_helper.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -26,9 +27,21 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
   bool showRocket = false;
   bool hideText = false;
 
+  // intro ekranı için tek seferlik süre bitirme koruması
+  bool _ended = false;
+  void _endIntroTimer({String? next}) {
+    if (_ended) return;
+    _ended = true;
+    ALog.endTimer('screen:intro', extra: { if (next != null) 'next': next });
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // ANALYTICS: ekran ve süre ölçümü
+    ALog.screen('intro');
+    ALog.startTimer('screen:intro');
 
     for (int i = 0; i < colorfulText.length + 1; i++) {
       _visible.add(false);
@@ -76,6 +89,8 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    // ANALYTICS: kullanıcı geri dönerse/uygulama kapanırsa süreyi bitir
+    _endIntroTimer();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -97,13 +112,18 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
           height: rocketSize,
           fit: BoxFit.contain,
           onLoaded: (composition) {
+            // Roket animasyonu bittiğinde Home'a geç
             Future.delayed(composition.duration, () {
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                );
-              }
+              if (!mounted) return;
+
+              // ANALYTICS: otomatik geçiş tıklaması gibi sayalım
+              ALog.tap('intro_to_home', place: 'rocket_auto');
+              _endIntroTimer(next: 'home');
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
             });
           },
         )

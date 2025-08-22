@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
+
 import '../../widgets/spinning_planet.dart';
 import '../../widgets/spinning_sound_planet.dart';
 import '../../widgets/spinning_math_planet.dart';
+
 import '../matchplanet/level_select_screen.dart';
 import '../math_planet/level_select_math.dart';
+import '../soundplanet/level_select_sound.dart';
 
-import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
+import '../../analytics_helper.dart'; // <-- ANALYTICS
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _audioPlayer = AudioPlayer();
     _playWelcomeAudio();
+
+    // ANALYTICS: Home ekranı görüntülendi + süre ölçümü
+    ALog.screen('home');
+    ALog.startTimer('screen:home');
   }
 
   Future<void> _playWelcomeAudio() async {
@@ -31,26 +38,61 @@ class _HomeScreenState extends State<HomeScreen> {
     await _audioPlayer.play(AssetSource('audio/hosgeldin.mp3'));
   }
 
+  // Örnek: geçişten önce kısa bir ses çalmak istersen
   Future<void> _playGezegenAudio() async {
     await _audioPlayer.stop();
-    await _audioPlayer.play(
-      AssetSource('audio/eslestirme_gezegeni.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'));
   }
 
   @override
   void dispose() {
+    // ANALYTICS: Home ekranında geçirilen süreyi bitir
+    ALog.endTimer('screen:home');
     super.dispose();
   }
 
-  Future<void> _navigateToLevelSelect() async {
-    _playGezegenAudio();
-    await Future.delayed(const Duration(seconds: 4));
+  Future<void> _goToMatchPlanet() async {
+    // ANALYTICS: Tıklama + gezegen açılışı
+    ALog.tap('open_match', place: 'home');
+    ALog.planetOpened('match');
 
+    _audioPlayer.stop();
+    await _playGezegenAudio();
     if (!mounted) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
+    );
+  }
+
+  Future<void> _goToSoundPlanet() async {
+    ALog.tap('open_sound', place: 'home');
+    ALog.planetOpened('sound');
+
+    _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource('audio/ses_gezegeni.mp3'));
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
+      ),
+    );
+  }
+
+  Future<void> _goToMathPlanet() async {
+    ALog.tap('open_math', place: 'home');
+    ALog.planetOpened('math');
+
+    _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource('audio/sesi.mp3'));
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LevelSelectMathScreen()),
     );
   }
 
@@ -73,46 +115,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(width: 30),
+
+                  // Eşleştirme gezegeni
                   GestureDetector(
-                    onTap: () async {
-                      _audioPlayer.stop();
-                      _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'));
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
-                      );
-                    },
+                    onTap: _goToMatchPlanet,
                     child: const SpinningPlanet(),
                   ),
+
                   const SizedBox(width: 50),
+
+                  // Ses gezegeni
                   GestureDetector(
-                    onTap: () async {
-                      _audioPlayer.stop();
-                      _audioPlayer.play(
-                        AssetSource('audio/ses_gezegeni.mp3'),
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
-                        ),
-                      );
-                    },
+                    onTap: _goToSoundPlanet,
                     child: const SpinningSoundPlanet(),
                   ),
-                  const SizedBox(width: 30),
-                  GestureDetector(
-                    onTap: () async {
-                      _audioPlayer.stop();
-                      _audioPlayer.play(
-                        AssetSource('audio/sesi.mp3'),
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LevelSelectMathScreen()),
-                      );
 
-                    },
+                  const SizedBox(width: 30),
+
+                  // Matematik gezegeni
+                  GestureDetector(
+                    onTap: _goToMathPlanet,
                     child: const SpinningMathPlanet(),
                   ),
                 ],
