@@ -15,8 +15,8 @@ class MatchGameCore extends StatefulWidget {
   final bool centerGrid;
   final int flipBackDelayMs;
   final double? cardSize;
+  final void Function(int score, int mistakes)? onGameCompleted;
   final Function()? onExit;
-
 
   const MatchGameCore({
     super.key,
@@ -31,8 +31,8 @@ class MatchGameCore extends StatefulWidget {
     this.centerGrid = false,
     this.flipBackDelayMs = 400,
     this.cardSize,
+    this.onGameCompleted,
     this.onExit,
-
   });
 
   @override
@@ -52,12 +52,15 @@ class _MatchGameCoreState extends State<MatchGameCore>
   final List<int> _selected = [];
   late final List<AnimationController> _slideCtrls;
 
+  int _mistakes = 0;
+  bool _completionFired = false;
+
   @override
   void initState() {
     super.initState();
     _cards = [...widget.cards, ...widget.cards]..shuffle(Random());
     _revealed = List.filled(_cards.length, false);
-    _matched = List.filled(_cards.length, false);
+    _matched  = List.filled(_cards.length, false);
     _slideCtrls = List.generate(
       _cards.length,
           (_) => AnimationController(
@@ -78,14 +81,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
   }
 
   void _toggleMute() {
-    setState(() {
-      _isMuted = !_isMuted;
-    });
-    if (_isMuted) {
-      _bgmPlayer.pause();
-    } else {
-      _bgmPlayer.resume();
-    }
+    setState(() => _isMuted = !_isMuted);
+    _isMuted ? _bgmPlayer.pause() : _bgmPlayer.resume();
   }
 
   @override
@@ -119,14 +116,13 @@ class _MatchGameCoreState extends State<MatchGameCore>
 
     await _fxPlayer.stop();
     await _namePlayer.stop();
-
     await _playName(_cards[idx]['sound']!);
 
     if (_selected.length == 2) {
       final i1 = _selected[0], i2 = _selected[1];
-      final match = _cards[i1]['image'] == _cards[i2]['image'];
+      final isMatch = _cards[i1]['image'] == _cards[i2]['image'];
 
-      if (match) {
+      if (isMatch) {
         _slideCtrls[i1].forward();
         _slideCtrls[i2].forward();
         setState(() {
@@ -145,6 +141,13 @@ class _MatchGameCoreState extends State<MatchGameCore>
 
           if (!mounted) return;
 
+          if (!_completionFired) {
+            _completionFired = true;
+            final int base = widget.pairCount * 100;
+            final int penalty = _mistakes * 10;
+            final int score = (base - penalty).clamp(0, base);
+            widget.onGameCompleted?.call(score, _mistakes);
+          }
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -161,10 +164,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final isPortrait =
-                            MediaQuery.of(context).orientation ==
-                                Orientation.portrait;
+                            MediaQuery.of(context).orientation == Orientation.portrait;
                         final maxHeight = constraints.maxHeight;
-
                         final animationSize = isPortrait
                             ? maxHeight * 0.75
                             : maxHeight * 0.90;
@@ -189,6 +190,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
           );
         }
       } else {
+        _mistakes += 1;
         _playFx(widget.failSound);
         await Future.delayed(Duration(milliseconds: widget.flipBackDelayMs));
         setState(() {
@@ -237,10 +239,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
         key: const ValueKey('front'),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset(imagePath, fit: BoxFit.cover),
         ),
       )
           : SizedBox.expand(
@@ -295,9 +294,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
             child: OrientationBuilder(
               builder: (context, ori) {
                 final portrait = ori == Orientation.portrait;
-                final cols = portrait
-                    ? widget.crossAxisCountPortrait
-                    : widget.crossAxisCountLandscape;
+                final cols =
+                portrait ? widget.crossAxisCountPortrait : widget.crossAxisCountLandscape;
                 final rows = (_cards.length / cols).ceil();
 
                 return LayoutBuilder(
@@ -314,10 +312,8 @@ class _MatchGameCoreState extends State<MatchGameCore>
                     final cellSize = min(cellWidth, cellHeight);
                     final effectiveSize = widget.cardSize ?? cellSize;
 
-
                     final gridW = effectiveSize * cols + totalHSpacing;
                     final gridH = effectiveSize * rows + totalVSpacing;
-
 
                     return Align(
                       alignment: widget.centerGrid ? Alignment.center : Alignment.centerLeft,
@@ -327,16 +323,14 @@ class _MatchGameCoreState extends State<MatchGameCore>
                         child: GridView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.zero,
-                          gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: cols,
                             crossAxisSpacing: spacing,
                             mainAxisSpacing: spacing,
                             childAspectRatio: 1.0,
                           ),
                           itemCount: _cards.length,
-                          itemBuilder: (ctx, idx) =>
-                              _buildCard(ctx, idx, portrait),
+                          itemBuilder: (ctx, idx) => _buildCard(ctx, idx, portrait),
                         ),
                       ),
                     );
@@ -355,9 +349,7 @@ class _MatchGameCoreState extends State<MatchGameCore>
                 radius: 22,
                 child: Text(
                   _isMuted ? '🔇' : '🎶',
-                  style: const TextStyle(
-                    fontSize: 30,
-                  ),
+                  style: const TextStyle(fontSize: 30),
                 ),
               ),
             ),

@@ -8,6 +8,7 @@ import 'match_level3.dart';
 import 'match_level4.dart';
 import 'match_level5.dart';
 import 'match_level6.dart';
+import '../../analytics_helper.dart';
 
 class LevelSelectScreen extends StatefulWidget {
   final AudioPlayer homePlayer;
@@ -18,14 +19,17 @@ class LevelSelectScreen extends StatefulWidget {
 }
 
 class _LevelSelectScreenState extends State<LevelSelectScreen> {
-  List<bool> _completed = [false, false, false, false, false,false];
-  List<bool> _unlocked = [true, false, false, false, false,false];
+  List<bool> _completed = [false, false, false, false, false, false];
+  List<bool> _unlocked = [true, false, false, false, false, false];
   final _player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     _loadProgress();
+
+    ALog.screen('match_level_select');
+    ALog.startTimer('screen:match_level_select');
   }
 
   Future<void> _loadProgress() async {
@@ -48,11 +52,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
 
   Future<void> _openLevel(int i) async {
     if (!_unlocked[i]) return;
+    final levelNumber = i + 1;
+    ALog.tap('match_select_level_$levelNumber', place: 'level_select');
 
     await widget.homePlayer.stop();
 
     bool? finished;
-
     switch (i) {
       case 0:
         finished = await Navigator.push<bool>(
@@ -104,6 +109,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
 
   @override
   void dispose() {
+    ALog.endTimer('screen:match_level_select');
     _player.dispose();
     widget.homePlayer.stop();
     super.dispose();
@@ -125,12 +131,13 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
           body: SafeArea(
             child: Stack(
               children: [
-
                 Positioned(
                   top: 20,
                   left: 10,
                   child: GestureDetector(
                     onTap: () {
+                      // ANALYTICS: Geri butonu tıklaması
+                      ALog.tap('match_level_select_back', place: 'top_left');
                       Navigator.pop(context);
                     },
                     child: Lottie.asset(
@@ -141,8 +148,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
                     ),
                   ),
                 ),
-
-
                 Center(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -183,15 +188,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
             Container(
               width: 250,
               height: 250,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(shape: BoxShape.circle),
               child: ClipOval(
                 child: ColorFiltered(
                   colorFilter: locked
                       ? const ColorFilter.mode(Colors.black54, BlendMode.darken)
-                      : const ColorFilter.mode(
-                      Colors.transparent, BlendMode.multiply),
+                      : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
                   child: Image.asset(
                     planetImages[i],
                     fit: BoxFit.contain,
