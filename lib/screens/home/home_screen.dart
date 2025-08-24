@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
-
 import '../../widgets/spinning_planet.dart';
 import '../../widgets/spinning_sound_planet.dart';
 import '../../widgets/spinning_math_planet.dart';
-
 import '../matchplanet/level_select_screen.dart';
 import '../math_planet/level_select_math.dart';
 import '../soundplanet/level_select_sound.dart';
-
-import '../../analytics_helper.dart'; // <-- ANALYTICS
+import '../../analytics_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await _audioPlayer.play(AssetSource('audio/hosgeldin.mp3'));
   }
 
-  // Örnek: geçişten önce kısa bir ses çalmak istersen
   Future<void> _playGezegenAudio() async {
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/eslestirme_gezegeni.mp3'));
@@ -87,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ALog.planetOpened('math');
 
     _audioPlayer.stop();
-    await _audioPlayer.play(AssetSource('audio/sesi.mp3'));
+    await _audioPlayer.play(AssetSource('audio/mathplanet/math_planet.mp3'));
     if (!mounted) return;
 
     Navigator.push(
@@ -115,8 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(width: 30),
-
-                  // Eşleştirme gezegeni
                   GestureDetector(
                     onTap: _goToMatchPlanet,
                     child: const SpinningPlanet(),
@@ -124,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(width: 50),
 
-                  // Ses gezegeni
                   GestureDetector(
                     onTap: _goToSoundPlanet,
                     child: const SpinningSoundPlanet(),
@@ -132,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(width: 30),
 
-                  // Matematik gezegeni
                   GestureDetector(
                     onTap: _goToMathPlanet,
                     child: const SpinningMathPlanet(),
