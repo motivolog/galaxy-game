@@ -16,7 +16,7 @@ class Level1 extends StatefulWidget {
 class _Level1State extends State<Level1> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final AudioPlayer _neyinSesiPlayer = AudioPlayer();
-  final AudioPlayer _congratsPlayer = AudioPlayer(); // 🎉 kutlama player'ı
+  final AudioPlayer _congratsPlayer = AudioPlayer();
 
   int _currentQuestionIndex = 0;
   bool _answered = false;
@@ -161,7 +161,7 @@ class _Level1State extends State<Level1> {
           child: Center(
             child: Lottie.asset(
               'assets/animations/alien_transition.json',
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.height * 0.8,
               repeat: true,
             ),
