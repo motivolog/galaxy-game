@@ -295,6 +295,7 @@ flutter:
     - assets/images/planet2/level3/flüt.png
 
       #Math planet
+    - assets/audio/mathplanet/math_planet.mp3
     - assets/images/planet3.png
     - assets/animations/astronot_math.json
     - assets/images/planet3/asteroid.png
