@@ -70,7 +70,7 @@ const List<Map<String, dynamic>> vehicleQuestions = [
     'sound': 'audio/vehicle/tram.mp3',
     'correct': 'assets/images/planet2/level2/tram.png',
     'correct_sound': 'audio/vehicle/correct_tram.mp3',
-    'hint': 'https://zelihausta.github.io/game-assets-sound/hint_car.mp3',
+    'hint': 'https://zelihausta.github.io/game-assets-sound/hint_tram.mp3',
     'options': [
       'assets/images/planet2/level2/car.png',
       'assets/images/planet2/level2/tractor.png',
@@ -81,7 +81,7 @@ const List<Map<String, dynamic>> vehicleQuestions = [
     'sound': 'audio/vehicle/police.mp3',
     'correct': 'assets/images/planet2/level2/policecar.png',
     'correct_sound': 'audio/vehicle/correct_policecar.mp3',
-    'hint': 'https://zelihausta.github.io/game-assets-sound/hint_policecar.mp3',
+    'hint': 'https://zelihausta.github.io/game-assets-sound/hint_police_car.mp3',
     'options': [
       'assets/images/planet2/level2/policecar.png',
       'assets/images/planet2/level2/airplane.png',
