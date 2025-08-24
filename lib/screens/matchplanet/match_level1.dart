@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import '../../../analytics_helper.dart';
 import 'matchgame_core.dart';
 
@@ -11,7 +10,6 @@ class MatchLevel1 extends StatefulWidget {
 }
 
 class _MatchLevel1State extends State<MatchLevel1> {
-  final FlutterTts _flutterTts = FlutterTts();
   final Stopwatch _gameSW = Stopwatch();
   bool _completed = false;
 
