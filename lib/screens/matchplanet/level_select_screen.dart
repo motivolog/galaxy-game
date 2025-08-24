@@ -136,7 +136,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
                   left: 10,
                   child: GestureDetector(
                     onTap: () {
-                      // ANALYTICS: Geri butonu tıklaması
                       ALog.tap('match_level_select_back', place: 'top_left');
                       Navigator.pop(context);
                     },
@@ -178,6 +177,21 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       'assets/images/planet_purple.png',
     ];
 
+    final List<double> scaleFactors = [
+      0.95,
+      1.0,
+      1.0,
+      1.1,
+      0.9,
+      1.1,
+    ];
+
+    final shortestSide = MediaQuery.of(context).size.shortestSide;
+    final bool isTablet = shortestSide >= 600;
+    final double planetSize = isTablet ? shortestSide * 0.45 : shortestSide * 0.50;
+    final double starSize = planetSize * 0.13;
+    final double lockSize = planetSize * 0.11;
+
     return GestureDetector(
       onTap: () => _openLevel(i),
       child: Padding(
@@ -186,32 +200,35 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
           alignment: Alignment.center,
           children: [
             Container(
-              width: 250,
-              height: 250,
+              width: planetSize,
+              height: planetSize,
               decoration: const BoxDecoration(shape: BoxShape.circle),
               child: ClipOval(
                 child: ColorFiltered(
                   colorFilter: locked
                       ? const ColorFilter.mode(Colors.black54, BlendMode.darken)
                       : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                  child: Image.asset(
-                    planetImages[i],
-                    fit: BoxFit.contain,
+                  child: Transform.scale(
+                    scale: scaleFactors[i],
+                    child: Image.asset(
+                      planetImages[i],
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
             ),
             if (done)
-              const Positioned(
+              Positioned(
                 top: 12,
                 right: 12,
-                child: Icon(Icons.star, color: Colors.amber, size: 32),
+                child: Icon(Icons.star, color: Colors.amber, size: starSize),
               ),
             if (locked)
-              const Positioned(
+              Positioned(
                 top: 12,
                 left: 12,
-                child: Icon(Icons.lock, color: Colors.white70, size: 28),
+                child: Icon(Icons.lock, color: Colors.white70, size: lockSize),
               ),
           ],
         ),
