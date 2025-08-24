@@ -3,8 +3,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
-import 'package:flutter_projects/screens/soundplanet/level_select_sound.dart';
-
 
 class Level1 extends StatefulWidget {
   const Level1({super.key});
@@ -14,169 +12,129 @@ class Level1 extends StatefulWidget {
 }
 
 class _Level1State extends State<Level1> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  final AudioPlayer _neyinSesiPlayer = AudioPlayer();
-  final AudioPlayer _congratsPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  final AudioPlayer _promptPlayer = AudioPlayer();
+  AudioPlayer? _congratsPlayer;
 
   int _currentQuestionIndex = 0;
   bool _answered = false;
-  bool _neyinSesiBekleniyor = false;
-  bool _showCelebration = false;
+  final Map<int, List<String>> _shuffledOptionsMap = {};
 
   @override
   void initState() {
     super.initState();
-    _prepareLevel();
+    _generateShuffledOptionsForIndex(_currentQuestionIndex);
+    _playCurrentSoundWithOptionalPrompt();
   }
-
-  Future<void> _prepareLevel() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    _playSoundWithPrompt();
+  void _generateShuffledOptionsForIndex(int index) {
+    if (_shuffledOptionsMap.containsKey(index)) return;
+    final rawOptions = (soundQuestions[index]['options'] as List).cast<String>();
+    final shuffled = List<String>.from(rawOptions)..shuffle();
+    _shuffledOptionsMap[index] = shuffled;
   }
-
-  Future<void> _playSoundWithPrompt() async {
-    await _audioPlayer.stop();
-    await _neyinSesiPlayer.stop();
-
-    await _audioPlayer.play(
-      UrlSource(soundQuestions[_currentQuestionIndex]['sound']),
-    );
+  Future<void> _playCurrentSoundWithOptionalPrompt() async {
+    await _promptPlayer.stop();
+    await _sfxPlayer.stop();
+    final soundUrl = soundQuestions[_currentQuestionIndex]['sound'] as String;
+    await _sfxPlayer.play(UrlSource(soundUrl));
 
     if (_currentQuestionIndex == 0) {
-      _neyinSesiBekleniyor = true;
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (_neyinSesiBekleniyor) {
-        await _neyinSesiPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted && _currentQuestionIndex == 0 && !_answered) {
+        await _promptPlayer.play(AssetSource('audio/neyin_sesi.mp3'));
       }
     }
   }
 
-  Future<void> _handleAnswer(String selectedImage) async {
+  Future<void> _checkAnswer(String selectedImagePath) async {
     if (_answered) return;
 
-    _neyinSesiBekleniyor = false;
-    await _neyinSesiPlayer.stop();
+    final q = soundQuestions[_currentQuestionIndex] as Map<String, dynamic>;
+    final correct = q['correct'] as String;
 
-    final question = soundQuestions[_currentQuestionIndex];
-    final correct = question['correct'];
+    await _promptPlayer.stop();
+    await _sfxPlayer.stop();
 
-    if (p.basename(selectedImage) == p.basename(correct)) {
-      await _audioPlayer.stop();
+    final isCorrect =
+        p.basename(selectedImagePath) == p.basename(correct);
 
+    if (isCorrect) {
       setState(() => _answered = true);
 
-      final correctSound = question['correct_sound'];
-      if (correctSound != null) {
-        await _audioPlayer.play(AssetSource(correctSound));
-        await _audioPlayer.onPlayerComplete.first;
+      final correctSfx = q['correct_sound'] as String?;
+      if (correctSfx != null && correctSfx.isNotEmpty) {
+        await _sfxPlayer.play(AssetSource(correctSfx));
+        await _sfxPlayer.onPlayerComplete.first;
       }
 
-      if (!mounted) return;
-      setState(() {
-        _currentQuestionIndex++;
-        _answered = false;
-      });
-
-      if (_currentQuestionIndex >= soundQuestions.length) {
+      final isLast = _currentQuestionIndex >= soundQuestions.length - 1;
+      if (!isLast) {
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (!mounted) return;
         setState(() {
-          _showCelebration = true;
+          _currentQuestionIndex++;
+          _answered = false;
         });
+        _generateShuffledOptionsForIndex(_currentQuestionIndex);
+        await _playCurrentSoundWithOptionalPrompt();
       } else {
-        Future.microtask(() => _playSoundWithPrompt());
+        await _showCongratulations();
+        if (mounted) Navigator.of(context).pop();
       }
     } else {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
-      await _audioPlayer.onPlayerComplete.first;
-      if (mounted) setState(() => _answered = false);
+      await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
+      await _sfxPlayer.onPlayerComplete.first;
     }
   }
 
-  Future<void> _playCelebrationAndExit() async {
-    await _congratsPlayer.setReleaseMode(ReleaseMode.stop);
-    await _congratsPlayer.play(AssetSource('audio/vehicle/sci-fi.mp3'));
-    await Future.delayed(const Duration(seconds: 4));
-    await _congratsPlayer.stop();
-    await _congratsPlayer.dispose();
+  Future<void> _showCongratulations() async {
+    _congratsPlayer = AudioPlayer();
+    await _congratsPlayer!.setReleaseMode(ReleaseMode.loop);
+    await _congratsPlayer!.play(AssetSource('audio/vehicle/sci-fi.mp3'));
 
-    if (mounted) {
-      Navigator.pop(context); // Oyun sonrası geri dönüş
-    }
-  }
-
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    _neyinSesiPlayer.dispose();
-    _congratsPlayer.dispose();
-    super.dispose();
-  }
-
-  Widget _buildImage(String imagePath, {required double size}) {
-    return GestureDetector(
-      onTap: () => _handleAnswer(imagePath),
-      child: Container(
-        width: size,
-        height: size,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(4, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Image.asset(imagePath, fit: BoxFit.contain),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_showCelebration) {
-      _congratsPlayer.setReleaseMode(ReleaseMode.loop);
-      _congratsPlayer.play(AssetSource('audio/vehicle/sci-fi.mp3'));
-
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: GestureDetector(
-          onTap: () {
-            _congratsPlayer.stop();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => LevelSelectSoundScreen(incomingPlayer: _congratsPlayer),
-              ),
-            );
-          },
-
+    await Navigator.of(context).push(PageRouteBuilder(
+      opaque: false,
+      barrierColor: Colors.transparent,
+      pageBuilder: (_, __, ___) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () async {
+          await _congratsPlayer?.stop();
+          await _congratsPlayer?.dispose();
+          _congratsPlayer = null;
+          Navigator.of(context).pop();
+        },
+        child: Container(
+          color: Colors.black,
+          width: double.infinity,
+          height: double.infinity,
           child: Center(
             child: Lottie.asset(
               'assets/animations/alien_transition.json',
               width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height * 0.8,
+              height: MediaQuery.of(context).size.height * 0.6,
+              fit: BoxFit.contain,
               repeat: true,
             ),
           ),
         ),
-      );
-    }
+      ),
+    ));
+  }
 
+  @override
+  void dispose() {
+    _sfxPlayer.dispose();
+    _promptPlayer.stop();
+    _promptPlayer.dispose();
+    _congratsPlayer?.stop();
+    _congratsPlayer?.dispose();
+    super.dispose();
+  }
 
-    final question = soundQuestions[_currentQuestionIndex];
-    final options = question['options'] as List;
-
-    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+  @override
+  Widget build(BuildContext context) {
+    final options = _shuffledOptionsMap[_currentQuestionIndex]!;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final cardSize = isPortrait ? shortestSide * 0.45 : shortestSide * 0.50;
 
     return Scaffold(
       body: SafeArea(
@@ -188,22 +146,28 @@ class _Level1State extends State<Level1> {
                 fit: BoxFit.cover,
               ),
             ),
+
             Center(
               child: OrientationBuilder(
                 builder: (context, orientation) {
-                  if (orientation == Orientation.portrait) {
+                  final isPortrait = orientation == Orientation.portrait;
+                  final cardSize = isPortrait
+                      ? shortestSide * 0.45
+                      : shortestSide * 0.50;
+
+                  if (isPortrait) {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildImage(options[0], size: cardSize),
-                            _buildImage(options[1], size: cardSize),
+                            _buildOption(options[0], cardSize),
+                            _buildOption(options[1], cardSize),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        _buildImage(options[2], size: cardSize),
+                        _buildOption(options[2], cardSize),
                         const SizedBox(height: 80),
                       ],
                     );
@@ -215,7 +179,7 @@ class _Level1State extends State<Level1> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: options
-                            .map<Widget>((img) => _buildImage(img, size: cardSize))
+                            .map<Widget>((img) => _buildOption(img, cardSize))
                             .toList(),
                       ),
                       const SizedBox(height: 80),
@@ -224,6 +188,7 @@ class _Level1State extends State<Level1> {
                 },
               ),
             ),
+
             Positioned(
               bottom: 24,
               left: 0,
@@ -234,12 +199,12 @@ class _Level1State extends State<Level1> {
                   const SizedBox(width: 20),
                   if (_currentQuestionIndex > 0)
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         setState(() {
                           _currentQuestionIndex--;
                           _answered = false;
                         });
-                        _playSoundWithPrompt();
+                        await _playCurrentSoundWithOptionalPrompt();
                       },
                       child: Image.asset(
                         'assets/images/planet2/back_arrow.png',
@@ -249,8 +214,9 @@ class _Level1State extends State<Level1> {
                     )
                   else
                     const SizedBox(width: 55),
+
                   GestureDetector(
-                    onTap: _playSoundWithPrompt,
+                    onTap: _playCurrentSoundWithOptionalPrompt,
                     child: Image.asset(
                       'assets/images/planet2/sound_button.png',
                       width: 60,
@@ -262,6 +228,36 @@ class _Level1State extends State<Level1> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOption(String imagePath, double size) {
+    return Semantics(
+      label: p.basenameWithoutExtension(imagePath),
+      button: true,
+      child: GestureDetector(
+        onTap: _answered ? null : () => _checkAnswer(imagePath),
+        child: Container(
+          width: size,
+          height: size,
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(4, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(imagePath, fit: BoxFit.contain),
+          ),
         ),
       ),
     );
