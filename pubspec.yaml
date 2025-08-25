@@ -296,6 +296,7 @@ flutter:
 
       #Math planet
     - assets/audio/mathplanet/math_planet.mp3
+    - assets/images/planet3/mathlevel_bg.png
     - assets/images/planet3.png
     - assets/animations/astronot_math.json
     - assets/images/planet3/asteroid.png
@@ -319,6 +320,12 @@ flutter:
     - assets/images/planet3/door1.png
     - assets/images/planet3/door2.png
     - assets/images/planet3/door3.png
+    - assets/audio/planet3/divide.mp3
+    - assets/audio/planet3/minus.mp3
+    - assets/audio/planet3/multiplication.mp3
+    - assets/audio/planet3/plus.mp3
+    - assets/audio/planet3/quiz.mp3
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
