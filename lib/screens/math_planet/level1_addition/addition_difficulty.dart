@@ -13,16 +13,26 @@ class AdditionDifficultyPage extends StatefulWidget {
 class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
   late final AudioPlayer _player;
   bool _busy = false;
+
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _playScreenIntro();
   }
 
   @override
   void dispose() {
     _player.dispose();
     super.dispose();
+  }
+  Future<void> _playScreenIntro() async {
+    try {
+      await _player.stop();
+      final completed = _player.onPlayerComplete.first;
+      await _player.play(AssetSource('audio/planet3/zorluksec.mp3'));
+      await completed.timeout(const Duration(seconds: 6));
+    } catch (_) {}
   }
 
   Future<void> _playCueAndWait(String cue) async {
@@ -87,6 +97,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
+            await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
             Navigator.pop(context);
@@ -142,7 +153,12 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         height: buttonHeight,
         child: ElevatedButton(
           style: ghostBtnStyle,
-          onPressed: _busy ? null : () async => onTap(),
+          onPressed: _busy
+              ? null
+              : () async {
+            await _player.stop();
+            await onTap();
+          },
           child: Text(
             label,
             style: TextStyle(
@@ -153,7 +169,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         ),
       );
     }
-
     return Scaffold(
       body: Stack(
         children: [
@@ -172,7 +187,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
               ),
             ),
           ),
-
           SafeArea(
             child: Center(
               child: Padding(
@@ -200,7 +214,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
-                      buildBtn("Kolay (Görselli)", () async {
+                      buildBtn("Kolay", () async {
                         await _sayThenGo('easy', () {
                           _start(
                             context,
@@ -220,7 +234,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                           );
                         });
                       }),
-
                       SizedBox(height: verticalGap),
                       buildBtn("Orta", () async {
                         await _sayThenGo('medium', () {
@@ -233,7 +246,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                           );
                         });
                       }),
-
                       SizedBox(height: verticalGap),
                       buildBtn("Zor", () async {
                         await _sayThenGo('hard', () {
