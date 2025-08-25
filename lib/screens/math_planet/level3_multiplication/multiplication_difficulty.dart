@@ -1,21 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import 'multiplication_page.dart';
 import 'multiplication_question_generator.dart';
 
-class MultiplicationDifficultyPage extends StatelessWidget {
+class MultiplicationDifficultyPage extends StatefulWidget {
   const MultiplicationDifficultyPage({super.key});
+
+  @override
+  State<MultiplicationDifficultyPage> createState() => _MultiplicationDifficultyPageState();
+}
+
+class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyPage> {
+  late final AudioPlayer _player;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _playScreenIntro();
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playScreenIntro() async {
+    try {
+      await _player.stop();
+      final completed = _player.onPlayerComplete.first;
+      await _player.play(AssetSource('audio/planet3/zorluksec.mp3'));
+      await completed.timeout(const Duration(seconds: 6));
+    } catch (_) {}
+  }
+
+  Future<void> _playCueAndWait(String cue) async {
+    final path = switch (cue) {
+      'easy' => 'audio/planet3/easy.mp3',
+      'medium' => 'audio/planet3/medium.mp3',
+      'hard' => 'audio/planet3/hard.mp3',
+      _ => null,
+    };
+    if (path == null) return;
+    try {
+      await _player.stop();
+      final completed = _player.onPlayerComplete.first;
+      await _player.play(AssetSource(path));
+      await completed.timeout(const Duration(seconds: 4));
+    } catch (_) {}
+  }
 
   void _start(
       BuildContext context, {
         required Difficulty difficulty,
-        int targetCorrect = 8,
+        int targetCorrect = 10,
       }) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => MultiplicationLevelPage(
-          targetCorrect: targetCorrect,
           difficulty: difficulty,
+          targetCorrect: targetCorrect,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sayThenGo(String cue, VoidCallback go) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    await _playCueAndWait(cue);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    go();
+  }
+
+  Widget _buildBackButton(BuildContext context, double scale) {
+    final double size = (44.0 * scale).clamp(44.0, 64.0);
+    final double iconSize = (24.0 * scale).clamp(24.0, 36.0);
+
+    return Semantics(
+      label: 'Geri',
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(size),
+          onTap: () async {
+            await _player.stop();
+            await SystemSound.play(SystemSoundType.click);
+            if (!mounted) return;
+            Navigator.pop(context);
+          },
+          child: Ink(
+            width: size, height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.15),
+              border: Border.all(color: Colors.white70, width: 2),
+            ),
+            child: Center(
+              child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: iconSize),
+            ),
+          ),
         ),
       ),
     );
@@ -24,10 +114,8 @@ class MultiplicationDifficultyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final size = media.size;
-    final shortest = size.shortestSide;
+    final shortest = media.size.shortestSide;
     final isTablet = shortest >= 600;
-
     final scale = isTablet ? 1.8 : 1.0;
     final titleSize = (22.0 * scale).clamp(22.0, 48.0);
     final buttonHeight = (56.0 * scale).clamp(56.0, 100.0);
@@ -38,103 +126,99 @@ class MultiplicationDifficultyPage extends StatelessWidget {
     final maxContentWidth = isTablet ? 800.0 : 420.0;
     final horizontalPadding = EdgeInsets.symmetric(horizontal: isTablet ? 32 : 20);
 
-    Widget btn(String label, IconData icon, VoidCallback onTap) => SizedBox(
-      width: double.infinity,
-      height: buttonHeight,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1E1F2B),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(radius)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: buttonTextSize + 2),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final ButtonStyle ghostBtnStyle = ElevatedButton.styleFrom(
+      backgroundColor: Colors.white.withOpacity(0.15),
+      foregroundColor: Colors.white,
+      side: const BorderSide(color: Colors.white70, width: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(radius)),
+      padding: EdgeInsets.zero,
+      elevation: 0,
     );
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0E1224), Color(0xFF0B0F1D)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    Widget buildBtn(String label, Future<void> Function() onTap) {
+      return SizedBox(
+        width: double.infinity,
+        height: buttonHeight,
+        child: ElevatedButton(
+          style: ghostBtnStyle,
+          onPressed: _busy
+              ? null
+              : () async {
+            await _player.stop();
+            await onTap();
+          },
+          child: Text(
+            label,
+            style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w600),
           ),
         ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Top-left bigger back arrow
-              Positioned(
-                left: 4,
-                top: 4,
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  iconSize: isTablet ? 36 : 30,
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
-                ),
+      );
+    }
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/planet3/bg_add.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: EdgeInsets.all(isTablet ? 20 : 12),
+                child: _buildBackButton(context, scale),
               ),
+            ),
+          ),
 
-              // Centered content
-              Center(
-                child: SingleChildScrollView(
-                  padding: horizontalPadding,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxContentWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: isTablet ? 72 : 56,
-                          child: Center(
-                            child: Text(
-                              'Çarpma Zorluğu',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: titleSize,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+          SafeArea(
+            child: Center(
+              child: Padding(
+                padding: horizontalPadding,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Çarpma - Zorluk Seviyesi",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: titleSize, fontWeight: FontWeight.w700,
+                          color: Colors.white, height: 1.2,
+                          shadows: const [
+                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
+                          ],
                         ),
-
-                        SizedBox(height: verticalGapLarge),
-
-                        btn('Kolay', Icons.auto_awesome,
-                                () => _start(context, difficulty: Difficulty.easy, targetCorrect: 10)),
-                        SizedBox(height: verticalGap),
-
-                        btn('Orta', Icons.psychology,
-                                () => _start(context, difficulty: Difficulty.medium, targetCorrect: 10)),
-                        SizedBox(height: verticalGap),
-
-                        btn('Zor', Icons.rocket_launch,
-                                () => _start(context, difficulty: Difficulty.hard, targetCorrect: 10)),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: verticalGapLarge),
+                      buildBtn("Kolay", () async {
+                        await _sayThenGo('easy', () {
+                          _start(context, difficulty: Difficulty.easy, targetCorrect: 10);
+                        });
+                      }),
+                      SizedBox(height: verticalGap),
+                      buildBtn("Orta", () async {
+                        await _sayThenGo('medium', () {
+                          _start(context, difficulty: Difficulty.medium, targetCorrect: 10);
+                        });
+                      }),
+                      SizedBox(height: verticalGap),
+                      buildBtn("Zor", () async {
+                        await _sayThenGo('hard', () {
+                          _start(context, difficulty: Difficulty.hard, targetCorrect: 10);
+                        });
+                      }),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
