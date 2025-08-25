@@ -44,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     // ANALYTICS: Home ekranında geçirilen süreyi bitir
     ALog.endTimer('screen:home');
+
+    _audioPlayer.stop();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -52,13 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
     ALog.tap('open_match', place: 'home');
     ALog.planetOpened('match');
 
-    _audioPlayer.stop();
+    await _audioPlayer.stop();
     await _playGezegenAudio();
     if (!mounted) return;
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer)),
+      MaterialPageRoute(
+        builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer),
+      ),
     );
   }
 
@@ -66,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ALog.tap('open_sound', place: 'home');
     ALog.planetOpened('sound');
 
-    _audioPlayer.stop();
+    await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/ses_gezegeni.mp3'));
     if (!mounted) return;
 
@@ -82,13 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
     ALog.tap('open_math', place: 'home');
     ALog.planetOpened('math');
 
-    _audioPlayer.stop();
+    await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/mathplanet/math_planet.mp3'));
     if (!mounted) return;
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const LevelSelectMathScreen()),
+      MaterialPageRoute(
+        builder: (_) => LevelSelectMathScreen(incomingPlayer: _audioPlayer),
+      ),
     );
   }
 
@@ -115,16 +122,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: _goToMatchPlanet,
                     child: const SpinningPlanet(),
                   ),
-
                   const SizedBox(width: 50),
-
                   GestureDetector(
                     onTap: _goToSoundPlanet,
                     child: const SpinningSoundPlanet(),
                   ),
-
                   const SizedBox(width: 30),
-
                   GestureDetector(
                     onTap: _goToMathPlanet,
                     child: const SpinningMathPlanet(),
