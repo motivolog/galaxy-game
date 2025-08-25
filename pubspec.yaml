@@ -328,6 +328,7 @@ flutter:
     - assets/audio/planet3/easy.mp3
     - assets/audio/planet3/medium.mp3
     - assets/audio/planet3/hard.mp3
+    - assets/audio/planet3/zorluksec.mp3
     - assets/images/planet3/bg_add.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
