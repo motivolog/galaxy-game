@@ -1,256 +1,243 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'level1_addition/addition_difficulty.dart';
 import 'level2_subtraction/subtraction_difficulty.dart';
 import 'level3_multiplication/multiplication_difficulty.dart';
-import 'level3_multiplication/multiplication_question_generator.dart' show Difficulty;
 import 'level4_division/division_difficulty.dart';
-
 import 'level5_quiz/level5_meteor_quiz_page.dart';
 
-
-
-class LevelSelectMathScreen extends StatelessWidget {
+class LevelSelectMathScreen extends StatefulWidget {
   const LevelSelectMathScreen({super.key});
 
   @override
+  State<LevelSelectMathScreen> createState() => _LevelSelectMathScreenState();
+}
+
+class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
+  late final AudioPlayer _player;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playTapSound(String? assetPath) async {
+    if (assetPath == null) return;
+    try {
+      await _player.stop();
+      await _player.play(AssetSource(assetPath));
+    } catch (_) {
+    }
+  }
+
+  void _go(Widget page, {String? soundAsset}) async {
+    HapticFeedback.selectionClick();
+    await _playTapSound(soundAsset);
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final levels = <_LevelInfo>[
-      _LevelInfo(number: 1, title: 'Toplama', unlocked: true,  progress: 0.7),
-      _LevelInfo(number: 2, title: 'Çıkarma',     unlocked: true, progress: 0.0),
-      _LevelInfo(number: 3, title: 'Çarpma',     unlocked: true, progress: 0.0),
-      _LevelInfo(number: 4, title: 'Bölme',      unlocked: true, progress: 0.0),
-      _LevelInfo(number: 5, title: 'Meteor Quiz',       unlocked: true, progress: 0.0),
-    ];
+    final size = MediaQuery.of(context).size;
+    final shortest = size.shortestSide;
+    final double btnWidth  = (size.width * 0.18).clamp(120, 200).toDouble();
+    final double btnHeight = (shortest / 7.9).clamp(59, 84).toDouble();
+    final double gapH = 28, gapW = 20;
+    final double symbolSize = (shortest / 12).clamp(50, 52).toDouble();
 
-    final w = MediaQuery.of(context).size.width;
-
-    int crossAxisCount;
-    double aspect;
-    if (w >= 1000) { crossAxisCount = 4; aspect = 3/4; }
-    else if (w >= 700) { crossAxisCount = 3; aspect = 3/4; }
-    else { crossAxisCount = 2; aspect = 4/5; }
+    Widget btn({
+      required String symbol,
+      required String semantics,
+      required VoidCallback onTap,
+    }) {
+      return _CubeButton(
+        width: btnWidth,
+        height: btnHeight,
+        symbol: symbol,
+        symbolSize: symbolSize,
+        onTap: onTap,
+        semanticsLabel: semantics,
+      );
+    }
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0E1224), Color(0xFF0B0F1D)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: GridView.builder(
-            itemCount: levels.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: aspect,
-            ),
-            itemBuilder: (_, i) => _LevelCard(
-              info: levels[i],
-              onTap: () {
-                if (!levels[i].unlocked) return;
-
-                switch (levels[i].number) {
-                  case 1:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdditionDifficultyPage(),
-                      ),
-                    );
-                    break;
-
-                  case 2:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const SubtractionDifficultyPage(),
-                      ),
-                    );
-                    break;
-
-                  case 3:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MultiplicationDifficultyPage()),
-                    );
-                    break;
-
-                  case 4: // Bölme
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DivisionDifficultyPage()),
-                    );
-                    break;
-
-
-                  case 5: // Meteor Quiz
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) =>  Level5MeteorQuizPage()),
-                    );
-                    break;
-                }
-              },
-
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/planet3/mathlevel_bg.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
+              filterQuality: FilterQuality.high,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
 
-class _LevelInfo {
-  final int number;
-  final String title;
-  final bool unlocked;
-  final double progress;
-  const _LevelInfo({
-    required this.number, required this.title,
-    required this.unlocked, required this.progress,
-  });
-}
-
-class _LevelCard extends StatefulWidget {
-  const _LevelCard({required this.info, required this.onTap});
-  final _LevelInfo info;
-  final VoidCallback onTap;
-
-  @override
-  State<_LevelCard> createState() => _LevelCardState();
-}
-
-class _LevelCardState extends State<_LevelCard> {
-  bool _hover = false;
-  @override
-  Widget build(BuildContext context) {
-    final unlocked = widget.info.unlocked;
-    final baseColor = unlocked ? const Color(0xFF2C3E50) : const Color(0xFF1E2730);
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _hover = true),
-      onTapCancel: () => setState(() => _hover = false),
-      onTapUp: (_) => setState(() => _hover = false),
-      onTap: unlocked ? widget.onTap : null,
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 120),
-        scale: _hover ? 0.98 : 1.0,
-        child: Stack(
-          children: [
-
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: [
-                    baseColor.withOpacity(0.95),
-                    baseColor.withOpacity(0.80),
-                  ],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    blurRadius: 12, offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 28, top: 24, bottom: 26),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          unlocked ? Icons.auto_awesome : Icons.lock,
-                          color: unlocked ? Colors.amberAccent : Colors.white54,
+                      btn(
+                        symbol: '+',
+                        semantics: 'Toplama',
+                        onTap: () => _go(
+                          const AdditionDifficultyPage(),
+                          soundAsset: 'audio/planet3/plus.mp3',
                         ),
                       ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text("Level ${widget.info.number}",
-                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                      SizedBox(width: gapW),
+                      btn(
+                        symbol: '−',
+                        semantics: 'Çıkarma',
+                        onTap: () => _go(
+                          const SubtractionDifficultyPage(),
+                          soundAsset: 'audio/planet3/minus.mp3',
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-
-                  Text(
-                    widget.info.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+                  SizedBox(height: gapH),
+                  Row(
+                    children: [
+                      btn(
+                        symbol: '×',
+                        semantics: 'Çarpma',
+                        onTap: () => _go(
+                          const MultiplicationDifficultyPage(),
+                          soundAsset: 'audio/planet3/multiplication.mp3',
+                        ),
+                      ),
+                      SizedBox(width: gapW),
+                      btn(
+                        symbol: '÷',
+                        semantics: 'Bölme',
+                        onTap: () => _go(
+                          const DivisionDifficultyPage(),
+                          soundAsset: 'audio/planet3/divide.mp3',
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-
-                  Text(
-                    unlocked ? "Hazır" : "Kilidi açmak için önceki seviyeyi bitir",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: unlocked ? Colors.white70 : Colors.white38,
+                  SizedBox(height: gapH),
+                  btn(
+                    symbol: '?',
+                    semantics: 'Quiz',
+                    onTap: () => _go(
+                      const Level5MeteorQuizPage(),
+                      soundAsset: 'audio/planet3/quiz.mp3',
                     ),
                   ),
-                  const Spacer(),
-
-                  _ProgressBar(value: widget.info.progress, enabled: unlocked),
                 ],
               ),
             ),
-
-
-            if (!unlocked)
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.black.withOpacity(0.35),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
+class _CubeButton extends StatefulWidget {
+  const _CubeButton({
+    required this.width,
+    required this.height,
+    required this.symbol,
+    required this.symbolSize,
+    required this.onTap,
+    required this.semanticsLabel,
+  });
 
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.value, required this.enabled});
-  final double value; // 0..1
-  final bool enabled;
+  final double width;
+  final double height;
+  final String symbol;
+  final double symbolSize;
+  final VoidCallback onTap;
+  final String semanticsLabel;
+
+  @override
+  State<_CubeButton> createState() => _CubeButtonState();
+}
+
+class _CubeButtonState extends State<_CubeButton> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.white.withOpacity(0.10);
-    final fg = enabled ? Colors.lightBlueAccent : Colors.white24;
+    const topColor = Color(0xFFA999FF);
+    const midColor = Color(0xFF8C7BFA);
+    const botColor = Color(0xFF5E50D9);
 
-    return Container(
-      height: 10,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: FractionallySizedBox(
-          widthFactor: value.clamp(0, 1),
-          child: Container(color: fg),
+    return Semantics(
+      button: true,
+      label: widget.semanticsLabel,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) {
+          setState(() => _pressed = false);
+          widget.onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          width: widget.width,
+          height: widget.height,
+          transform: Matrix4.identity()
+            ..translate(0.0, _pressed ? 2.0 : 0.0)
+            ..scale(_pressed ? 0.98 : 1.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [topColor, midColor, botColor],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 18,
+                spreadRadius: 1,
+                offset: const Offset(0, 10),
+              ),
+              const BoxShadow(
+                color: Color(0x40FFFFFF),
+                blurRadius: 8,
+                spreadRadius: -2,
+                offset: Offset(-3, -3),
+              ),
+            ],
+          ),
+          foregroundDecoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0x22FFFFFF), Color(0x00000000)],
+            ),
+          ),
+          child: Center(
+            child: Text(
+              widget.symbol,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: widget.symbolSize,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
         ),
       ),
     );
