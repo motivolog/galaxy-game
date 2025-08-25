@@ -9,7 +9,8 @@ import 'level4_division/division_difficulty.dart';
 import 'level5_quiz/level5_meteor_quiz_page.dart';
 
 class LevelSelectMathScreen extends StatefulWidget {
-  const LevelSelectMathScreen({super.key});
+  const LevelSelectMathScreen({super.key, this.incomingPlayer});
+  final AudioPlayer? incomingPlayer;
 
   @override
   State<LevelSelectMathScreen> createState() => _LevelSelectMathScreenState();
@@ -17,42 +18,60 @@ class LevelSelectMathScreen extends StatefulWidget {
 
 class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
   late final AudioPlayer _player;
+  bool _navigating = false;
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _player = AudioPlayer()
+      ..setReleaseMode(ReleaseMode.stop)
+      ..setPlayerMode(PlayerMode.mediaPlayer);
   }
 
   @override
   void dispose() {
+    _player.stop();
     _player.dispose();
     super.dispose();
   }
-
-  Future<void> _playTapSound(String? assetPath) async {
+  Future<void> _playTapSoundAndWait(String? assetPath) async {
     if (assetPath == null) return;
+
     try {
+      await widget.incomingPlayer?.stop();
       await _player.stop();
+
       await _player.play(AssetSource(assetPath));
+      await _player.onPlayerComplete.first
+          .timeout(const Duration(seconds: 2));
     } catch (_) {
+      await Future.delayed(const Duration(milliseconds: 300));
     }
   }
 
-  void _go(Widget page, {String? soundAsset}) async {
+  Future<void> _go(Widget page, {String? soundAsset}) async {
+    if (_navigating) return;
+    _navigating = true;
+
     HapticFeedback.selectionClick();
-    await _playTapSound(soundAsset);
-    if (!mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    await _playTapSoundAndWait(soundAsset);
+
+    if (!mounted) {
+      _navigating = false;
+      return;
+    }
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    _navigating = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final shortest = size.shortestSide;
+
     final double btnWidth  = (size.width * 0.18).clamp(120, 200).toDouble();
     final double btnHeight = (shortest / 7.9).clamp(59, 84).toDouble();
-    final double gapH = 28, gapW = 20;
+    const double gapH = 28, gapW = 20;
     final double symbolSize = (shortest / 12).clamp(50, 52).toDouble();
 
     Widget btn({
@@ -81,7 +100,6 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
               filterQuality: FilterQuality.high,
             ),
           ),
-
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(left: 28, top: 24, bottom: 26),
@@ -98,7 +116,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                           soundAsset: 'audio/planet3/plus.mp3',
                         ),
                       ),
-                      SizedBox(width: gapW),
+                      const SizedBox(width: gapW),
                       btn(
                         symbol: '−',
                         semantics: 'Çıkarma',
@@ -109,7 +127,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: gapH),
+                  const SizedBox(height: gapH),
                   Row(
                     children: [
                       btn(
@@ -120,7 +138,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                           soundAsset: 'audio/planet3/multiplication.mp3',
                         ),
                       ),
-                      SizedBox(width: gapW),
+                      const SizedBox(width: gapW),
                       btn(
                         symbol: '÷',
                         semantics: 'Bölme',
@@ -131,7 +149,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: gapH),
+                  const SizedBox(height: gapH),
                   btn(
                     symbol: '?',
                     semantics: 'Quiz',
