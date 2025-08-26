@@ -34,16 +34,14 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     _player.dispose();
     super.dispose();
   }
+
   Future<void> _playTapSoundAndWait(String? assetPath) async {
     if (assetPath == null) return;
-
     try {
       await widget.incomingPlayer?.stop();
       await _player.stop();
-
       await _player.play(AssetSource(assetPath));
-      await _player.onPlayerComplete.first
-          .timeout(const Duration(seconds: 2));
+      await _player.onPlayerComplete.first.timeout(const Duration(seconds: 2));
     } catch (_) {
       await Future.delayed(const Duration(milliseconds: 300));
     }
@@ -64,15 +62,34 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     _navigating = false;
   }
 
+  Future<void> _onBack() async {
+    HapticFeedback.selectionClick();
+    try {
+      await widget.incomingPlayer?.stop();
+      await _player.stop();
+    } catch (_) {}
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final shortest = size.shortestSide;
-
-    final double btnWidth  = (size.width * 0.18).clamp(120, 200).toDouble();
-    final double btnHeight = (shortest / 7.9).clamp(59, 84).toDouble();
-    const double gapH = 28, gapW = 20;
-    final double symbolSize = (shortest / 12).clamp(50, 52).toDouble();
+    final bool isTablet = shortest >= 600;
+    final double btnWidth  = isTablet
+        ? (size.width * 0.22).clamp(160, 240).toDouble()
+        : (size.width * 0.18).clamp(120, 200).toDouble();
+    final double btnHeight = isTablet
+        ? (shortest / 6.8).clamp(70, 100).toDouble()
+        : (shortest / 7.9).clamp(59, 84).toDouble();
+    final double symbolSize = isTablet
+        ? (shortest / 10).clamp(60, 75).toDouble()
+        : (shortest / 12).clamp(50, 52).toDouble();
+    final double gapH = isTablet ? 30 : 28;
+    final double gapW = isTablet ? 22 : 20;
+    final double topPad = isTablet
+        ? (shortest / 5.5).clamp(80, 140).toDouble()
+        : (shortest / 4.5).clamp(50, 90).toDouble();
 
     Widget btn({
       required String symbol,
@@ -94,7 +111,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/planet3/mathlevel_bg.png',
+              'assets/images/planet3/mathlevelback.png',
               fit: BoxFit.cover,
               alignment: Alignment.bottomCenter,
               filterQuality: FilterQuality.high,
@@ -102,7 +119,29 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(left: 28, top: 24, bottom: 26),
+              padding: const EdgeInsets.only(top: 12, left: 12),
+              child: GestureDetector(
+                onTap: _onBack,
+                child: Container(
+                  width: isTablet ? 72 : 54,
+                  height: isTablet ? 72 : 54,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF8C7BFA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                    size: isTablet ? 40 : 32,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(left: 28, top: topPad, bottom: 26),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -116,7 +155,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                           soundAsset: 'audio/planet3/plus.mp3',
                         ),
                       ),
-                      const SizedBox(width: gapW),
+                      SizedBox(width: gapW),
                       btn(
                         symbol: '−',
                         semantics: 'Çıkarma',
@@ -127,7 +166,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: gapH),
+                  SizedBox(height: gapH),
                   Row(
                     children: [
                       btn(
@@ -138,7 +177,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                           soundAsset: 'audio/planet3/multiplication.mp3',
                         ),
                       ),
-                      const SizedBox(width: gapW),
+                      SizedBox(width: gapW),
                       btn(
                         symbol: '÷',
                         semantics: 'Bölme',
@@ -149,7 +188,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: gapH),
+                  SizedBox(height: gapH),
                   btn(
                     symbol: '?',
                     semantics: 'Quiz',
@@ -167,6 +206,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     );
   }
 }
+
 class _CubeButton extends StatefulWidget {
   const _CubeButton({
     required this.width,
