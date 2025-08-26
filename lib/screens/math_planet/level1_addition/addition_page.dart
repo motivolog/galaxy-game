@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'object_panel.dart';
 import 'space_background.dart';
+import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
+import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 
 class AdditionLevelPage extends StatefulWidget {
   const AdditionLevelPage({
@@ -26,6 +27,7 @@ class AdditionLevelPage extends StatefulWidget {
   final bool distinctSides;
   final bool changeAssetsEveryQuestion;
   final int visualizeUpTo;
+
   @override
   State<AdditionLevelPage> createState() => _AdditionLevelPageState();
 }
@@ -39,17 +41,14 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
 
   late String _leftAsset;
   late String _rightAsset;
-
-  static const int _visualizeUpTo = 10;
-  bool get _showObjects =>
-      q.a <= widget.visualizeUpTo && q.b <= widget.visualizeUpTo;
-
+  bool get _showObjects => q.a <= widget.visualizeUpTo && q.b <= widget.visualizeUpTo;
 
   @override
   void initState() {
     super.initState();
     q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
     _pickAssets();
+    _speakCurrentQuestion();
   }
 
   @override
@@ -69,7 +68,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     if (widget.distinctSides && widget.objectAssets.length > 1) {
       String candidate;
       do {
-        candidate = widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
+        candidate =
+        widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
       } while (candidate == _leftAsset);
       _rightAsset = candidate;
     } else {
@@ -80,21 +80,27 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   Future<void> _onPick(int value) async {
     if (lockingUi) return;
     final isRight = value == q.answer;
+    await TTSManager.instance.stop();
 
     if (isRight) {
-      setState(() { lockingUi = true; correct++; });
-      await Future.delayed(const Duration(milliseconds: 500));
+      setState(() {
+        lockingUi = true;
+        correct++;
+      });
+      final ansText = mathAnswerToSpeech(a: q.a, op: '+', b: q.b);
+      await TTSManager.instance.speakNow(ansText);
 
       if (correct >= widget.targetCorrect) {
         await _completeLevel();
         return;
       }
-
       setState(() {
         q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
         if (widget.changeAssetsEveryQuestion) _pickAssets();
         lockingUi = false;
       });
+
+      _speakCurrentQuestion();
     } else {
       setState(() => pulseHint = true);
       await Future.delayed(const Duration(milliseconds: 350));
@@ -103,6 +109,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Bir daha dene ')));
       }
+      _speakCurrentQuestion();
     }
   }
 
@@ -118,7 +125,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         final size = MediaQuery.of(dialogCtx).size;
         final isTablet = size.shortestSide >= 600;
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             'Tebrikler!',
             style: TextStyle(fontSize: isTablet ? 28 : 22, fontWeight: FontWeight.w700),
@@ -139,11 +147,11 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                 onPressed: () => Navigator.of(dialogCtx).pop(),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, isTablet ? 60 : 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                  'Seviye ekranına dön',
-                  style: TextStyle(fontSize: isTablet ? 20 : 16),
+                  'Seviye ekranına dön', style: TextStyle(fontSize: isTablet ? 20 : 16),
                 ),
               ),
             ),
@@ -155,7 +163,17 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     if (!mounted) return;
     Navigator.pop(context, true);
   }
+  void _speakCurrentQuestion() {
+    final speech = mathQuestionToSpeech(a: q.a, op: '+', b: q.b);
+    final qid = '${q.a}+${q.b}';
+    TTSManager.instance.speakOnce(speech, id: qid);
+  }
 
+  @override
+  void dispose() {
+    TTSManager.instance.stop();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -168,7 +186,6 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         child: Stack(
           children: [
             const SpaceBackground(),
-
             // Üst bar
             Positioned(
               top: 8, left: 8, right: 8,
@@ -189,9 +206,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                         const SizedBox(height: 6),
                         Text(
                           'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: isTablet ? 18 : 14,
+                          style: TextStyle(color: Colors.white70, fontSize: isTablet ? 18 : 14,
                           ),
                         ),
                       ],
@@ -225,17 +240,23 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                               fontWeight: FontWeight.w800,
                             ),
                             children: [
-                              TextSpan(text: '${q.a}', style: const TextStyle(color: Color(0xFF9AE6FF))),
-                              const TextSpan(text: '  +  ', style: TextStyle(color: Colors.white)),
-                              TextSpan(text: '${q.b}', style: const TextStyle(color: Color(0xFFFF84B8))),
-                              const TextSpan(text: '  =  ?', style: TextStyle(color: Colors.white)),
+                              TextSpan(
+                                text: '${q.a}',
+                                style: const TextStyle(color: Color(0xFF9AE6FF)),
+                              ),
+                              const TextSpan(
+                                  text: '  +  ', style: TextStyle(color: Colors.white)),
+                              TextSpan(
+                                text: '${q.b}', style: const TextStyle(color: Color(0xFFFF84B8)),
+                              ),
+                              const TextSpan(
+                                  text: '  =  ?',style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
-
                     if (_showObjects) ...[
                       Row(
                         children: [
@@ -274,15 +295,15 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
             ),
 
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+              left: 0, right: 0, bottom: 0,
               child: SafeArea(
                 minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
                 child: LayoutBuilder(
                   builder: (_, cons) {
-                    final btnH = isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
-                    final btnW = isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
+                    final btnH =
+                    isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
+                    final btnW =
+                    isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
                     final spacing = isTablet ? 20.0 : 14.0;
                     final fs = isTablet ? 32.0 : 24.0;
 
@@ -290,11 +311,13 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                       constraints: BoxConstraints(maxWidth: size.width),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.24),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withOpacity(0.05)),
+                          border:
+                          Border.all(color: Colors.white.withOpacity(0.05)),
                         ),
                         child: Wrap(
                           alignment: WrapAlignment.center,
@@ -306,13 +329,18 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                                 width: btnW,
                                 height: btnH,
                                 child: ElevatedButton(
-                                  onPressed: lockingUi ? null : () => _onPick(q.options[idx]),
+                                  onPressed: lockingUi
+                                      ? null
+                                      : () => _onPick(q.options[idx]),
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
-                                  child: Text('${q.options[idx]}', style: TextStyle(fontSize: fs)),
+                                  child: Text(
+                                    '${q.options[idx]}',
+                                    style: TextStyle(fontSize: fs),
+                                  ),
                                 ),
                               ),
                           ],
