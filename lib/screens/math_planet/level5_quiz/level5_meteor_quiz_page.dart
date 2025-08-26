@@ -2,6 +2,8 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'level5_meteor_quiz.dart';
 import 'answers_overlay.dart';
+import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
+import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 
 class Level5MeteorQuizPage extends StatefulWidget {
   const Level5MeteorQuizPage({super.key});
@@ -17,13 +19,28 @@ class _Level5MeteorQuizPageState extends State<Level5MeteorQuizPage> {
   void initState() {
     super.initState();
     game = Level5MeteorQuizGame(
-      onFinished: () => setState(() {}),
+      onFinished: _onFinished,
       onUiRefresh: () => setState(() {}),
+      onNewQuestion: (int a, String op, int b) {
+        final speech = mathQuestionToSpeech(a: a, op: op, b: b);
+        final id = '$a$op$b';
+        TTSManager.instance.speak(speech, id: id);
+      },
+      onCorrectAnswer: (int a, String op, int b) async {
+        final ans = mathAnswerToSpeech(a: a, op: op, b: b);
+        await TTSManager.instance.speakNow(ans);
+      },
     );
+  }
+
+  Future<void> _onFinished() async {
+    await TTSManager.instance.stop();
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    TTSManager.instance.stop();
     game.pauseEngine();
     super.dispose();
   }
@@ -34,14 +51,8 @@ class _Level5MeteorQuizPageState extends State<Level5MeteorQuizPage> {
     final isTablet = mq.size.shortestSide >= 600;
     final double progress = game.totalQuestions == 0
         ? 0
-        : (game.currentIndex.clamp(0, game.totalQuestions) / game.totalQuestions);
-    final double barHeight = isTablet ? 16 : 10;
-    final double barRadius = isTablet ? 12 : 8;
-    final EdgeInsets barPadding =
-    isTablet ? const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
-        : const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
-    final double barMaxWidth = isTablet ? 520 : 360;
-    final double progressLabelSize = isTablet ? 16 : 12;
+        : (game.currentIndex.clamp(0, game.totalQuestions) /
+        game.totalQuestions);
     final iconSize = isTablet ? 32.0 : 24.0;
     final buttonPadding = isTablet ? 18.0 : 12.0;
     final posInset = isTablet ? 20.0 : 14.0;
@@ -64,13 +75,14 @@ class _Level5MeteorQuizPageState extends State<Level5MeteorQuizPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+                        borderRadius:
+                        BorderRadius.circular(isTablet ? 12 : 8),
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: isTablet ? 16 : 10,
                           backgroundColor: Colors.white.withOpacity(0.15),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            const Color(0xFF81C784), // pastel yeşil
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFF81C784),
                           ),
                         ),
                       ),
@@ -99,13 +111,17 @@ class _Level5MeteorQuizPageState extends State<Level5MeteorQuizPage> {
                 button: true,
                 child: IconButton(
                   tooltip: 'Geri',
-                  icon: Icon(Icons.arrow_back, size: iconSize, color: Colors.white),
+                  icon: Icon(Icons.arrow_back,
+                      size: iconSize, color: Colors.white),
                   style: IconButton.styleFrom(
                     backgroundColor: const Color(0xFF81C784),
                     padding: EdgeInsets.all(buttonPadding),
                     shape: const CircleBorder(),
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () async {
+                    await TTSManager.instance.stop();
+                    if (mounted) Navigator.pop(context);
+                  },
                 ),
               ),
             ),
@@ -138,7 +154,10 @@ class _Level5MeteorQuizPageState extends State<Level5MeteorQuizPage> {
                       ),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () async {
+                          await TTSManager.instance.stop();
+                          if (mounted) Navigator.pop(context);
+                        },
                         child: const Text("Level ekranına dön"),
                       ),
                     ],

@@ -4,6 +4,8 @@ import 'package:lottie/lottie.dart';
 import 'multiplication_question_generator.dart';
 import 'cosmic_pirates_game.dart';
 import 'answers_overlay.dart';
+import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
+import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 
 class MultiplicationLevelPage extends StatefulWidget {
   const MultiplicationLevelPage({
@@ -11,7 +13,6 @@ class MultiplicationLevelPage extends StatefulWidget {
     this.targetCorrect = 8,
     this.difficulty = Difficulty.medium,
   });
-
   final int targetCorrect;
   final Difficulty difficulty;
 
@@ -32,16 +33,28 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
       onUiRefresh: () => setState(() {}),
       onFinished: _showFinishDialog,
       worldScale: worldScale,
-      // scaleSpeedWithWorld: true,
+      onNewQuestion: (int a, int b) {
+        final s = mathQuestionToSpeech(a: a, op: '×', b: b);
+        final id = '$a×$b';
+        TTSManager.instance.speak(s, id: id);
+      },
+      onCorrectAnswer: (int a, int b) async {
+        final ans = mathAnswerToSpeech(a: a, op: '×', b: b);
+        await TTSManager.instance.speakNow(ans);
+      },
     );
   }
+
   void _ensureGame(double worldScale) {
     if (_game == null || _lastWorldScale != worldScale) {
       _game = _buildGame(worldScale);
       _lastWorldScale = worldScale;
     }
   }
-  void _showFinishDialog() {
+
+  Future<void> _showFinishDialog() async {
+    await TTSManager.instance.stop();
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -66,17 +79,25 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
   }
 
   @override
+  void dispose() {
+    TTSManager.instance.stop();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final shortest = size.shortestSide;
     final bool isTablet = shortest >= 600;
-    final double worldScale = isTablet ? 1.70 : (
-        shortest < 360 ? 1.10 :
-        shortest < 390 ? 1.18 :
-        shortest < 430 ? 1.24 :
-        1.28
-    );
+    final double worldScale = isTablet
+        ? 1.70
+        : (shortest < 360
+        ? 1.10
+        : (shortest < 390
+        ? 1.18
+        : (shortest < 430 ? 1.24 : 1.28)));
     _ensureGame(worldScale);
+
     final double lottieSize = isTablet
         ? (shortest * 0.38).clamp(96.0, 220.0)
         : (shortest * 0.30).clamp(64.0, 150.0);

@@ -8,19 +8,26 @@ import 'package:flame_lottie/flame_lottie.dart';
 import 'package:lottie/lottie.dart';
 
 enum QuizState { presenting, resolving, finished }
+
 class Question {
   final String text;
   final int answer;
   final List<int> options;
   Question(this.text, this.answer, this.options);
 }
+
 class Level5MeteorQuizGame extends FlameGame {
   Level5MeteorQuizGame({
     required this.onFinished,
     required this.onUiRefresh,
+    this.onNewQuestion,
+    this.onCorrectAnswer,
   });
+
   final VoidCallback onFinished;
   final VoidCallback onUiRefresh;
+  final void Function(int a, String op, int b)? onNewQuestion;
+  final void Function(int a, String op, int b)? onCorrectAnswer;
 
   QuizState state = QuizState.presenting;
   final int totalQuestions = 10;
@@ -52,9 +59,7 @@ class Level5MeteorQuizGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-
     add(_Starfield(size)..priority = -10);
-
     final lottie = await loadLottie(
       Lottie.asset('assets/animations/astronot_math.json'),
     );
@@ -99,14 +104,10 @@ class Level5MeteorQuizGame extends FlameGame {
   void _startIdleFloat() {
     _stopIdleFloat();
     if (astronaut == null || _idleTopY == null) return;
-
     _idleMoveEffect = MoveToEffect(
       Vector2(_astronautX, _idleTopY!),
       EffectController(
-        duration: 2.4,
-        curve: Curves.easeInOut,
-        alternate: true,
-        infinite: true,
+        duration: 2.4, curve: Curves.easeInOut, alternate: true, infinite: true,
       ),
     );
     astronaut!.add(_idleMoveEffect!);
@@ -115,10 +116,7 @@ class Level5MeteorQuizGame extends FlameGame {
       RotateEffect.by(
         0.03,
         EffectController(
-          duration: 1.6,
-          curve: Curves.easeInOut,
-          alternate: true,
-          infinite: true,
+          duration: 1.6, curve: Curves.easeInOut, alternate: true, infinite: true,
         ),
       ),
     );
@@ -137,7 +135,6 @@ class Level5MeteorQuizGame extends FlameGame {
     final m = activeMeteor;
     if (a == null || m == null || _isAttacking) return;
     _isAttacking = true;
-
     _stopIdleFloat();
 
     final moveToMeteorY = MoveToEffect(
@@ -209,9 +206,7 @@ class Level5MeteorQuizGame extends FlameGame {
     add(laser);
 
     final glow = CircleComponent(
-      radius: 12,
-      position: from,
-      anchor: Anchor.center,
+      radius: 12, position: from, anchor: Anchor.center,
       paint: Paint()
         ..shader = RadialGradient(
           colors: [
@@ -250,11 +245,15 @@ class Level5MeteorQuizGame extends FlameGame {
 
   Future<void> onAnswerSelected(int val) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
-
     final isCorrect = (val == currentQuestion!.answer);
     state = QuizState.resolving;
 
     if (isCorrect) {
+      final triple = _parseAopB(currentQuestion!.text);
+      if (triple != null) {
+        final (a, op, b) = triple;
+        onCorrectAnswer?.call(a, op, b);
+      }
       correctCount++;
       await _attackMeteorAndExplode();
       currentIndex++;
@@ -272,7 +271,6 @@ class Level5MeteorQuizGame extends FlameGame {
   void _respawnSameQuestion() {
     if (_isSpawning || state == QuizState.finished) return;
     _isSpawning = true;
-
     activeMeteor?.removeFromParent();
     activeMeteor = null;
 
@@ -306,10 +304,32 @@ class Level5MeteorQuizGame extends FlameGame {
     )
       ..position = Vector2(size.x + 80, y)
       ..anchor = Anchor.center;
-
     add(activeMeteor!);
     state = QuizState.presenting;
+    _notifyNewQuestionFromText(q.text);
+
     onUiRefresh();
+  }
+  void _notifyNewQuestionFromText(String text) {
+    final triple = _parseAopB(text);
+    if (triple == null) return;
+    final (a, op, b) = triple;
+    onNewQuestion?.call(a, op, b);
+  }
+  (int, String, int)? _parseAopB(String text) {
+    final m = RegExp(r'^\s*(\d+)\s*([+\-−×x\*/÷/])\s*(\d+)\s*=').firstMatch(text);
+    if (m == null) return null;
+    final a = int.parse(m.group(1)!);
+    final rawOp = m.group(2)!;
+    final b = int.parse(m.group(3)!);
+    final op = switch (rawOp) {
+      '+' => '+',
+      '-' || '−' => '-',
+      '×' || 'x' || 'X' || '*' => '×',
+      '÷' || '/' => '÷',
+      _ => '+',
+    };
+    return (a, op, b);
   }
 
   List<Question> _generateQuestions(int n) {
@@ -404,6 +424,7 @@ class Meteor extends PositionComponent {
       onMissed();
     }
   }
+
   @override
   void render(Canvas canvas) {
     final shadowRect = Rect.fromLTWH(4, 6, size.x - 8, size.y - 8);

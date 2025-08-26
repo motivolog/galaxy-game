@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'division_game.dart';
 import 'ui.dart';
 import 'components.dart';
+import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
+import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 
 class DivisionPage extends StatefulWidget {
   const DivisionPage({super.key, required this.difficulty});
@@ -20,7 +22,6 @@ class _DivisionPageState extends State<DivisionPage> {
     if (mq == null) return false;
     return mq.size.shortestSide >= 600;
   }
-
   @override
   void initState() {
     super.initState();
@@ -28,10 +29,22 @@ class _DivisionPageState extends State<DivisionPage> {
       difficulty: widget.difficulty,
       onUiRefresh: () => setState(() {}),
       onFinished: _onFinished,
+      onNewQuestion: (int a, int b) {
+        final s = mathQuestionToSpeech(a: a, op: '÷', b: b);
+        final id = '$a÷$b';
+        TTSManager.instance.speak(s, id: id);
+      },
+      onCorrectAnswer: (int a, int b) async {
+        final ans = mathAnswerToSpeech(a: a, op: '÷', b: b);
+        await TTSManager.instance.speakNow(ans);
+      },
     );
   }
 
-  void _onFinished() {
+  Future<void> _onFinished() async {
+    await TTSManager.instance.stop();
+
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -52,6 +65,13 @@ class _DivisionPageState extends State<DivisionPage> {
   }
 
   @override
+  void dispose() {
+
+    TTSManager.instance.stop();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final qText = game.current?.text ?? '';
 
@@ -65,7 +85,6 @@ class _DivisionPageState extends State<DivisionPage> {
       body: SafeArea(
         child: Stack(
           children: [
-
             Positioned.fill(
               child: Image.asset(
                 'assets/images/planet3/dvsn_bg.png',
@@ -85,14 +104,11 @@ class _DivisionPageState extends State<DivisionPage> {
                     questionText: qText,
                     progress: game.progress,
                     stepLabel: '${game.correctCount} / ${game.totalQuestions}',
-                    prominent: true,
-                    capsule: true,
-                    showProgress: false,
+                    prominent: true, capsule: true, showProgress: false,
                   ),
                 ),
               ),
             ),
-
             Positioned.fill(
               child: IgnorePointer(
                 child: SafeArea(
@@ -110,27 +126,24 @@ class _DivisionPageState extends State<DivisionPage> {
                 ),
               ),
             ),
-
-            // Kapılar
             DoorsOverlay(
-              game: game,
-              gap: 2.0,
+              game: game, gap: 2.0,
             ),
             Positioned(
-              top: backPad,
-              left: backPad,
+              top: backPad, left: backPad,
               child: SafeArea(
                 child: Semantics(
-                  label: 'Geri',
-                  button: true,
+                  label: 'Geri', button: true,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () async {
+                        await TTSManager.instance.stop();
+                        if (mounted) Navigator.pop(context);
+                      },
                       customBorder: const CircleBorder(),
                       child: Container(
-                        width: backSize,
-                        height: backSize,
+                        width: backSize, height: backSize,
                         decoration: BoxDecoration(
                           color: const Color(0xFFC160A0),
                           shape: BoxShape.circle,
@@ -144,9 +157,7 @@ class _DivisionPageState extends State<DivisionPage> {
                         ),
                         alignment: Alignment.center,
                         child: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: backIcon,
+                          Icons.arrow_back, color: Colors.white, size: backIcon,
                         ),
                       ),
                     ),

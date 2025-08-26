@@ -35,6 +35,8 @@ class PiratesMultiplyGame extends FlameGame {
     required this.difficulty,
     required this.onUiRefresh,
     required this.onFinished,
+    this.onNewQuestion,
+    this.onCorrectAnswer,
     double? worldScale,
     this.scaleSpeedWithWorld = false,
   }) : worldScaleOverride = worldScale;
@@ -43,6 +45,8 @@ class PiratesMultiplyGame extends FlameGame {
   final Difficulty difficulty;
   final VoidCallback onUiRefresh;
   final VoidCallback onFinished;
+  final void Function(int a, int b)? onNewQuestion;
+  final void Function(int a, int b)? onCorrectAnswer;
   final double? worldScaleOverride;
   late double worldScale;
   final bool scaleSpeedWithWorld;
@@ -60,6 +64,7 @@ class PiratesMultiplyGame extends FlameGame {
 
   @override
   Color backgroundColor() => Colors.transparent;
+
   double get _baseMonsterSpeed {
     switch (difficulty) {
       case Difficulty.easy:
@@ -73,24 +78,23 @@ class PiratesMultiplyGame extends FlameGame {
 
   double get monsterSpeed =>
       scaleSpeedWithWorld ? _baseMonsterSpeed * worldScale : _baseMonsterSpeed;
+
   double _autoScale() {
-    final shortest = math.min(size.x, size.y); // DOĞRU
+    final shortest = math.min(size.x, size.y);
 
     final bool isTablet = shortest >= 600;
     if (isTablet) return 1.70;
 
-    // Telefon kademeleri
-    if (shortest < 360) return 1.10;  // çok küçük telefon
-    if (shortest < 390) return 1.18;  // küçük
-    if (shortest < 430) return 1.24;  // orta (çoğu telefon)
-    return 1.28;                      // büyük telefon
+    if (shortest < 360) return 1.10;
+    if (shortest < 390) return 1.18;
+    if (shortest < 430) return 1.24;
+    return 1.28;
   }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Ölçek: varsa UI’dan geleni kullan, yoksa otomatik hesapla
     worldScale = worldScaleOverride ?? _autoScale();
 
     monsterSprites = [
@@ -101,13 +105,11 @@ class PiratesMultiplyGame extends FlameGame {
       await Sprite.load('planet3/enemy5.png'),
     ];
 
-    // Oyun hattı (y ekseni)
     final laneY = size.y * 0.58;
 
-    // Astronot referans komponenti — BOYUT ve POZİSYON ölçekli
     playerAnchor = RectangleComponent(
       position: Vector2(24 * worldScale, laneY - 28 * worldScale),
-      size: Vector2(56, 56) * worldScale, // telefon orta, tablette daha büyük
+      size: Vector2(56, 56) * worldScale,
       paint: Paint()..color = const Color(0x00000000),
       anchor: Anchor.topLeft,
     );
@@ -139,6 +141,15 @@ class PiratesMultiplyGame extends FlameGame {
     state = QuizState.presenting;
     _spawnMonster();
     onUiRefresh();
+    final q = currentQuestion;
+    if (q != null) {
+      final m = RegExp(r'^(\d+)\s*[×x\*]\s*(\d+)\s*=').firstMatch(q.text);
+      if (m != null) {
+        final a = int.parse(m.group(1)!);
+        final b = int.parse(m.group(2)!);
+        onNewQuestion?.call(a, b);
+      }
+    }
   }
 
   void _spawnMonster() {
@@ -158,16 +169,23 @@ class PiratesMultiplyGame extends FlameGame {
 
   void onAnswerSelected(int value) {
     if (state != QuizState.presenting || currentQuestion == null) return;
-
     if (value == currentQuestion!.answer) {
       state = QuizState.resolving;
       correctCount++;
+      final txt = currentQuestion!.text;
+      final m = RegExp(r'^(\d+)\s*[×x\*]\s*(\d+)\s*=').firstMatch(txt);
+      if (m != null) {
+        final a = int.parse(m.group(1)!);
+        final b = int.parse(m.group(2)!);
+        onCorrectAnswer?.call(a, b);
+      }
+
       _beamThenNext();
     } else {
       lives = (lives - 1).clamp(0, 3);
 
       final x = playerAnchor.x;
-      final double shake = 6 * worldScale; // titreşim şiddeti ölçekli
+      final double shake = 6 * worldScale;
       playerAnchor.add(
         SequenceEffect([
           MoveToEffect(Vector2(x + shake, playerAnchor.y),
@@ -189,17 +207,15 @@ class PiratesMultiplyGame extends FlameGame {
       onUiRefresh();
     }
   }
-
   void _beamThenNext() {
     final to = monster?.center;
     final from = playerAnchor.center;
-
     if (to != null) {
       final dx = to.x - from.x;
       final dy = to.y - from.y;
       final len = math.sqrt(dx * dx + dy * dy);
 
-      final double beamThickness = 2 * worldScale; // lazer kalınlığı ölçekli
+      final double beamThickness = 2 * worldScale;
       final beam = RectangleComponent(
         position: from,
         size: Vector2(beamThickness, beamThickness),
