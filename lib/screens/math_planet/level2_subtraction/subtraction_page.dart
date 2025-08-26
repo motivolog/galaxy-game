@@ -2,11 +2,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'space_background.dart';
 import 'subtraction_question.dart';
 import 'operation_panel.dart';
 import 'monster_choice.dart';
+import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
+import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 
 class SubtractionLevelPage extends StatefulWidget {
   const SubtractionLevelPage({
@@ -40,11 +41,13 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
 
   void _ensureControllers() {
     _qmPulseCtrl ??= AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 900),
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
 
     _rewardCtrl ??= AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 320),
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
     );
   }
 
@@ -53,10 +56,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     super.initState();
     question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
     _ensureControllers();
+    Future.microtask(_speakCurrentQuestion);
   }
 
   @override
   void dispose() {
+    TTSManager.instance.stop();
     _qmPulseCtrl?.dispose();
     _rewardCtrl?.dispose();
     super.dispose();
@@ -66,6 +71,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     if (lockingUi) return;
     final value = question.options[index];
     final isRight = value == question.answer;
+    await TTSManager.instance.stop();
 
     if (isRight) {
       setState(() {
@@ -73,25 +79,34 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         popIndex = index;
         correct++;
       });
+      final ansText = mathAnswerToSpeech(a: question.a, op: '-', b: question.b);
+      await TTSManager.instance.speakNow(ansText);
       _rewardCtrl!.forward(from: 0);
       await Future.delayed(const Duration(milliseconds: 320));
-
       if (!mounted) return;
       if (correct >= widget.targetCorrect) {
         await _completeLevel();
         return;
       }
       setState(() {
-        question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+        question =
+            SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
         lockingUi = false;
         popIndex = null;
       });
+      _speakCurrentQuestion();
     } else {
       HapticFeedback.lightImpact();
-      setState(() { pulseHint = true; shakeIndex = index; });
+      setState(() {
+        pulseHint = true;
+        shakeIndex = index;
+      });
       await Future.delayed(const Duration(milliseconds: 260));
       if (!mounted) return;
-      setState(() { pulseHint = false; shakeIndex = null; });
+      setState(() {
+        pulseHint = false;
+        shakeIndex = null;
+      });
 
       final size = MediaQuery.of(context).size;
       final isTablet = size.shortestSide >= 600;
@@ -103,6 +118,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
           margin: EdgeInsets.only(bottom: panelH + 16, left: 16, right: 16),
         ),
       );
+      _speakCurrentQuestion();
     }
   }
 
@@ -123,14 +139,17 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     if (!mounted) return;
     Navigator.pop(context, true);
   }
+  void _speakCurrentQuestion() {
+    final speech = mathQuestionToSpeech(a: question.a, op: '-', b: question.b);
+    final qid = '${question.a}-${question.b}';
+    TTSManager.instance.speakOnce(speech, id: qid);
+  }
 
   @override
   Widget build(BuildContext context) {
     _ensureControllers();
-
     final size = MediaQuery.of(context).size;
     final isTablet = size.shortestSide >= 600;
-
     final double panelH = isTablet ? 180 : 150;
     final double gap = isTablet ? 16 : 12;
     final double bottomPad = 18;
@@ -158,12 +177,15 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                           value: correct / widget.targetCorrect,
                           minHeight: isTablet ? 14 : 10,
                           backgroundColor: Colors.white10,
-                          valueColor: const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
+                          valueColor:
+                          const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(color: Colors.white70, fontSize: isTablet ? 18 : 14),
+                          style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isTablet ? 18 : 14),
                         ),
                       ],
                     ),
@@ -177,7 +199,8 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
               child: OperationPanel(
                 a: question.a,
                 b: question.b,
-                qmPulse: CurvedAnimation(parent: _qmPulseCtrl!, curve: Curves.easeInOut),
+                qmPulse: CurvedAnimation(
+                    parent: _qmPulseCtrl!, curve: Curves.easeInOut),
                 reward: _rewardCtrl!,
                 isTablet: isTablet,
                 pulseHint: pulseHint,
@@ -196,15 +219,16 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                           label: '${question.options[i]}',
                           palette: _paletteFor(i),
                           shaking: shakeIndex == i,
-                          popping:  popIndex == i,
-                          glowing:  popIndex == i,
+                          popping: popIndex == i,
+                          glowing: popIndex == i,
                           phase: i * 0.9,
                           onTap: lockingUi ? null : () => _onPickAt(i),
                           fontSize: isTablet ? 22.0 : 18.0,
                           height: panelH,
                         ),
                       ),
-                      if (i != question.options.length - 1) SizedBox(width: gap),
+                      if (i != question.options.length - 1)
+                        SizedBox(width: gap),
                     ],
                   ],
                 ),
@@ -218,9 +242,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
 
   List<Color> _paletteFor(int i) {
     switch (i % 3) {
-      case 0: return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
-      case 1: return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
-      default: return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
+      case 0:
+        return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
+      case 1:
+        return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
+      default:
+        return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
     }
   }
 }
