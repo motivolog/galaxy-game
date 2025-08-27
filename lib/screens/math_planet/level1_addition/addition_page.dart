@@ -5,6 +5,9 @@ import 'object_panel.dart';
 import 'space_background.dart';
 import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
 
 class AdditionLevelPage extends StatefulWidget {
   const AdditionLevelPage({
@@ -38,10 +41,15 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   int correct = 0;
   bool lockingUi = false;
   bool pulseHint = false;
+  final AudioPlayer _fx = AudioPlayer();
+  int? _shakeIdx;
+  int _shakeKey = 0;
+  int _tapSeq = 0;
 
   late String _leftAsset;
   late String _rightAsset;
-  bool get _showObjects => q.a <= widget.visualizeUpTo && q.b <= widget.visualizeUpTo;
+  bool get _showObjects =>
+      q.a <= widget.visualizeUpTo && q.b <= widget.visualizeUpTo;
 
   @override
   void initState() {
@@ -49,6 +57,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
     _pickAssets();
     _speakCurrentQuestion();
+    _fx.setReleaseMode(ReleaseMode.stop);
   }
 
   @override
@@ -73,42 +82,64 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
       } while (candidate == _leftAsset);
       _rightAsset = candidate;
     } else {
-      _rightAsset = widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
+      _rightAsset =
+      widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
     }
   }
 
-  Future<void> _onPick(int value) async {
+  Future<void> _onPick(int idx, int value) async {
     if (lockingUi) return;
-    final isRight = value == q.answer;
+    final int seq = ++_tapSeq;
+    try { await _fx.stop(); } catch (_) {}
     await TTSManager.instance.stop();
+
+    final isRight = value == q.answer;
 
     if (isRight) {
       setState(() {
         lockingUi = true;
         correct++;
       });
+
       final ansText = mathAnswerToSpeech(a: q.a, op: '+', b: q.b);
-      await TTSManager.instance.speakNow(ansText);
+
+      try {
+        await TTSManager.instance
+            .speakNow(ansText)
+            .timeout(const Duration(seconds: 2));
+      } catch (_) {}
+
+      if (!mounted) return;
 
       if (correct >= widget.targetCorrect) {
         await _completeLevel();
         return;
       }
+
       setState(() {
         q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
         if (widget.changeAssetsEveryQuestion) _pickAssets();
         lockingUi = false;
       });
-
-      _speakCurrentQuestion();
+      TTSManager.instance.speakOnce(
+        mathQuestionToSpeech(a: q.a, op: '+', b: q.b),
+        id: '${q.a}+${q.b}',
+      );
     } else {
-      setState(() => pulseHint = true);
+      HapticFeedback.mediumImpact();
+      setState(() {
+        pulseHint = true;
+        _shakeIdx = idx;
+        _shakeKey++;
+      });
+
       await Future.delayed(const Duration(milliseconds: 350));
       if (mounted) setState(() => pulseHint = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Bir daha dene ')));
-      }
+      try {
+        await _fx.play(AssetSource('audio/tekrar_dene.mp3'));
+      } catch (_) {}
+      await Future.delayed(const Duration(milliseconds: 900));
+      if (!mounted || seq != _tapSeq) return;
       _speakCurrentQuestion();
     }
   }
@@ -118,51 +149,17 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     await prefs.setBool('math_level1_done', true);
 
     if (!mounted) return;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        final size = MediaQuery.of(dialogCtx).size;
-        final isTablet = size.shortestSide >= 600;
-        return AlertDialog(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            'Tebrikler!',
-            style: TextStyle(fontSize: isTablet ? 28 : 22, fontWeight: FontWeight.w700),
-          ),
-          content: Text(
-            'Toplama seviyesini tamamladın.',
-            style: TextStyle(fontSize: isTablet ? 20 : 16),
-          ),
-          actionsPadding: EdgeInsets.only(
-            left: isTablet ? 24 : 16,
-            right: isTablet ? 24 : 16,
-            bottom: isTablet ? 20 : 12,
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(dialogCtx).pop(),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, isTablet ? 60 : 48),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text(
-                  'Seviye ekranına dön', style: TextStyle(fontSize: isTablet ? 20 : 16),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    await TTSManager.instance.stop();
+    try { await _fx.stop(); } catch (_) {}
+
+    await showCelebrationGalaxy(
+      context, duration: const Duration(seconds: 4),
     );
 
     if (!mounted) return;
     Navigator.pop(context, true);
   }
+
   void _speakCurrentQuestion() {
     final speech = mathQuestionToSpeech(a: q.a, op: '+', b: q.b);
     final qid = '${q.a}+${q.b}';
@@ -172,6 +169,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   @override
   void dispose() {
     TTSManager.instance.stop();
+    _fx.dispose();
     super.dispose();
   }
   @override
@@ -186,9 +184,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         child: Stack(
           children: [
             const SpaceBackground(),
-            // Üst bar
             Positioned(
-              top: 8, left: 8, right: 8,
+              top: -2, left: 1, right: 8,
               child: Row(
                 children: [
                   IconButton(
@@ -206,7 +203,9 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                         const SizedBox(height: 6),
                         Text(
                           'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(color: Colors.white70, fontSize: isTablet ? 18 : 14,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: isTablet ? 18 : 14,
                           ),
                         ),
                       ],
@@ -240,9 +239,10 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                               fontWeight: FontWeight.w800,
                             ),
                             children: [
+                              const TextSpan(
+                                  text: '  ', style: TextStyle(color: Colors.white)),
                               TextSpan(
-                                text: '${q.a}',
-                                style: const TextStyle(color: Color(0xFF9AE6FF)),
+                                text: '${q.a}', style: const TextStyle(color: Color(0xFF9AE6FF)),
                               ),
                               const TextSpan(
                                   text: '  +  ', style: TextStyle(color: Colors.white)),
@@ -250,7 +250,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                                 text: '${q.b}', style: const TextStyle(color: Color(0xFFFF84B8)),
                               ),
                               const TextSpan(
-                                  text: '  =  ?',style: TextStyle(color: Colors.white)),
+                                  text: '  =  ?', style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -294,6 +294,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
               ),
             ),
 
+
             Positioned(
               left: 0, right: 0, bottom: 0,
               child: SafeArea(
@@ -328,18 +329,37 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                               SizedBox(
                                 width: btnW,
                                 height: btnH,
-                                child: ElevatedButton(
-                                  onPressed: lockingUi
-                                      ? null
-                                      : () => _onPick(q.options[idx]),
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                child: TweenAnimationBuilder<double>(
+                                  key: ValueKey(
+                                      'shake$_shakeKey-$idx-${_shakeIdx == idx}'),
+                                  tween: Tween<double>(
+                                      begin: 0,
+                                      end: _shakeIdx == idx ? 1 : 0),
+                                  duration:
+                                  const Duration(milliseconds: 450),
+                                  builder: (context, t, child) {
+                                    final dx = (_shakeIdx == idx)
+                                        ? sin(t * pi * 6) * 6
+                                        : 0.0;
+                                    return Transform.translate(
+                                      offset: Offset(dx, 0),
+                                      child: child,
+                                    );
+                                  },
+                                  child: ElevatedButton(
+                                    onPressed: lockingUi
+                                        ? null
+                                        : () => _onPick(idx, q.options[idx]),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                        BorderRadius.circular(16),
+                                      ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    '${q.options[idx]}',
-                                    style: TextStyle(fontSize: fs),
+                                    child: Text(
+                                      '${q.options[idx]}',
+                                      style: TextStyle(fontSize: fs),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -362,12 +382,10 @@ class _AdditionQuestion {
   final int a, b, answer;
   final List<int> options;
   _AdditionQuestion(this.a, this.b, this.answer, this.options);
-
   static _AdditionQuestion generate(Random rnd, int maxA, int maxB) {
     final a = rnd.nextInt(maxA + 1);
     final b = rnd.nextInt(maxB + 1);
     final ans = a + b;
-
     final span = max(3, (ans * 0.15).round());
     int jitter() => rnd.nextInt(span * 2 + 1) - span;
 
@@ -376,7 +394,6 @@ class _AdditionQuestion {
       final d = ans + jitter();
       if (d >= 0) set.add(d);
     }
-
     final opts = set.toList()..shuffle(rnd);
     return _AdditionQuestion(a, b, ans, opts);
   }
