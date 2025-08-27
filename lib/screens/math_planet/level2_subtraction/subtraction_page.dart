@@ -8,6 +8,8 @@ import 'operation_panel.dart';
 import 'monster_choice.dart';
 import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
 
 class SubtractionLevelPage extends StatefulWidget {
   const SubtractionLevelPage({
@@ -31,10 +33,11 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   late SubtractionQuestion question;
   int correct = 0;
   bool lockingUi = false;
-
   bool pulseHint = false;
   int? shakeIndex;
   int? popIndex;
+  final AudioPlayer _fx = AudioPlayer();
+  int _tapSeq = 0;
 
   AnimationController? _qmPulseCtrl;
   AnimationController? _rewardCtrl;
@@ -56,6 +59,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     super.initState();
     question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
     _ensureControllers();
+    _fx.setReleaseMode(ReleaseMode.stop);
     Future.microtask(_speakCurrentQuestion);
   }
 
@@ -64,14 +68,18 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     TTSManager.instance.stop();
     _qmPulseCtrl?.dispose();
     _rewardCtrl?.dispose();
+    _fx.dispose();
     super.dispose();
   }
 
   Future<void> _onPickAt(int index) async {
     if (lockingUi) return;
+    final int seq = ++_tapSeq;
+    try { await _fx.stop(); } catch (_) {}
+    await TTSManager.instance.stop();
+
     final value = question.options[index];
     final isRight = value == question.answer;
-    await TTSManager.instance.stop();
 
     if (isRight) {
       setState(() {
@@ -80,23 +88,33 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         correct++;
       });
       final ansText = mathAnswerToSpeech(a: question.a, op: '-', b: question.b);
-      await TTSManager.instance.speakNow(ansText);
-      _rewardCtrl!.forward(from: 0);
+      try {
+        await TTSManager.instance
+            .speakNow(ansText)
+            .timeout(const Duration(seconds: 1));
+      } catch (_) {}
+
+      _rewardCtrl?.forward(from: 0);
       await Future.delayed(const Duration(milliseconds: 320));
+
       if (!mounted) return;
+
       if (correct >= widget.targetCorrect) {
         await _completeLevel();
         return;
       }
       setState(() {
-        question =
-            SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+        question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
         lockingUi = false;
         popIndex = null;
       });
-      _speakCurrentQuestion();
+
+      TTSManager.instance.speakOnce(
+        mathQuestionToSpeech(a: question.a, op: '-', b: question.b),
+        id: '${question.a}-${question.b}',
+      );
     } else {
-      HapticFeedback.lightImpact();
+      HapticFeedback.mediumImpact();
       setState(() {
         pulseHint = true;
         shakeIndex = index;
@@ -108,16 +126,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         shakeIndex = null;
       });
 
-      final size = MediaQuery.of(context).size;
-      final isTablet = size.shortestSide >= 600;
-      final panelH = isTablet ? 180.0 : 150.0;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Bir daha dene'),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(bottom: panelH + 16, left: 16, right: 16),
-        ),
-      );
+      try {
+        await _fx.play(AssetSource('audio/tekrar_dene.mp3'));
+      } catch (_) {}
+
+      await Future.delayed(const Duration(milliseconds: 900));
+      if (!mounted || seq != _tapSeq) return;
       _speakCurrentQuestion();
     }
   }
@@ -125,15 +139,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   Future<void> _completeLevel() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('math_level2_done', true);
-
     if (!mounted) return;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const AlertDialog(
-        title: Text('Tebrikler!'),
-        content: Text('Çıkarma seviyesini tamamladın.'),
-      ),
+    await TTSManager.instance.stop();
+    try { await _fx.stop(); } catch (_) {}
+    await showCelebrationGalaxy(
+      context,
+      duration: const Duration(seconds: 4),
     );
 
     if (!mounted) return;
@@ -159,8 +170,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         child: Stack(
           children: [
             const SpaceBackground(),
-
-            // üst bar
             Positioned(
               top: 8, left: 8, right: 8,
               child: Row(
@@ -181,11 +190,11 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                           const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          'Doğru: $correct / ${widget.targetCorrect}',
+                        Text('Doğru: $correct / ${widget.targetCorrect}',
                           style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: isTablet ? 18 : 14),
+                            color: Colors.white70,
+                            fontSize: isTablet ? 18 : 14,
+                          ),
                         ),
                       ],
                     ),
@@ -193,20 +202,20 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                 ],
               ),
             ),
-
             Align(
               alignment: const Alignment(0, -0.45),
               child: OperationPanel(
                 a: question.a,
                 b: question.b,
                 qmPulse: CurvedAnimation(
-                    parent: _qmPulseCtrl!, curve: Curves.easeInOut),
+                  parent: _qmPulseCtrl!,
+                  curve: Curves.easeInOut,
+                ),
                 reward: _rewardCtrl!,
                 isTablet: isTablet,
                 pulseHint: pulseHint,
               ),
             ),
-
             Positioned(
               left: 12, right: 12, bottom: bottomPad,
               child: SizedBox(
@@ -239,15 +248,11 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
       ),
     );
   }
-
   List<Color> _paletteFor(int i) {
     switch (i % 3) {
-      case 0:
-        return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
-      case 1:
-        return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
-      default:
-        return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
+      case 0:return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
+      case 1:return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
+      default:return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
     }
   }
 }

@@ -37,6 +37,7 @@ class PiratesMultiplyGame extends FlameGame {
     required this.onFinished,
     this.onNewQuestion,
     this.onCorrectAnswer,
+    this.onWrongAnswer,                 
     double? worldScale,
     this.scaleSpeedWithWorld = false,
   }) : worldScaleOverride = worldScale;
@@ -46,7 +47,9 @@ class PiratesMultiplyGame extends FlameGame {
   final VoidCallback onUiRefresh;
   final VoidCallback onFinished;
   final void Function(int a, int b)? onNewQuestion;
-  final void Function(int a, int b)? onCorrectAnswer;
+  final Future<void> Function(int a, int b)? onCorrectAnswer;
+  final Future<void> Function()? onWrongAnswer;
+
   final double? worldScaleOverride;
   late double worldScale;
   final bool scaleSpeedWithWorld;
@@ -81,10 +84,8 @@ class PiratesMultiplyGame extends FlameGame {
 
   double _autoScale() {
     final shortest = math.min(size.x, size.y);
-
     final bool isTablet = shortest >= 600;
     if (isTablet) return 1.70;
-
     if (shortest < 360) return 1.10;
     if (shortest < 390) return 1.18;
     if (shortest < 430) return 1.24;
@@ -126,9 +127,7 @@ class PiratesMultiplyGame extends FlameGame {
     if (state == QuizState.presenting && m != null && m.isOutOfScreen) {
       lives = (lives - 1).clamp(0, 3);
       if (lives <= 0) {
-        state = QuizState.finished;
-        onUiRefresh();
-        onFinished();
+        _triggerGameOver();
       } else {
         _spawnMonster();
         onUiRefresh();
@@ -141,6 +140,7 @@ class PiratesMultiplyGame extends FlameGame {
     state = QuizState.presenting;
     _spawnMonster();
     onUiRefresh();
+
     final q = currentQuestion;
     if (q != null) {
       final m = RegExp(r'^(\d+)\s*[×x\*]\s*(\d+)\s*=').firstMatch(q.text);
@@ -166,9 +166,9 @@ class PiratesMultiplyGame extends FlameGame {
     );
     add(monster!);
   }
-
-  void onAnswerSelected(int value) {
+  Future<void> onAnswerSelected(int value) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
+
     if (value == currentQuestion!.answer) {
       state = QuizState.resolving;
       correctCount++;
@@ -177,13 +177,13 @@ class PiratesMultiplyGame extends FlameGame {
       if (m != null) {
         final a = int.parse(m.group(1)!);
         final b = int.parse(m.group(2)!);
-        onCorrectAnswer?.call(a, b);
+        if (onCorrectAnswer != null) {
+          await onCorrectAnswer!(a, b);
+        }
       }
 
       _beamThenNext();
     } else {
-      lives = (lives - 1).clamp(0, 3);
-
       final x = playerAnchor.x;
       final double shake = 6 * worldScale;
       playerAnchor.add(
@@ -196,17 +196,20 @@ class PiratesMultiplyGame extends FlameGame {
               EffectController(duration: 0.05)),
         ]),
       );
+      if (onWrongAnswer != null) {
+        await onWrongAnswer!();
+      }
 
+      lives = (lives - 1).clamp(0, 3);
       if (lives <= 0) {
-        state = QuizState.finished;
-        onUiRefresh();
-        onFinished();
+        _triggerGameOver();
         return;
       }
       state = QuizState.presenting;
       onUiRefresh();
     }
   }
+
   void _beamThenNext() {
     final to = monster?.center;
     final from = playerAnchor.center;
@@ -242,5 +245,21 @@ class PiratesMultiplyGame extends FlameGame {
     } else {
       _nextQuestion();
     }
+  }
+
+  void _triggerGameOver() {
+    state = QuizState.finished;
+    pauseEngine();
+    overlays.add('gameover');
+    onUiRefresh();
+  }
+  void restart() {
+    correctCount = 0;
+    lives = 3;
+    state = QuizState.presenting;
+    monster?.removeFromParent();
+    monster = null;
+    resumeEngine();
+    _nextQuestion();
   }
 }
