@@ -11,6 +11,7 @@ class DivisionGame extends FlameGame {
     required this.onFinished,
     this.onNewQuestion,
     this.onCorrectAnswer,
+    this.onWrongAnswer,
   }) : totalQuestions = switch (difficulty) {
     'easy' => 10,
     'medium' => 12,
@@ -21,7 +22,9 @@ class DivisionGame extends FlameGame {
   final VoidCallback onUiRefresh;
   final VoidCallback onFinished;
   final void Function(int a, int b)? onNewQuestion;
-  final void Function(int a, int b)? onCorrectAnswer;
+  final Future<void> Function(int a, int b)? onCorrectAnswer;
+  final Future<void> Function()? onWrongAnswer;
+
   final int totalQuestions;
   final gen = DivisionQuestionGenerator();
 
@@ -49,6 +52,7 @@ class DivisionGame extends FlameGame {
     onUiRefresh();
     _notifyNewQuestion();
   }
+
   (int?, int?) _extractAB(DivisionQuestion? q) {
     if (q == null) return (null, null);
     int? a, b;
@@ -87,25 +91,31 @@ class DivisionGame extends FlameGame {
     }
   }
 
-  void onAnswerSelected(int value) => onAnswerSelectedAt(value, -1);
-  void onAnswerSelectedAt(int value, int index) {
+  Future<void> onAnswerSelected(int value) => onAnswerSelectedAt(value, -1);
+
+  Future<void> onAnswerSelectedAt(int value, int index) async {
     if (state != QuizState.presenting || current == null) return;
+
     state = QuizState.resolving;
     lastSelectedIndex = index;
     onUiRefresh();
 
     final isCorrect = value == current!.answer;
+
     if (isCorrect) {
       final (a, b) = _extractAB(current);
-      if (a != null && b != null) {
-        onCorrectAnswer?.call(a, b);
+      if (a != null && b != null && onCorrectAnswer != null) {
+        try {
+          await onCorrectAnswer!(a, b);
+        } catch (_) {}
       }
+
       correctCount++;
       progress = (correctCount / totalQuestions).clamp(0.0, 1.0);
+
       if (correctCount >= totalQuestions) {
         state = QuizState.escaping;
         onUiRefresh();
-
         Future.delayed(const Duration(milliseconds: 1200), () {
           state = QuizState.finished;
           onUiRefresh();
@@ -113,18 +123,22 @@ class DivisionGame extends FlameGame {
         });
         return;
       }
-      Future.delayed(const Duration(milliseconds: 400), () {
-        currentIndex++;
-        _nextQuestion();
-      });
+
+      currentIndex++;
+      _nextQuestion();
     } else {
+      if (onWrongAnswer != null) {
+        try {
+          await onWrongAnswer!();
+        } catch (_) {}
+      }
+
       monsterShakeTick++;
       onUiRefresh();
-      Future.delayed(const Duration(milliseconds: 400), () {
-        state = QuizState.presenting;
-        lastSelectedIndex = null;
-        onUiRefresh();
-      });
+      await Future.delayed(const Duration(milliseconds: 400));
+      state = QuizState.presenting;
+      lastSelectedIndex = null;
+      onUiRefresh();
     }
   }
 }

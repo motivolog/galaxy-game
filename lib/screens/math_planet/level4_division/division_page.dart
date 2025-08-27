@@ -5,6 +5,8 @@ import 'ui.dart';
 import 'components.dart';
 import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
 
 class DivisionPage extends StatefulWidget {
   const DivisionPage({super.key, required this.difficulty});
@@ -16,15 +18,19 @@ class DivisionPage extends StatefulWidget {
 
 class _DivisionPageState extends State<DivisionPage> {
   late DivisionGame game;
+  final AudioPlayer _fx = AudioPlayer();
 
   bool get isTablet {
     final mq = MediaQuery.maybeOf(context);
     if (mq == null) return false;
     return mq.size.shortestSide >= 600;
   }
+
   @override
   void initState() {
     super.initState();
+    _fx.setReleaseMode(ReleaseMode.stop);
+
     game = DivisionGame(
       difficulty: widget.difficulty,
       onUiRefresh: () => setState(() {}),
@@ -32,42 +38,45 @@ class _DivisionPageState extends State<DivisionPage> {
       onNewQuestion: (int a, int b) {
         final s = mathQuestionToSpeech(a: a, op: '÷', b: b);
         final id = '$a÷$b';
-        TTSManager.instance.speak(s, id: id);
+        TTSManager.instance.speakOnce(s, id: id);
       },
       onCorrectAnswer: (int a, int b) async {
         final ans = mathAnswerToSpeech(a: a, op: '÷', b: b);
-        await TTSManager.instance.speakNow(ans);
+        try {
+          await TTSManager.instance
+              .speakNow(ans)
+              .timeout(const Duration(seconds: 2));
+        } catch (_) {}
+      },
+      onWrongAnswer: () async {
+        try { await TTSManager.instance.stop(); } catch (_) {}
+        try { await _fx.stop(); } catch (_) {}
+        try {
+          await _fx.play(AssetSource('audio/tekrar_dene.mp3'));
+        } catch (_) {}
       },
     );
   }
 
   Future<void> _onFinished() async {
     await TTSManager.instance.stop();
+    try { await _fx.stop(); } catch (_) {}
 
     if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('Tebrikler!'),
-        content: const Text('Uzay canavarı kapıdan kaçtı '),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Future.microtask(() => Navigator.of(context).pop());
-            },
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
+
+    await showCelebrationGalaxy(
+      context,
+      duration: const Duration(seconds: 4),
     );
+
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
   }
 
   @override
   void dispose() {
-
     TTSManager.instance.stop();
+    _fx.dispose();
     super.dispose();
   }
 
@@ -91,11 +100,14 @@ class _DivisionPageState extends State<DivisionPage> {
                 fit: BoxFit.cover,
               ),
             ),
+
             GameWidget(game: game),
+
             AlienLottie(
               progressX: game.progress,
               shakeTrigger: game.monsterShakeTick,
             ),
+
             Positioned.fill(
               child: IgnorePointer(
                 child: Align(
@@ -104,11 +116,14 @@ class _DivisionPageState extends State<DivisionPage> {
                     questionText: qText,
                     progress: game.progress,
                     stepLabel: '${game.correctCount} / ${game.totalQuestions}',
-                    prominent: true, capsule: true, showProgress: false,
+                    prominent: true,
+                    capsule: true,
+                    showProgress: false,
                   ),
                 ),
               ),
             ),
+
             Positioned.fill(
               child: IgnorePointer(
                 child: SafeArea(
@@ -126,19 +141,22 @@ class _DivisionPageState extends State<DivisionPage> {
                 ),
               ),
             ),
-            DoorsOverlay(
-              game: game, gap: 2.0,
-            ),
+
+            DoorsOverlay(game: game, gap: 2.0),
+
+            // Geri butonu
             Positioned(
               top: backPad, left: backPad,
               child: SafeArea(
                 child: Semantics(
-                  label: 'Geri', button: true,
+                  label: 'Geri',
+                  button: true,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () async {
                         await TTSManager.instance.stop();
+                        try { await _fx.stop(); } catch (_) {}
                         if (mounted) Navigator.pop(context);
                       },
                       customBorder: const CircleBorder(),
