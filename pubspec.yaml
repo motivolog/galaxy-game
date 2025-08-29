@@ -299,6 +299,7 @@ flutter:
     - assets/audio/mathplanet/math_planet.mp3
     - assets/images/planet3/mathlevelback.png
     - assets/images/planet3.png
+    - assets/images/planet3/quizbg.png
     - assets/animations/astronot_math.json
     - assets/images/planet3/asteroid.png
     - assets/images/planet3/meteor.png
@@ -317,6 +318,7 @@ flutter:
     - assets/images/planet3/math_back.png
     - assets/images/planet3/plnt3_back.png
     - assets/animations/division_monster.json
+    - assets/animations/star_madal.json
     - assets/images/planet3/dvsn_bg.png
     - assets/images/planet3/door1.png
     - assets/images/planet3/door2.png
@@ -329,6 +331,7 @@ flutter:
     - assets/audio/planet3/easy.mp3
     - assets/audio/planet3/medium.mp3
     - assets/audio/planet3/hard.mp3
+    - assets/audio/planet3/quizsucces.mp3
     - assets/audio/planet3/zorluksec.mp3
     - assets/images/planet3/bg_add.png
     - assets/animations/game3celebrate.json
