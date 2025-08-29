@@ -7,7 +7,8 @@ import 'level2_subtraction/subtraction_difficulty.dart';
 import 'level3_multiplication/multiplication_difficulty.dart';
 import 'level4_division/division_difficulty.dart';
 import 'level5_quiz/level5_meteor_quiz_page.dart';
-import 'package:flutter_projects/analytics_helper.dart'; // <-- ALog
+import 'package:flutter_projects/analytics_helper.dart'; //  ALog
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class LevelSelectMathScreen extends StatefulWidget {
   const LevelSelectMathScreen({super.key, this.incomingPlayer});
@@ -44,7 +45,6 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
 
     super.dispose();
   }
-
   Future<void> _playTapSoundAndWait(String? assetPath) async {
     if (assetPath == null) return;
     try {
@@ -126,9 +126,12 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
         semanticsLabel: semantics,
       );
     }
-
-    return Scaffold(
-      body: Stack(
+        return Scaffold(
+          body: AccessibleZoom(
+           persistKey: 'math_access_zoom',
+            textScaleBoost: 1.35,           
+            maxScale: 3.0,
+            child: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
@@ -228,7 +231,8 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
             ),
           ),
         ],
-      ),
+    ),
+    ),
     );
   }
 }
