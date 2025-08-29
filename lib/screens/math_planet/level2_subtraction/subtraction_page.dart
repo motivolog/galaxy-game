@@ -10,7 +10,8 @@ import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
-import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
+import 'package:flutter_projects/analytics_helper.dart'; //  Analytics
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class SubtractionLevelPage extends StatefulWidget {
   const SubtractionLevelPage({
@@ -33,7 +34,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   final Random _random = Random();
   late SubtractionQuestion question;
   int correct = 0;
-  int wrong = 0; // ✅ yanlış sayaç
+  int wrong = 0;
   bool lockingUi = false;
   bool pulseHint = false;
   int? shakeIndex;
@@ -41,12 +42,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   final AudioPlayer _fx = AudioPlayer();
   int _tapSeq = 0;
 
-  // ✅ analytics yardımcıları
+  // analytics yardımcıları
   final Stopwatch _levelSW = Stopwatch();
-  final Map<String, int> _attempts = {}; // q_id -> attempt sayısı
+  final Map<String, int> _attempts = {};
   bool _finished = false;
   bool _exitLogged = false;
-  bool _hintLoggedForThisQ = false; // aynı soru için tek kez logla
+  bool _hintLoggedForThisQ = false;
 
   AnimationController? _qmPulseCtrl;
   AnimationController? _rewardCtrl;
@@ -67,13 +68,12 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   void initState() {
     super.initState();
 
-    // ✅ mode girişi + süre başlat
     ALog.e('math_mode_enter', params: {'mode': 'sub'});
     ALog.startTimer('math:sub');
     _levelSW.start();
 
     question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
-    _logQuestionStart(); // ✅ ilk soru
+    _logQuestionStart();
     _ensureControllers();
     _fx.setReleaseMode(ReleaseMode.stop);
     Future.microtask(_speakCurrentQuestion);
@@ -94,7 +94,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
 
   @override
   void dispose() {
-    // ✅ yarıda çıkış güvence
     if (!_finished && !_exitLogged) {
       final progressPct = ((correct / widget.targetCorrect) * 100).round();
       ALog.e('math_exit', params: {
@@ -123,7 +122,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     final value = question.options[index];
     final isRight = value == question.answer;
 
-    // ✅ cevap + attempt kaydı
     final attempt = (_attempts[_qid()] ?? 0) + 1;
     _attempts[_qid()] = attempt;
     ALog.e('math_answer', params: {
@@ -165,17 +163,17 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         popIndex = null;
       });
 
-      _logQuestionStart(); // ✅ sıradaki soru
+      _logQuestionStart();
       TTSManager.instance.speakOnce(
         mathQuestionToSpeech(a: question.a, op: '-', b: question.b),
         id: _qid(),
       );
     } else {
-      wrong++; // ✅ yanlış sayaç
+      wrong++;
       if (!_hintLoggedForThisQ) {
         _hintLoggedForThisQ = true;
         ALog.e('math_hint_used',
-            params: {'mode': 'sub', 'hint_type': 'visual'}); // görsel ipucu
+            params: {'mode': 'sub', 'hint_type': 'visual'});
       }
 
       HapticFeedback.mediumImpact();
@@ -210,7 +208,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
       await _fx.stop();
     } catch (_) {}
 
-    // ✅ tamamlanma + süre bitir
     final timeMs = _levelSW.elapsedMilliseconds;
     _levelSW.stop();
     ALog.e('math_level_complete', params: {
@@ -236,7 +233,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     final speech = mathQuestionToSpeech(a: question.a, op: '-', b: question.b);
     TTSManager.instance.speakOnce(speech, id: _qid());
   }
-
   @override
   Widget build(BuildContext context) {
     _ensureControllers();
@@ -247,8 +243,11 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     final double bottomPad = 18;
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
+        body: AccessibleZoom(
+          persistKey: 'math_access_zoom',
+          showButton: false,
+          child: SafeArea(
+            child: Stack(
           children: [
             const SpaceBackground(),
             Positioned(
@@ -259,7 +258,6 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                 children: [
                   IconButton(
                     onPressed: () {
-                      // ✅ geri/çıkış logla
                       final progressPct =
                       ((correct / widget.targetCorrect) * 100).round();
                       ALog.tap('back', place: 'math_sub');
@@ -315,9 +313,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
               ),
             ),
             Positioned(
-              left: 12,
-              right: 12,
-              bottom: bottomPad,
+              left: 12, right: 12, bottom: bottomPad,
               child: SizedBox(
                 height: panelH,
                 child: Row(
@@ -346,6 +342,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
           ],
         ),
       ),
+        ),
     );
   }
 

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'subtraction_page.dart' show SubtractionLevelPage;
-import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
+import 'package:flutter_projects/analytics_helper.dart'; // Analytics
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class SubtractionDifficultyPage extends StatefulWidget {
   const SubtractionDifficultyPage({super.key});
@@ -90,7 +91,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            // ✅ Analytics: geri
+            // Analytics: geri
             ALog.tap('back', place: 'math_difficulty');
 
             await _player.stop();
@@ -155,8 +156,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
             await onTap();
           },
           child: Text(
-            label,
-            style: TextStyle(
+            label, style: TextStyle(
               fontSize: buttonTextSize,
               fontWeight: FontWeight.w600,
             ),
@@ -166,7 +166,10 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
     }
 
     return Scaffold(
-      body: Stack(
+        body: AccessibleZoom(
+          persistKey: 'math_access_zoom',
+          showButton: false,
+          child: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
@@ -192,8 +195,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        "Çıkarma - Zorluk Seviyesi",
+                      Text("Çıkarma - Zorluk Seviyesi",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: titleSize,
@@ -211,7 +213,6 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
                       ),
                       SizedBox(height: verticalGapLarge),
 
-                      // ✅ Kolay
                       buildBtn("Kolay", () async {
                         ALog.tap('math_sub_easy', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select',
@@ -221,10 +222,8 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
                           _start(context, maxA: 10, maxB: 10);
                         });
                       }),
-
                       SizedBox(height: verticalGap),
 
-                      // ✅ Orta
                       buildBtn("Orta", () async {
                         ALog.tap('math_sub_medium', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select',
@@ -234,10 +233,8 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
                           _start(context, maxA: 50, maxB: 50);
                         });
                       }),
-
                       SizedBox(height: verticalGap),
 
-                      // ✅ Zor
                       buildBtn("Zor", () async {
                         ALog.tap('math_sub_hard', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select',
@@ -255,6 +252,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
           ),
         ],
       ),
+        ),
     );
   }
 }
