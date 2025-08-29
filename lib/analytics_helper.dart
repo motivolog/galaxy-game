@@ -1,31 +1,26 @@
-import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 
-/// Uygulama genelinde Analytics çağrıları için yardımcı sınıf.
-/// - Ekran takibi: screen()
-/// - Gezegen/oyun: planetOpened(), levelStart(), levelComplete()
-/// - Tıklama/CTA: tap()
-/// - Süre ölçümü: startTimer()/endTimer()
+/// Global Analytics helper
 class ALog {
   static final _a = FirebaseAnalytics.instance;
 
-  // ---- Temel ekran/gezegen olayları ----
-  static Future<void> screen(String name, {String? clazz}) =>
-      _a.logScreenView(screenName: name, screenClass: clazz ?? name);
+  // ---------- Screen ----------
+  static Future<void> screen(String name, {String? clazz}) async {
+    await _a.logScreenView(screenName: name, screenClass: clazz ?? name);
+    if (kDebugMode) print('[ALog] screen=$name');
+  }
 
+  // ---------- Planet / Level ----------
   static Future<void> planetOpened(String planet) =>
       _a.logEvent(name: 'planet_opened', parameters: {'planet': planet});
 
-  static Future<void> levelStart(
-      String game,
-      int level, {
-        String? difficulty,
-      }) =>
-      _a.logEvent(name: 'level_start', parameters: {
+  static Future<void> levelStart(String game, int level, {String? difficulty}) =>
+      _a.logEvent(name: 'level_start', parameters: _clean({
         'game': game,
         'level': level,
-        if (difficulty != null) 'difficulty': difficulty,
-      });
+        'difficulty': difficulty,
+      }));
 
   static Future<void> levelComplete(
       String game,
@@ -34,56 +29,85 @@ class ALog {
         required int mistakes,
         required int durationMs,
       }) =>
-      _a.logEvent(name: 'level_complete', parameters: {
+      _a.logEvent(name: 'level_complete', parameters: _clean({
         'game': game,
         'level': level,
         'score': score,
         'mistakes': mistakes,
         'duration_ms': durationMs,
-      });
+      }));
 
-  // ---- Tıklama/CTA ----
+  // ---------- CTA / Click ----------
   static Future<void> tap(String id, {String? place}) =>
-      _a.logEvent(name: 'cta_tap', parameters: {
-        'id': id, // örn: start_matching, play_sound, back_btn
-        if (place != null) 'place': place, // örn: intro, header, footer
-      });
+      _a.logEvent(name: 'cta_tap', parameters: _clean({
+        'id': id,            // e.g. start_matching, play_sound, back_btn
+        'place': place,      // e.g. intro, header, footer
+      }));
 
-  // ---- Ekranda kalma süresi ölçümü (Stopwatch + dispose) ----
+  // ---------- Generic Event ----------
+  static Future<void> e(String name, {Map<String, Object?> params = const {}}) =>
+      _a.logEvent(name: _safeEventName(name), parameters: _clean(params));
+
+  // ---------- User Properties ----------
+  static Future<void> setUserProperty(String name, String value) =>
+      _a.setUserProperty(name: name, value: value);
+
+  // ---------- Timers ----------
   static final Map<String, Stopwatch> _sw = {};
 
-  /// Bir ekran/oyun için süre ölçümünü başlat.
-  /// Örn: ALog.startTimer('screen:matchplanet')
+  /// Aynı key ile yeniden çağrılırsa reset edip tekrar başlatır.
   static void startTimer(String key) {
-    _sw.putIfAbsent(key, () => Stopwatch()).start();
+    final sw = _sw[key];
+    if (sw != null) {
+      sw
+        ..reset()
+        ..start();
+    } else {
+      _sw[key] = Stopwatch()..start();
+    }
   }
 
-  /// Ölçümü bitir ve `screen_time_ms` (veya verdiğin metric) event'i gönder.
-  /// `extra` ile ek parametreler (örn: {'planet':'match'}) geçebilirsin.
+  /// Ölçümü bitirir ve (default) 'screen_time_ms' adlı event yollar.
   static Future<void> endTimer(
       String key, {
         String metric = 'screen_time_ms',
         Map<String, Object?>? extra,
       }) async {
-    final s = _sw[key];
-    if (s == null) return;
-    s.stop();
-    final elapsed = s.elapsedMilliseconds;
-    _sw.remove(key);
+    final sw = _sw.remove(key);
+    if (sw == null) return;
+    sw.stop();
+    final elapsed = sw.elapsedMilliseconds;
 
-    // Tipi netleştirip ek parametreleri ekleyelim
-    final Map<String, Object> params = <String, Object>{
+    final params = _clean({
       'key': key,
       'elapsed_ms': elapsed,
-    };
-    if (extra != null) {
-      extra.forEach((k, v) {
-        if (v != null) params[k] = v;
-      });
-    }
-    await _a.logEvent(
-      name: metric,
-      parameters: params,
-    );
+      ...?extra,
+    });
+
+    await _a.logEvent(name: _safeEventName(metric), parameters: params);
+    if (kDebugMode) print('[ALog] $metric $params');
+  }
+
+  // ---------- Helpers ----------
+  static Map<String, Object> _clean(Map<String, Object?> src) {
+    final out = <String, Object>{};
+    src.forEach((k, v) {
+      if (v == null) return;
+      if (v is bool) {
+        out[k] = v ? 1 : 0;       // bool -> 0/1
+      } else if (v is num || v is String) {
+        out[k] = v;
+      } else {
+        out[k] = v.toString();    // güvenli fallback
+      }
+    });
+    return out;
+  }
+
+  static String _safeEventName(String name) {
+    // harf/rakam/alt_tire; boşluk & özel karakterleri alt_tire yap
+    final cleaned = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]+'), '_');
+    // boş kalmasın
+    return cleaned.isEmpty ? 'event' : cleaned;
   }
 }
