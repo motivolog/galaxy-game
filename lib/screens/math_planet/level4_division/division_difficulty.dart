@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'division_page.dart';
-import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
+import 'package:flutter_projects/analytics_helper.dart'; //  Analytics
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
+
 
 class DivisionDifficultyPage extends StatefulWidget {
   const DivisionDifficultyPage({super.key});
@@ -20,7 +22,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
-    // ✅ Analytics: ekran + süre ölçümü
+    // Analytics: ekran + süre ölçümü
     ALog.screen('math_div_difficulty');
     ALog.startTimer('screen:math_div_difficulty');
 
@@ -29,7 +31,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
 
   @override
   void dispose() {
-    // ✅ Analytics: ekranda geçirilen süreyi bitir
+    // Analytics: ekranda geçirilen süreyi bitir
     ALog.endTimer('screen:math_div_difficulty');
 
     _player.dispose();
@@ -92,7 +94,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            ALog.tap('back', place: 'div_difficulty'); // ✅ Analytics: geri
+            ALog.tap('back', place: 'div_difficulty'); //  Analytics: geri
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -160,7 +162,10 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
     }
 
     return Scaffold(
-      body: Stack(
+        body: AccessibleZoom(
+          persistKey: 'math_access_zoom',
+          showButton: false,
+          child: Stack(
         children: [
           Positioned.fill(
             child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
@@ -197,7 +202,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
                       SizedBox(height: verticalGapLarge),
 
                       buildBtn("Kolay", () async {
-                        ALog.tap('div_select_easy', place: 'div_difficulty'); // ✅
+                        ALog.tap('div_select_easy', place: 'div_difficulty');
                         await _sayThenGo('easy', () {
                           _start(context, difficulty: 'easy');
                         });
@@ -206,7 +211,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
                       SizedBox(height: verticalGap),
 
                       buildBtn("Orta", () async {
-                        ALog.tap('div_select_medium', place: 'div_difficulty'); // ✅
+                        ALog.tap('div_select_medium', place: 'div_difficulty');
                         await _sayThenGo('medium', () {
                           _start(context, difficulty: 'medium');
                         });
@@ -215,7 +220,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
                       SizedBox(height: verticalGap),
 
                       buildBtn("Zor", () async {
-                        ALog.tap('div_select_hard', place: 'div_difficulty'); // ✅
+                        ALog.tap('div_select_hard', place: 'div_difficulty');
                         await _sayThenGo('hard', () {
                           _start(context, difficulty: 'hard');
                         });
@@ -228,6 +233,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
           ),
         ],
       ),
+        ),
     );
   }
 }
