@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'addition_page.dart';
 import 'package:flutter_projects/analytics_helper.dart';
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class AdditionDifficultyPage extends StatefulWidget {
   const AdditionDifficultyPage({super.key});
@@ -99,7 +100,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            // ✅ Analytics: geri
+            //  Analytics: geri
             ALog.tap('back', place: 'math_difficulty');
 
             await _player.stop();
@@ -130,9 +131,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     final media = MediaQuery.of(context);
     final shortest = media.size.shortestSide;
     final isTablet = shortest >= 600;
-
     final scale = isTablet ? 1.8 : 1.0;
-
     final titleSize = (22.0 * scale).clamp(22.0, 48.0);
     final buttonHeight = (56.0 * scale).clamp(56.0, 100.0);
     final buttonTextSize = (16.0 * scale).clamp(16.0, 34.0);
@@ -142,7 +141,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     final maxContentWidth = isTablet ? 800.0 : 420.0;
     final horizontalPadding =
     EdgeInsets.symmetric(horizontal: isTablet ? 32 : 20);
-
     final ButtonStyle ghostBtnStyle = ElevatedButton.styleFrom(
       backgroundColor: Colors.white.withOpacity(0.15),
       foregroundColor: Colors.white,
@@ -176,12 +174,14 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     }
 
     return Scaffold(
-      body: Stack(
+        body: AccessibleZoom(
+          persistKey: 'math_access_zoom',
+          showButton: false,
+          child: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/planet3/bg_add.png',
-              fit: BoxFit.cover,
+              'assets/images/planet3/bg_add.png', fit: BoxFit.cover,
             ),
           ),
           SafeArea(
@@ -221,7 +221,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                       ),
                       SizedBox(height: verticalGapLarge),
 
-                      // ✅ Kolay
                       buildBtn("Kolay", () async {
                         // Analytics: seçim
                         ALog.tap('math_add_easy', place: 'math_difficulty');
@@ -250,7 +249,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
 
                       SizedBox(height: verticalGap),
 
-                      // ✅ Orta
                       buildBtn("Orta", () async {
                         ALog.tap('math_add_medium', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select',
@@ -269,7 +267,6 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
 
                       SizedBox(height: verticalGap),
 
-                      // ✅ Zor
                       buildBtn("Zor", () async {
                         ALog.tap('math_add_hard', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select',
@@ -293,6 +290,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
           ),
         ],
       ),
+        ),
     );
   }
 }

@@ -9,7 +9,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
 import 'package:flutter_projects/analytics_helper.dart';
-
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class AdditionLevelPage extends StatefulWidget {
   const AdditionLevelPage({
@@ -41,7 +41,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   final _rnd = Random();
   late _AdditionQuestion q;
   int correct = 0;
-  int wrong = 0; // ✅ yanlış sayacı
+  int wrong = 0;
   bool lockingUi = false;
   bool pulseHint = false;
   final AudioPlayer _fx = AudioPlayer();
@@ -64,14 +64,13 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   void initState() {
     super.initState();
 
-    // ✅ Mode girişi + süre başlat
     ALog.e('math_mode_enter', params: {'mode': 'add'});
     ALog.startTimer('math:add');
     _levelSW.start();
 
     q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
     _pickAssets();
-    _logQuestionStart(); // ✅ ilk soru
+    _logQuestionStart();
     _speakCurrentQuestion();
     _fx.setReleaseMode(ReleaseMode.stop);
   }
@@ -120,10 +119,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
       await _fx.stop();
     } catch (_) {}
     await TTSManager.instance.stop();
-
     final isRight = value == q.answer;
 
-    // ✅ cevap kaydı + attempt
     final attempt = (_attempts[_qid()] ?? 0) + 1;
     _attempts[_qid()] = attempt;
     ALog.e('math_answer', params: {
@@ -162,13 +159,13 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         if (widget.changeAssetsEveryQuestion) _pickAssets();
         lockingUi = false;
       });
-      _logQuestionStart(); // ✅ sıradaki soru başı
+      _logQuestionStart();
       TTSManager.instance.speakOnce(
         mathQuestionToSpeech(a: q.a, op: '+', b: q.b),
         id: _qid(),
       );
     } else {
-      wrong++; // ✅ yanlış sayaç
+      wrong++;
       HapticFeedback.mediumImpact();
       setState(() {
         pulseHint = true;
@@ -196,8 +193,6 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     try {
       await _fx.stop();
     } catch (_) {}
-
-    // ✅ tamamlanma + süre bitir
     final timeMs = _levelSW.elapsedMilliseconds;
     _levelSW.stop();
     ALog.e('math_level_complete', params: {
@@ -212,8 +207,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     _finished = true;
 
     await showCelebrationGalaxy(
-      context,
-      duration: const Duration(seconds: 4),
+      context, duration: const Duration(seconds: 4),
     );
 
     if (!mounted) return;
@@ -227,7 +221,6 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
 
   @override
   void dispose() {
-    // ✅ yarıda çıkış güvence
     if (!_finished && !_exitLogged) {
       final progressPct = ((correct / widget.targetCorrect) * 100).round();
       ALog.e('math_exit', params: {
@@ -251,19 +244,19 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     final titleFs = isTablet ? 56.0 : (size.width < 360 ? 30.0 : 38.0);
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: SafeArea(
+          child: Stack(
           children: [
             const SpaceBackground(),
             Positioned(
-              top: -2,
-              left: 1,
-              right: 8,
+              top: -2, left: 1, right: 8,
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () {
-                      // ✅ geri/çıkış logla
                       final progressPct =
                       ((correct / widget.targetCorrect) * 100).round();
                       ALog.tap('back', place: 'math_add');
@@ -327,24 +320,21 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                             ),
                             children: [
                               const TextSpan(
-                                  text: '  ',
-                                  style: TextStyle(color: Colors.white)),
+                                  text: '  ', style: TextStyle(color: Colors.white)),
                               TextSpan(
                                 text: '${q.a}',
                                 style:
                                 const TextStyle(color: Color(0xFF9AE6FF)),
                               ),
                               const TextSpan(
-                                  text: '  +  ',
-                                  style: TextStyle(color: Colors.white)),
+                                  text: '  +  ', style: TextStyle(color: Colors.white)),
                               TextSpan(
                                 text: '${q.b}',
                                 style:
                                 const TextStyle(color: Color(0xFFFF84B8)),
                               ),
                               const TextSpan(
-                                  text: '  =  ?',
-                                  style: TextStyle(color: Colors.white)),
+                                  text: '  =  ?', style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -389,17 +379,13 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
             ),
 
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+              left: 0, right: 0, bottom: 0,
               child: SafeArea(
                 minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
                 child: LayoutBuilder(
                   builder: (_, cons) {
-                    final btnH =
-                    isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
-                    final btnW =
-                    isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
+                    final btnH = isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
+                    final btnW = isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
                     final spacing = isTablet ? 20.0 : 14.0;
                     final fs = isTablet ? 32.0 : 24.0;
 
@@ -468,6 +454,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
