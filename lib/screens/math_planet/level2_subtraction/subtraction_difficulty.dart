@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'subtraction_page.dart' show SubtractionLevelPage;
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
 
 class SubtractionDifficultyPage extends StatefulWidget {
   const SubtractionDifficultyPage({super.key});
@@ -26,6 +27,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
     _player.dispose();
     super.dispose();
   }
+
   Future<void> _playScreenIntro() async {
     try {
       await _player.stop();
@@ -34,6 +36,7 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
       await completed.timeout(const Duration(seconds: 6));
     } catch (_) {}
   }
+
   Future<void> _playCueAndWait(String cue) async {
     final path = switch (cue) {
       'easy' => 'audio/planet3/easy.mp3',
@@ -84,34 +87,42 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
       button: true,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(borderRadius: BorderRadius.circular(size),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(size),
           onTap: () async {
+            // ✅ Analytics: geri
+            ALog.tap('back', place: 'math_difficulty');
+
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
             Navigator.pop(context);
           },
-          child: Ink(width: size, height: size,
+          child: Ink(
+            width: size,
+            height: size,
             decoration: BoxDecoration(
-              shape: BoxShape.circle, color: Colors.white.withOpacity(0.15),
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.15),
               border: Border.all(color: Colors.white70, width: 2),
             ),
             child: Center(
-              child: Icon(Icons.arrow_back_rounded, color: Colors.white,
-                size: iconSize,
-              ),
+              child: Icon(Icons.arrow_back_rounded,
+                  color: Colors.white, size: iconSize),
             ),
           ),
         ),
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final shortest = media.size.shortestSide;
     final isTablet = shortest >= 600;
     final scale = isTablet ? 1.8 : 1.0;
+
     final titleSize = (22.0 * scale).clamp(22.0, 48.0);
     final buttonHeight = (56.0 * scale).clamp(56.0, 100.0);
     final buttonTextSize = (16.0 * scale).clamp(16.0, 34.0);
@@ -143,7 +154,9 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
             await _player.stop();
             await onTap();
           },
-          child: Text(label, style: TextStyle(
+          child: Text(
+            label,
+            style: TextStyle(
               fontSize: buttonTextSize,
               fontWeight: FontWeight.w600,
             ),
@@ -156,7 +169,9 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover,
+            child: Image.asset(
+              'assets/images/planet3/bg_add.png',
+              fit: BoxFit.cover,
             ),
           ),
           SafeArea(
@@ -181,30 +196,55 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
                         "Çıkarma - Zorluk Seviyesi",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: titleSize, fontWeight: FontWeight.w700,
-                          color: Colors.white, height: 1.2,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.2,
                           shadows: const [
-                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54,
+                            Shadow(
+                              offset: Offset(0, 1),
+                              blurRadius: 2,
+                              color: Colors.black54,
                             ),
                           ],
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
+
+                      // ✅ Kolay
                       buildBtn("Kolay", () async {
+                        ALog.tap('math_sub_easy', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'sub', 'difficulty': 'easy'});
+
                         await _sayThenGo('easy', () {
-                          _start(context, maxA: 10, maxB: 10,);
+                          _start(context, maxA: 10, maxB: 10);
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Orta
                       buildBtn("Orta", () async {
+                        ALog.tap('math_sub_medium', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'sub', 'difficulty': 'medium'});
+
                         await _sayThenGo('medium', () {
-                          _start(context, maxA: 50, maxB: 50,);
+                          _start(context, maxA: 50, maxB: 50);
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Zor
                       buildBtn("Zor", () async {
+                        ALog.tap('math_sub_hard', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'sub', 'difficulty': 'hard'});
+
                         await _sayThenGo('hard', () {
-                          _start(context, maxA: 100, maxB: 100,);
+                          _start(context, maxA: 100, maxB: 100);
                         });
                       }),
                     ],

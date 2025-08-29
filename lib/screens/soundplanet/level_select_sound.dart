@@ -4,6 +4,7 @@ import 'level1.dart';
 import 'level2.dart';
 import 'level3.dart';
 import 'package:lottie/lottie.dart';
+import '../../analytics_helper.dart'; // ✅ Analytics
 
 class LevelSelectSoundScreen extends StatefulWidget {
   final AudioPlayer incomingPlayer;
@@ -57,7 +58,11 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
               left: 10,
               child: GestureDetector(
                 onTap: () async {
+                  // ✅ Analytics: geri butonu
+                  ALog.tap('back', place: 'level_select_sound');
+
                   await widget.incomingPlayer.stop();
+                  if (!mounted) return;
                   Navigator.pop(context);
                 },
                 child: Lottie.asset(
@@ -79,15 +84,20 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       label: 'Seviye 1: Hayvan Sesleri',
                       imagePath: 'assets/images/planet_animal.png',
                       onTap: () async {
+                        // ✅ Analytics: kategori seçimi
+                        ALog.tap('sound_animals', place: 'level_select_sound');
+                        await ALog.e('sound_category_enter', params: {'category': 'animals'});
+                        ALog.startTimer('sound:animals');
+
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
                         await player.play(AssetSource('audio/animal_yonlendirme.mp3'));
                         await player.onPlayerComplete.first;
+
+                        if (!mounted) return;
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const Level1(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const Level1()),
                         );
                       },
                       size: buttonSize,
@@ -97,15 +107,20 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       label: 'Seviye 2: Taşıt Sesleri',
                       imagePath: 'assets/images/vehicleplanet.png',
                       onTap: () async {
+                        // ✅ Analytics: kategori seçimi
+                        ALog.tap('sound_vehicles', place: 'level_select_sound');
+                        await ALog.e('sound_category_enter', params: {'category': 'vehicles'});
+                        ALog.startTimer('sound:vehicles');
+
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
                         await player.play(AssetSource('audio/vehicle_yonlendirme.mp3'));
                         await player.onPlayerComplete.first;
+
+                        if (!mounted) return;
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const Level2(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const Level2()),
                         );
                       },
                       size: buttonSize,
@@ -115,15 +130,20 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
                       label: 'Seviye 3: Müzik Aletleri',
                       imagePath: 'assets/images/planetiki.png',
                       onTap: () async {
+                        // ✅ Analytics: kategori seçimi
+                        ALog.tap('sound_instruments', place: 'level_select_sound');
+                        await ALog.e('sound_category_enter', params: {'category': 'instruments'});
+                        ALog.startTimer('sound:instruments');
+
                         await widget.incomingPlayer.stop();
                         final player = AudioPlayer();
                         await player.play(AssetSource('audio/intrument_yonlendirme.mp3'));
                         await player.onPlayerComplete.first;
+
+                        if (!mounted) return;
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const Level3(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const Level3()),
                         );
                       },
                       size: buttonSize,
@@ -150,16 +170,15 @@ class _LevelSelectSoundScreenState extends State<LevelSelectSoundScreen> {
       button: true,
       child: InkWell(
         onTap: onTap,
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain,
-            ),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Image.asset(
+            imagePath,
+            fit: BoxFit.contain,
           ),
         ),
-
+      ),
     );
   }
 }

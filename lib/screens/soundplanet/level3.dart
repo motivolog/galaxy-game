@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'instrument_questions.dart';
+import '../../analytics_helper.dart'; // ✅ Analytics
 
 class Level3 extends StatefulWidget {
   const Level3({super.key});
@@ -13,17 +14,28 @@ class Level3 extends StatefulWidget {
 
 class _Level3State extends State<Level3> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  late final AudioPlayer _bgPlayer;
+  late final AudioPlayer _bgPlayer; // ✅ initState'de başlatılacak
   AudioPlayer? _congratsPlayer;
 
   int _currentQuestionIndex = 0;
   bool _answered = false;
   final Map<int, List<String>> _shuffledOptionsMap = {};
 
+  // ✅ Analytics sayaçları
+  final Map<int, int> _attempts = {};
+  int _correctCount = 0;
+  int _wrongCount = 0;
+  bool _finished = false;
+  final Stopwatch _levelSW = Stopwatch();
+
   @override
   void initState() {
     super.initState();
+    _bgPlayer = AudioPlayer(); // ✅ null hatasını önle
+    _levelSW.start();          // ✅ level süresi
+
     _generateShuffledOptionsForIndex(_currentQuestionIndex);
+    _logQuestionStart();       // ✅ ilk soru
     _playCurrentSound();
   }
 
@@ -35,6 +47,19 @@ class _Level3State extends State<Level3> {
     }
   }
 
+  String _currentQId() {
+    final soundPath = instrumentQuestions[_currentQuestionIndex]['sound'] as String;
+    return p.basenameWithoutExtension(soundPath);
+  }
+
+  void _logQuestionStart() {
+    ALog.e('sound_question_start', params: {
+      'category': 'instruments',
+      'q_id': _currentQId(),
+    });
+    _attempts[_currentQuestionIndex] = 0;
+  }
+
   Future<void> _playCurrentSound() async {
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
@@ -43,6 +68,12 @@ class _Level3State extends State<Level3> {
   }
 
   Future<void> _playHint() async {
+    // ✅ hint (tekrar dinleme) kaydı
+    ALog.e('sound_hint_used', params: {
+      'category': 'instruments',
+      'q_id': _currentQId(),
+    });
+
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
       UrlSource(instrumentQuestions[_currentQuestionIndex]['hint']),
@@ -57,7 +88,21 @@ class _Level3State extends State<Level3> {
 
     await _sfxPlayer.stop();
 
-    if (p.basename(selectedImage) == p.basename(correct)) {
+    final isCorrect = p.basename(selectedImage) == p.basename(correct);
+
+    // ✅ cevap + deneme sayısı
+    final attempt = (_attempts[_currentQuestionIndex] ?? 0) + 1;
+    _attempts[_currentQuestionIndex] = attempt;
+
+    ALog.e('sound_answer', params: {
+      'category': 'instruments',
+      'q_id': _currentQId(),
+      'correct': isCorrect ? 1 : 0,
+      'attempt': attempt,
+    });
+
+    if (isCorrect) {
+      _correctCount++;
       _answered = true;
 
       await _sfxPlayer.play(AssetSource(q['correct_sound']));
@@ -70,13 +115,29 @@ class _Level3State extends State<Level3> {
           _answered = false;
           _generateShuffledOptionsForIndex(_currentQuestionIndex);
         });
+        _logQuestionStart(); // ✅ sıradaki soru
         await _playCurrentSound();
-
       } else {
+        // ✅ level bitti
+        final timeMs = _levelSW.elapsedMilliseconds;
+        _levelSW.stop();
+
+        ALog.e('sound_level_complete', params: {
+          'category': 'instruments',
+          'time_ms': timeMs,
+          'correct_count': _correctCount,
+          'wrong_count': _wrongCount,
+        });
+
+        // level_select_sound.dart'ta başlatılan kategori zamanlayıcısını kapat
+        ALog.endTimer('sound:instruments', extra: {'category': 'instruments'});
+
+        _finished = true;
         await _showCongratulations();
         if (mounted) Navigator.of(context).pop();
       }
     } else {
+      _wrongCount++;
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
     }
@@ -116,6 +177,23 @@ class _Level3State extends State<Level3> {
 
   @override
   void dispose() {
+    // ✅ yarıda çıkış
+    if (!_finished) {
+      final total = instrumentQuestions.length;
+      int completed = _currentQuestionIndex + (_answered ? 1 : 0);
+      if (completed > total) completed = total;
+      final progressPct = ((completed / total) * 100).round();
+
+      ALog.e('sound_exit', params: {
+        'category': 'instruments',
+        'progress_pct': progressPct,
+        'reason': 'back',
+      });
+
+      ALog.endTimer('sound:instruments', extra: {'category': 'instruments'});
+      _levelSW.stop();
+    }
+
     _sfxPlayer.dispose();
     _bgPlayer.stop();
     _bgPlayer.dispose();
@@ -177,7 +255,7 @@ class _Level3State extends State<Level3> {
               top: 20,
               right: 20,
               child: GestureDetector(
-                onTap: _playHint,
+                onTap: _playHint, // ✅ hint (url)
                 child: const Icon(Icons.info_outline, size: 45, color: Colors.orange),
               ),
             ),
@@ -192,10 +270,15 @@ class _Level3State extends State<Level3> {
                   if (_currentQuestionIndex > 0)
                     GestureDetector(
                       onTap: () {
+                        // (opsiyonel) geri soru
+                        ALog.tap('sound_prev_question', place: 'instruments');
+
                         setState(() {
                           _currentQuestionIndex--;
                           _answered = false;
                         });
+                        _generateShuffledOptionsForIndex(_currentQuestionIndex);
+                        _logQuestionStart(); // ✅ geri gidince yeni soru
                         _playCurrentSound();
                       },
                       child: Image.asset(
@@ -208,7 +291,14 @@ class _Level3State extends State<Level3> {
                     const SizedBox(width: 60),
 
                   GestureDetector(
-                    onTap: _playCurrentSound,
+                    onTap: () async {
+                      // ✅ tekrar dinleme: hint gibi say
+                      ALog.e('sound_hint_used', params: {
+                        'category': 'instruments',
+                        'q_id': _currentQId(),
+                      });
+                      await _playCurrentSound();
+                    },
                     child: Image.asset(
                       'assets/images/planet2/sound_button.png',
                       width: 60,

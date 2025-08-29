@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'multiplication_page.dart';
 import 'multiplication_question_generator.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
 
 class MultiplicationDifficultyPage extends StatefulWidget {
   const MultiplicationDifficultyPage({super.key});
@@ -90,13 +91,15 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
+            ALog.tap('back', place: 'math_difficulty'); // ✅
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
             Navigator.pop(context);
           },
           child: Ink(
-            width: size, height: size,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withOpacity(0.15),
@@ -141,16 +144,11 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         height: buttonHeight,
         child: ElevatedButton(
           style: ghostBtnStyle,
-          onPressed: _busy
-              ? null
-              : () async {
+          onPressed: _busy ? null : () async {
             await _player.stop();
             await onTap();
           },
-          child: Text(
-            label,
-            style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w600),
-          ),
+          child: Text(label, style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w600)),
         ),
       );
     }
@@ -159,10 +157,7 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/planet3/bg_add.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
           ),
           SafeArea(
             child: Align(
@@ -173,7 +168,6 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
               ),
             ),
           ),
-
           SafeArea(
             child: Center(
               child: Padding(
@@ -187,27 +181,43 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
                         "Çarpma - Zorluk Seviyesi",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: titleSize, fontWeight: FontWeight.w700,
-                          color: Colors.white, height: 1.2,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.2,
                           shadows: const [
                             Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
                           ],
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
+
+                      // ✅ Kolay
                       buildBtn("Kolay", () async {
+                        ALog.tap('math_mul_easy', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'easy'});
                         await _sayThenGo('easy', () {
                           _start(context, difficulty: Difficulty.easy, targetCorrect: 10);
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Orta
                       buildBtn("Orta", () async {
+                        ALog.tap('math_mul_medium', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'medium'});
                         await _sayThenGo('medium', () {
                           _start(context, difficulty: Difficulty.medium, targetCorrect: 10);
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Zor
                       buildBtn("Zor", () async {
+                        ALog.tap('math_mul_hard', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'hard'});
                         await _sayThenGo('hard', () {
                           _start(context, difficulty: Difficulty.hard, targetCorrect: 10);
                         });

@@ -7,6 +7,7 @@ import 'level2_subtraction/subtraction_difficulty.dart';
 import 'level3_multiplication/multiplication_difficulty.dart';
 import 'level4_division/division_difficulty.dart';
 import 'level5_quiz/level5_meteor_quiz_page.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // <-- ALog
 
 class LevelSelectMathScreen extends StatefulWidget {
   const LevelSelectMathScreen({super.key, this.incomingPlayer});
@@ -26,12 +27,21 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     _player = AudioPlayer()
       ..setReleaseMode(ReleaseMode.stop)
       ..setPlayerMode(PlayerMode.mediaPlayer);
+
+    // Analytics: ekran + gezegen + süre sayacı
+    ALog.screen('math_level_select', clazz: 'LevelSelectMathScreen');
+    ALog.planetOpened('math');
+    ALog.startTimer('screen:math_level_select');
   }
 
   @override
   void dispose() {
     _player.stop();
     _player.dispose();
+
+    // Analytics: ekranda kalma süresi
+    ALog.endTimer('screen:math_level_select', metric: 'screen_time_ms');
+
     super.dispose();
   }
 
@@ -47,11 +57,19 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     }
   }
 
-  Future<void> _go(Widget page, {String? soundAsset}) async {
+  Future<void> _go(
+      Widget page, {
+        String? soundAsset,
+        required String tapId, // <-- analytics id
+      }) async {
     if (_navigating) return;
     _navigating = true;
 
     HapticFeedback.selectionClick();
+
+    // Analytics: buton tıklama
+    ALog.tap(tapId, place: 'math_level_select');
+
     await _playTapSoundAndWait(soundAsset);
 
     if (!mounted) {
@@ -64,6 +82,9 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
 
   Future<void> _onBack() async {
     HapticFeedback.selectionClick();
+    // Analytics: geri
+    ALog.tap('back_btn', place: 'math_level_select');
+
     try {
       await widget.incomingPlayer?.stop();
       await _player.stop();
@@ -153,6 +174,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                         onTap: () => _go(
                           const AdditionDifficultyPage(),
                           soundAsset: 'audio/planet3/plus.mp3',
+                          tapId: 'open_addition',
                         ),
                       ),
                       SizedBox(width: gapW),
@@ -162,6 +184,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                         onTap: () => _go(
                           const SubtractionDifficultyPage(),
                           soundAsset: 'audio/planet3/minus.mp3',
+                          tapId: 'open_subtraction',
                         ),
                       ),
                     ],
@@ -175,6 +198,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                         onTap: () => _go(
                           const MultiplicationDifficultyPage(),
                           soundAsset: 'audio/planet3/multiplication.mp3',
+                          tapId: 'open_multiplication',
                         ),
                       ),
                       SizedBox(width: gapW),
@@ -184,6 +208,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                         onTap: () => _go(
                           const DivisionDifficultyPage(),
                           soundAsset: 'audio/planet3/divide.mp3',
+                          tapId: 'open_division',
                         ),
                       ),
                     ],
@@ -195,6 +220,7 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
                     onTap: () => _go(
                       const Level5MeteorQuizPage(),
                       soundAsset: 'audio/planet3/quiz.mp3',
+                      tapId: 'open_quiz',
                     ),
                   ),
                 ],

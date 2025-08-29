@@ -8,6 +8,8 @@ import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
+import 'package:flutter_projects/analytics_helper.dart';
+
 
 class AdditionLevelPage extends StatefulWidget {
   const AdditionLevelPage({
@@ -39,12 +41,19 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   final _rnd = Random();
   late _AdditionQuestion q;
   int correct = 0;
+  int wrong = 0; // ✅ yanlış sayacı
   bool lockingUi = false;
   bool pulseHint = false;
   final AudioPlayer _fx = AudioPlayer();
   int? _shakeIdx;
   int _shakeKey = 0;
   int _tapSeq = 0;
+
+  // ✅ analytics yardımcıları
+  final Stopwatch _levelSW = Stopwatch();
+  final Map<String, int> _attempts = {}; // q_id -> attempt
+  bool _finished = false;
+  bool _exitLogged = false;
 
   late String _leftAsset;
   late String _rightAsset;
@@ -54,8 +63,15 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   @override
   void initState() {
     super.initState();
+
+    // ✅ Mode girişi + süre başlat
+    ALog.e('math_mode_enter', params: {'mode': 'add'});
+    ALog.startTimer('math:add');
+    _levelSW.start();
+
     q = _AdditionQuestion.generate(_rnd, widget.maxA, widget.maxB);
     _pickAssets();
+    _logQuestionStart(); // ✅ ilk soru
     _speakCurrentQuestion();
     _fx.setReleaseMode(ReleaseMode.stop);
   }
@@ -77,23 +93,48 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
     if (widget.distinctSides && widget.objectAssets.length > 1) {
       String candidate;
       do {
-        candidate =
-        widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
+        candidate = widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
       } while (candidate == _leftAsset);
       _rightAsset = candidate;
     } else {
-      _rightAsset =
-      widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
+      _rightAsset = widget.objectAssets[_rnd.nextInt(widget.objectAssets.length)];
     }
+  }
+
+  String _qid() => '${q.a}+${q.b}';
+
+  void _logQuestionStart() {
+    _attempts[_qid()] = 0;
+    ALog.e('math_question', params: {
+      'mode': 'add',
+      'a': q.a,
+      'b': q.b,
+      'op': '+',
+    });
   }
 
   Future<void> _onPick(int idx, int value) async {
     if (lockingUi) return;
     final int seq = ++_tapSeq;
-    try { await _fx.stop(); } catch (_) {}
+    try {
+      await _fx.stop();
+    } catch (_) {}
     await TTSManager.instance.stop();
 
     final isRight = value == q.answer;
+
+    // ✅ cevap kaydı + attempt
+    final attempt = (_attempts[_qid()] ?? 0) + 1;
+    _attempts[_qid()] = attempt;
+    ALog.e('math_answer', params: {
+      'mode': 'add',
+      'a': q.a,
+      'b': q.b,
+      'op': '+',
+      'user': value,
+      'correct': isRight ? 1 : 0,
+      'attempt': attempt,
+    });
 
     if (isRight) {
       setState(() {
@@ -121,11 +162,13 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         if (widget.changeAssetsEveryQuestion) _pickAssets();
         lockingUi = false;
       });
+      _logQuestionStart(); // ✅ sıradaki soru başı
       TTSManager.instance.speakOnce(
         mathQuestionToSpeech(a: q.a, op: '+', b: q.b),
-        id: '${q.a}+${q.b}',
+        id: _qid(),
       );
     } else {
+      wrong++; // ✅ yanlış sayaç
       HapticFeedback.mediumImpact();
       setState(() {
         pulseHint = true;
@@ -150,10 +193,27 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
 
     if (!mounted) return;
     await TTSManager.instance.stop();
-    try { await _fx.stop(); } catch (_) {}
+    try {
+      await _fx.stop();
+    } catch (_) {}
+
+    // ✅ tamamlanma + süre bitir
+    final timeMs = _levelSW.elapsedMilliseconds;
+    _levelSW.stop();
+    ALog.e('math_level_complete', params: {
+      'mode': 'add',
+      'time_ms': timeMs,
+      'q_total': widget.targetCorrect,
+      'q_correct': correct,
+      'q_wrong': wrong,
+    });
+    ALog.endTimer('math:add', extra: {'mode': 'add'});
+
+    _finished = true;
 
     await showCelebrationGalaxy(
-      context, duration: const Duration(seconds: 4),
+      context,
+      duration: const Duration(seconds: 4),
     );
 
     if (!mounted) return;
@@ -162,16 +222,27 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
 
   void _speakCurrentQuestion() {
     final speech = mathQuestionToSpeech(a: q.a, op: '+', b: q.b);
-    final qid = '${q.a}+${q.b}';
-    TTSManager.instance.speakOnce(speech, id: qid);
+    TTSManager.instance.speakOnce(speech, id: _qid());
   }
 
   @override
   void dispose() {
+    // ✅ yarıda çıkış güvence
+    if (!_finished && !_exitLogged) {
+      final progressPct = ((correct / widget.targetCorrect) * 100).round();
+      ALog.e('math_exit', params: {
+        'mode': 'add',
+        'progress_pct': progressPct,
+        'reason': 'dispose',
+      });
+      ALog.endTimer('math:add', extra: {'mode': 'add'});
+    }
+
     TTSManager.instance.stop();
     _fx.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -185,11 +256,27 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
           children: [
             const SpaceBackground(),
             Positioned(
-              top: -2, left: 1, right: 8,
+              top: -2,
+              left: 1,
+              right: 8,
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () {
+                      // ✅ geri/çıkış logla
+                      final progressPct =
+                      ((correct / widget.targetCorrect) * 100).round();
+                      ALog.tap('back', place: 'math_add');
+                      ALog.e('math_exit', params: {
+                        'mode': 'add',
+                        'progress_pct': progressPct,
+                        'reason': 'back',
+                      });
+                      ALog.endTimer('math:add', extra: {'mode': 'add'});
+                      _exitLogged = true;
+
+                      Navigator.pop(context, false);
+                    },
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   Expanded(
@@ -240,17 +327,24 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                             ),
                             children: [
                               const TextSpan(
-                                  text: '  ', style: TextStyle(color: Colors.white)),
+                                  text: '  ',
+                                  style: TextStyle(color: Colors.white)),
                               TextSpan(
-                                text: '${q.a}', style: const TextStyle(color: Color(0xFF9AE6FF)),
+                                text: '${q.a}',
+                                style:
+                                const TextStyle(color: Color(0xFF9AE6FF)),
                               ),
                               const TextSpan(
-                                  text: '  +  ', style: TextStyle(color: Colors.white)),
+                                  text: '  +  ',
+                                  style: TextStyle(color: Colors.white)),
                               TextSpan(
-                                text: '${q.b}', style: const TextStyle(color: Color(0xFFFF84B8)),
+                                text: '${q.b}',
+                                style:
+                                const TextStyle(color: Color(0xFFFF84B8)),
                               ),
                               const TextSpan(
-                                  text: '  =  ?', style: TextStyle(color: Colors.white)),
+                                  text: '  =  ?',
+                                  style: TextStyle(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -294,9 +388,10 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
               ),
             ),
 
-
             Positioned(
-              left: 0, right: 0, bottom: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: SafeArea(
                 minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
                 child: LayoutBuilder(
@@ -317,8 +412,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.24),
                           borderRadius: BorderRadius.circular(16),
-                          border:
-                          Border.all(color: Colors.white.withOpacity(0.05)),
+                          border: Border.all(
+                              color: Colors.white.withOpacity(0.05)),
                         ),
                         child: Wrap(
                           alignment: WrapAlignment.center,

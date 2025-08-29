@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'question.dart';
+import '../../analytics_helper.dart'; // ✅ Analytics
 
 class Level1 extends StatefulWidget {
   const Level1({super.key});
@@ -20,21 +21,50 @@ class _Level1State extends State<Level1> {
   bool _answered = false;
   final Map<int, List<String>> _shuffledOptionsMap = {};
 
+  // ✅ Analytics yardımcı sayaçlar
+  final Map<int, int> _attempts = {};      // soru bazlı deneme sayısı
+  int _correctCount = 0;
+  int _wrongCount = 0;
+  bool _finished = false;
+  final Stopwatch _levelSW = Stopwatch();  // level süresi (ms) için
+
   @override
   void initState() {
     super.initState();
+    _levelSW.start(); // ✅ Level süresi başlat
+
     _generateShuffledOptionsForIndex(_currentQuestionIndex);
+    _logQuestionStart(); // ✅ İlk soru başladı
     _playCurrentSoundWithOptionalPrompt();
   }
+
   void _generateShuffledOptionsForIndex(int index) {
     if (_shuffledOptionsMap.containsKey(index)) return;
     final rawOptions = (soundQuestions[index]['options'] as List).cast<String>();
     final shuffled = List<String>.from(rawOptions)..shuffle();
     _shuffledOptionsMap[index] = shuffled;
   }
+
+  String _currentQId() {
+    // ✅ Soru kimliği: ses dosyasının adı
+    final soundUrl = soundQuestions[_currentQuestionIndex]['sound'] as String;
+    return p.basenameWithoutExtension(soundUrl);
+  }
+
+  void _logQuestionStart() {
+    // ✅ Yeni soru başladığında
+    ALog.e('sound_question_start', params: {
+      'category': 'animals',
+      'q_id': _currentQId(),
+    });
+    // soru için deneme sayacını sıfırlama
+    _attempts[_currentQuestionIndex] = 0;
+  }
+
   Future<void> _playCurrentSoundWithOptionalPrompt() async {
     await _promptPlayer.stop();
     await _sfxPlayer.stop();
+
     final soundUrl = soundQuestions[_currentQuestionIndex]['sound'] as String;
     await _sfxPlayer.play(UrlSource(soundUrl));
 
@@ -55,10 +85,21 @@ class _Level1State extends State<Level1> {
     await _promptPlayer.stop();
     await _sfxPlayer.stop();
 
-    final isCorrect =
-        p.basename(selectedImagePath) == p.basename(correct);
+    final isCorrect = p.basename(selectedImagePath) == p.basename(correct);
+
+    // ✅ Deneme sayısı + cevap olayı
+    final attempt = (_attempts[_currentQuestionIndex] ?? 0) + 1;
+    _attempts[_currentQuestionIndex] = attempt;
+
+    ALog.e('sound_answer', params: {
+      'category': 'animals',
+      'q_id': _currentQId(),
+      'correct': isCorrect ? 1 : 0,
+      'attempt': attempt,
+    });
 
     if (isCorrect) {
+      _correctCount++;
       setState(() => _answered = true);
 
       final correctSfx = q['correct_sound'] as String?;
@@ -76,12 +117,29 @@ class _Level1State extends State<Level1> {
           _answered = false;
         });
         _generateShuffledOptionsForIndex(_currentQuestionIndex);
+        _logQuestionStart(); // ✅ sıradaki soru
         await _playCurrentSoundWithOptionalPrompt();
       } else {
+        // ✅ Level bitti
+        final timeMs = _levelSW.elapsedMilliseconds;
+        _levelSW.stop();
+
+        ALog.e('sound_level_complete', params: {
+          'category': 'animals',
+          'time_ms': timeMs,
+          'correct_count': _correctCount,
+          'wrong_count': _wrongCount,
+        });
+
+        // category timer'ını (level_select_sound'da başlatıldıysa) kapat
+        ALog.endTimer('sound:animals', extra: {'category': 'animals'});
+
+        _finished = true;
         await _showCongratulations();
         if (mounted) Navigator.of(context).pop();
       }
     } else {
+      _wrongCount++;
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
     }
@@ -123,6 +181,24 @@ class _Level1State extends State<Level1> {
 
   @override
   void dispose() {
+    // ✅ Yarıda çıkış senaryosu
+    if (!_finished) {
+      final total = soundQuestions.length;
+      int completed = _currentQuestionIndex + (_answered ? 1 : 0);
+      if (completed > total) completed = total;
+      final progressPct = ((completed / total) * 100).round();
+
+      ALog.e('sound_exit', params: {
+        'category': 'animals',
+        'progress_pct': progressPct,
+        'reason': 'back',
+      });
+
+      // Category timer açıksa kapat
+      ALog.endTimer('sound:animals', extra: {'category': 'animals'});
+      _levelSW.stop();
+    }
+
     _sfxPlayer.dispose();
     _promptPlayer.stop();
     _promptPlayer.dispose();
@@ -189,6 +265,7 @@ class _Level1State extends State<Level1> {
               ),
             ),
 
+            // ✅ Alt çubuk: geri soru / tekrar dinle (hint)
             Positioned(
               bottom: 24,
               left: 0,
@@ -200,10 +277,15 @@ class _Level1State extends State<Level1> {
                   if (_currentQuestionIndex > 0)
                     GestureDetector(
                       onTap: () async {
+                        // (isteğe bağlı) navigasyon takibi
+                        ALog.tap('sound_prev_question', place: 'animals');
+
                         setState(() {
                           _currentQuestionIndex--;
                           _answered = false;
                         });
+                        _generateShuffledOptionsForIndex(_currentQuestionIndex);
+                        _logQuestionStart(); // ✅ geri gidince yeni soru başlangıcı
                         await _playCurrentSoundWithOptionalPrompt();
                       },
                       child: Image.asset(
@@ -216,7 +298,14 @@ class _Level1State extends State<Level1> {
                     const SizedBox(width: 55),
 
                   GestureDetector(
-                    onTap: _playCurrentSoundWithOptionalPrompt,
+                    onTap: () async {
+                      // ✅ hint olarak sayalım (tekrar dinle)
+                      ALog.e('sound_hint_used', params: {
+                        'category': 'animals',
+                        'q_id': _currentQId(),
+                      });
+                      await _playCurrentSoundWithOptionalPrompt();
+                    },
                     child: Image.asset(
                       'assets/images/planet2/sound_button.png',
                       width: 60,

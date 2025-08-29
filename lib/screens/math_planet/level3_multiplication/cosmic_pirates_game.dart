@@ -5,6 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'multiplication_question_generator.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics eklendi
 
 class Monster extends SpriteComponent {
   Monster({
@@ -37,7 +38,7 @@ class PiratesMultiplyGame extends FlameGame {
     required this.onFinished,
     this.onNewQuestion,
     this.onCorrectAnswer,
-    this.onWrongAnswer,                 
+    this.onWrongAnswer,
     double? worldScale,
     this.scaleSpeedWithWorld = false,
   }) : worldScaleOverride = worldScale;
@@ -126,6 +127,13 @@ class PiratesMultiplyGame extends FlameGame {
     final m = monster;
     if (state == QuizState.presenting && m != null && m.isOutOfScreen) {
       lives = (lives - 1).clamp(0, 3);
+      // ✅ Can kaybı: canavar kaçırıldı
+      ALog.e('math_life_lost', params: {
+        'mode': 'mul',
+        'reason': 'missed',
+        'lives_left': lives,
+      });
+
       if (lives <= 0) {
         _triggerGameOver();
       } else {
@@ -166,6 +174,7 @@ class PiratesMultiplyGame extends FlameGame {
     );
     add(monster!);
   }
+
   Future<void> onAnswerSelected(int value) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
 
@@ -201,6 +210,13 @@ class PiratesMultiplyGame extends FlameGame {
       }
 
       lives = (lives - 1).clamp(0, 3);
+      // ✅ Can kaybı: yanlış cevap
+      ALog.e('math_life_lost', params: {
+        'mode': 'mul',
+        'reason': 'wrong',
+        'lives_left': lives,
+      });
+
       if (lives <= 0) {
         _triggerGameOver();
         return;
@@ -252,7 +268,16 @@ class PiratesMultiplyGame extends FlameGame {
     pauseEngine();
     overlays.add('gameover');
     onUiRefresh();
+
+    // ✅ Game over olayı
+    ALog.e('math_gameover', params: {
+      'mode': 'mul',
+      'correct': correctCount,
+      'target': targetCorrect,
+      'lives_left': lives,
+    });
   }
+
   void restart() {
     correctCount = 0;
     lives = 3;

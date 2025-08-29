@@ -10,6 +10,7 @@ import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
 
 class SubtractionLevelPage extends StatefulWidget {
   const SubtractionLevelPage({
@@ -32,12 +33,20 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   final Random _random = Random();
   late SubtractionQuestion question;
   int correct = 0;
+  int wrong = 0; // ✅ yanlış sayaç
   bool lockingUi = false;
   bool pulseHint = false;
   int? shakeIndex;
   int? popIndex;
   final AudioPlayer _fx = AudioPlayer();
   int _tapSeq = 0;
+
+  // ✅ analytics yardımcıları
+  final Stopwatch _levelSW = Stopwatch();
+  final Map<String, int> _attempts = {}; // q_id -> attempt sayısı
+  bool _finished = false;
+  bool _exitLogged = false;
+  bool _hintLoggedForThisQ = false; // aynı soru için tek kez logla
 
   AnimationController? _qmPulseCtrl;
   AnimationController? _rewardCtrl;
@@ -57,14 +66,45 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   @override
   void initState() {
     super.initState();
+
+    // ✅ mode girişi + süre başlat
+    ALog.e('math_mode_enter', params: {'mode': 'sub'});
+    ALog.startTimer('math:sub');
+    _levelSW.start();
+
     question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+    _logQuestionStart(); // ✅ ilk soru
     _ensureControllers();
     _fx.setReleaseMode(ReleaseMode.stop);
     Future.microtask(_speakCurrentQuestion);
   }
 
+  String _qid() => '${question.a}-${question.b}';
+
+  void _logQuestionStart() {
+    _attempts[_qid()] = 0;
+    _hintLoggedForThisQ = false;
+    ALog.e('math_question', params: {
+      'mode': 'sub',
+      'a': question.a,
+      'b': question.b,
+      'op': '-',
+    });
+  }
+
   @override
   void dispose() {
+    // ✅ yarıda çıkış güvence
+    if (!_finished && !_exitLogged) {
+      final progressPct = ((correct / widget.targetCorrect) * 100).round();
+      ALog.e('math_exit', params: {
+        'mode': 'sub',
+        'progress_pct': progressPct,
+        'reason': 'dispose',
+      });
+      ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+    }
+
     TTSManager.instance.stop();
     _qmPulseCtrl?.dispose();
     _rewardCtrl?.dispose();
@@ -75,11 +115,26 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   Future<void> _onPickAt(int index) async {
     if (lockingUi) return;
     final int seq = ++_tapSeq;
-    try { await _fx.stop(); } catch (_) {}
+    try {
+      await _fx.stop();
+    } catch (_) {}
     await TTSManager.instance.stop();
 
     final value = question.options[index];
     final isRight = value == question.answer;
+
+    // ✅ cevap + attempt kaydı
+    final attempt = (_attempts[_qid()] ?? 0) + 1;
+    _attempts[_qid()] = attempt;
+    ALog.e('math_answer', params: {
+      'mode': 'sub',
+      'a': question.a,
+      'b': question.b,
+      'op': '-',
+      'user': value,
+      'correct': isRight ? 1 : 0,
+      'attempt': attempt,
+    });
 
     if (isRight) {
       setState(() {
@@ -104,16 +159,25 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         return;
       }
       setState(() {
-        question = SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
+        question =
+            SubtractionQuestion.generate(_random, widget.maxA, widget.maxB);
         lockingUi = false;
         popIndex = null;
       });
 
+      _logQuestionStart(); // ✅ sıradaki soru
       TTSManager.instance.speakOnce(
         mathQuestionToSpeech(a: question.a, op: '-', b: question.b),
-        id: '${question.a}-${question.b}',
+        id: _qid(),
       );
     } else {
+      wrong++; // ✅ yanlış sayaç
+      if (!_hintLoggedForThisQ) {
+        _hintLoggedForThisQ = true;
+        ALog.e('math_hint_used',
+            params: {'mode': 'sub', 'hint_type': 'visual'}); // görsel ipucu
+      }
+
       HapticFeedback.mediumImpact();
       setState(() {
         pulseHint = true;
@@ -139,9 +203,26 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   Future<void> _completeLevel() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('math_level2_done', true);
+
     if (!mounted) return;
     await TTSManager.instance.stop();
-    try { await _fx.stop(); } catch (_) {}
+    try {
+      await _fx.stop();
+    } catch (_) {}
+
+    // ✅ tamamlanma + süre bitir
+    final timeMs = _levelSW.elapsedMilliseconds;
+    _levelSW.stop();
+    ALog.e('math_level_complete', params: {
+      'mode': 'sub',
+      'time_ms': timeMs,
+      'q_total': widget.targetCorrect,
+      'q_correct': correct,
+      'q_wrong': wrong,
+    });
+    ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+    _finished = true;
+
     await showCelebrationGalaxy(
       context,
       duration: const Duration(seconds: 4),
@@ -150,10 +231,10 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     if (!mounted) return;
     Navigator.pop(context, true);
   }
+
   void _speakCurrentQuestion() {
     final speech = mathQuestionToSpeech(a: question.a, op: '-', b: question.b);
-    final qid = '${question.a}-${question.b}';
-    TTSManager.instance.speakOnce(speech, id: qid);
+    TTSManager.instance.speakOnce(speech, id: _qid());
   }
 
   @override
@@ -171,11 +252,27 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
           children: [
             const SpaceBackground(),
             Positioned(
-              top: 8, left: 8, right: 8,
+              top: 8,
+              left: 8,
+              right: 8,
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () {
+                      // ✅ geri/çıkış logla
+                      final progressPct =
+                      ((correct / widget.targetCorrect) * 100).round();
+                      ALog.tap('back', place: 'math_sub');
+                      ALog.e('math_exit', params: {
+                        'mode': 'sub',
+                        'progress_pct': progressPct,
+                        'reason': 'back',
+                      });
+                      ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+                      _exitLogged = true;
+
+                      Navigator.pop(context, false);
+                    },
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   Expanded(
@@ -190,7 +287,8 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
                           const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
                         ),
                         const SizedBox(height: 6),
-                        Text('Doğru: $correct / ${widget.targetCorrect}',
+                        Text(
+                          'Doğru: $correct / ${widget.targetCorrect}',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: isTablet ? 18 : 14,
@@ -217,7 +315,9 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
               ),
             ),
             Positioned(
-              left: 12, right: 12, bottom: bottomPad,
+              left: 12,
+              right: 12,
+              bottom: bottomPad,
               child: SizedBox(
                 height: panelH,
                 child: Row(
@@ -248,11 +348,15 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
       ),
     );
   }
+
   List<Color> _paletteFor(int i) {
     switch (i % 3) {
-      case 0:return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
-      case 1:return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
-      default:return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
+      case 0:
+        return const [Color(0xFF6FD36B), Color(0xFF2A9D4A)];
+      case 1:
+        return const [Color(0xFFB57BE3), Color(0xFF6C3FB4)];
+      default:
+        return const [Color(0xFF5CE1E6), Color(0xFF2A9DA6)];
     }
   }
 }

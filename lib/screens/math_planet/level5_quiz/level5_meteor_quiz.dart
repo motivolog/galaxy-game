@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flame_lottie/flame_lottie.dart';
 import 'package:lottie/lottie.dart';
 
+// ANALYTICS:
+import 'package:flutter_projects/analytics_helper.dart';
+
 enum QuizState { presenting, resolving, finished }
 
 class Question {
@@ -33,6 +36,10 @@ class Level5MeteorQuizGame extends FlameGame {
   final int totalQuestions = 10;
   int currentIndex = 0;
   int correctCount = 0;
+
+  // ANALYTICS:
+  final Stopwatch _sw = Stopwatch();
+  int _mistakes = 0; // yanlış + kaçırılan meteor sayısı
 
   final double baseMeteorSpeed = 80;
   final double boostMultiplier = 2.0;
@@ -82,6 +89,11 @@ class Level5MeteorQuizGame extends FlameGame {
 
     questions = _generateQuestions(totalQuestions);
     onUiRefresh();
+
+    // ANALYTICS: seviye başlangıcı + süre ölçümü
+    ALog.levelStart('math', 5, difficulty: 'mixed_quiz');
+    _sw.start();
+    ALog.startTimer('level:math5_meteor_quiz');
 
     _spawnNextMeteor();
   }
@@ -259,6 +271,8 @@ class Level5MeteorQuizGame extends FlameGame {
       currentIndex++;
       _spawnNextMeteor();
     } else {
+      // ANALYTICS: yanlış
+      _mistakes++;
       activeMeteor?.speedBoost(multiplier: boostMultiplier, duration: 0.6);
       Future.delayed(const Duration(milliseconds: 650), () {
         state = QuizState.presenting;
@@ -283,6 +297,23 @@ class Level5MeteorQuizGame extends FlameGame {
   void _spawnNextMeteor() {
     if (currentIndex >= totalQuestions) {
       state = QuizState.finished;
+
+      // ANALYTICS: seviye bitişi
+      _sw.stop();
+      final dur = _sw.elapsedMilliseconds;
+      ALog.levelComplete(
+        'math',
+        5,
+        score: correctCount,
+        mistakes: _mistakes,
+        durationMs: dur,
+      );
+      ALog.endTimer('level:math5_meteor_quiz', extra: {
+        'score': correctCount,
+        'mistakes': _mistakes,
+        'total': totalQuestions,
+      });
+
       onFinished();
       return;
     }
@@ -297,6 +328,8 @@ class Level5MeteorQuizGame extends FlameGame {
       uiScale: uiScale,
       onMissed: () {
         if (state != QuizState.finished) {
+          // ANALYTICS: kaçırılan meteor da "mistake" sayılır
+          _mistakes++;
           state = QuizState.presenting;
           _respawnSameQuestion();
         }
@@ -310,12 +343,14 @@ class Level5MeteorQuizGame extends FlameGame {
 
     onUiRefresh();
   }
+
   void _notifyNewQuestionFromText(String text) {
     final triple = _parseAopB(text);
     if (triple == null) return;
     final (a, op, b) = triple;
     onNewQuestion?.call(a, op, b);
   }
+
   (int, String, int)? _parseAopB(String text) {
     final m = RegExp(r'^\s*(\d+)\s*([+\-−×x\*/÷/])\s*(\d+)\s*=').firstMatch(text);
     if (m == null) return null;

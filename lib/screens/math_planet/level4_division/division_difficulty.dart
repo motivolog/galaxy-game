@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'division_page.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
 
 class DivisionDifficultyPage extends StatefulWidget {
   const DivisionDifficultyPage({super.key});
@@ -18,14 +19,23 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
   void initState() {
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+
+    // ✅ Analytics: ekran + süre ölçümü
+    ALog.screen('math_div_difficulty');
+    ALog.startTimer('screen:math_div_difficulty');
+
     _playScreenIntro();
   }
 
   @override
   void dispose() {
+    // ✅ Analytics: ekranda geçirilen süreyi bitir
+    ALog.endTimer('screen:math_div_difficulty');
+
     _player.dispose();
     super.dispose();
   }
+
   Future<void> _playScreenIntro() async {
     try {
       await _player.stop();
@@ -34,6 +44,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
       await completed.timeout(const Duration(seconds: 6));
     } catch (_) {}
   }
+
   Future<void> _playCueAndWait(String cue) async {
     final path = switch (cue) {
       'easy' => 'audio/planet3/easy.mp3',
@@ -81,6 +92,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
+            ALog.tap('back', place: 'div_difficulty'); // ✅ Analytics: geri
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -151,10 +163,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/planet3/bg_add.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
           ),
           SafeArea(
             child: Align(
@@ -182,26 +191,31 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                           height: 1.2,
-                          shadows: const [
-                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
-                          ],
+                          shadows: const [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)],
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
+
                       buildBtn("Kolay", () async {
+                        ALog.tap('div_select_easy', place: 'div_difficulty'); // ✅
                         await _sayThenGo('easy', () {
                           _start(context, difficulty: 'easy');
                         });
                       }),
+
                       SizedBox(height: verticalGap),
 
                       buildBtn("Orta", () async {
+                        ALog.tap('div_select_medium', place: 'div_difficulty'); // ✅
                         await _sayThenGo('medium', () {
                           _start(context, difficulty: 'medium');
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
                       buildBtn("Zor", () async {
+                        ALog.tap('div_select_hard', place: 'div_difficulty'); // ✅
                         await _sayThenGo('hard', () {
                           _start(context, difficulty: 'hard');
                         });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'addition_page.dart';
+import 'package:flutter_projects/analytics_helper.dart';
 
 class AdditionDifficultyPage extends StatefulWidget {
   const AdditionDifficultyPage({super.key});
@@ -26,6 +27,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     _player.dispose();
     super.dispose();
   }
+
   Future<void> _playScreenIntro() async {
     try {
       await _player.stop();
@@ -97,6 +99,9 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
+            // ✅ Analytics: geri
+            ALog.tap('back', place: 'math_difficulty');
+
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -169,6 +174,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         ),
       );
     }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -214,7 +220,14 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
+
+                      // ✅ Kolay
                       buildBtn("Kolay", () async {
+                        // Analytics: seçim
+                        ALog.tap('math_add_easy', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'add', 'difficulty': 'easy'});
+
                         await _sayThenGo('easy', () {
                           _start(
                             context,
@@ -234,8 +247,15 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                           );
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Orta
                       buildBtn("Orta", () async {
+                        ALog.tap('math_add_medium', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'add', 'difficulty': 'medium'});
+
                         await _sayThenGo('medium', () {
                           _start(
                             context,
@@ -246,8 +266,15 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
                           );
                         });
                       }),
+
                       SizedBox(height: verticalGap),
+
+                      // ✅ Zor
                       buildBtn("Zor", () async {
+                        ALog.tap('math_add_hard', place: 'math_difficulty');
+                        await ALog.e('math_difficulty_select',
+                            params: {'mode': 'add', 'difficulty': 'hard'});
+
                         await _sayThenGo('hard', () {
                           _start(
                             context,

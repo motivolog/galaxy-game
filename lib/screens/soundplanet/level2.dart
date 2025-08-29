@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as p;
 import 'vehicle_questions.dart';
+import '../../analytics_helper.dart'; // ✅ Analytics
 
 class Level2 extends StatefulWidget {
   const Level2({super.key});
@@ -13,7 +14,7 @@ class Level2 extends StatefulWidget {
 
 class _Level2State extends State<Level2> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  late final AudioPlayer _bgPlayer;
+  late final AudioPlayer _bgPlayer; // ✅ initState'de başlatılacak
   AudioPlayer? _congratsPlayer;
 
   int _currentQuestionIndex = 0;
@@ -21,10 +22,21 @@ class _Level2State extends State<Level2> {
 
   final Map<int, List<String>> _shuffledOptionsMap = {};
 
+  // ✅ Analytics sayaçları
+  final Map<int, int> _attempts = {};     // soru bazlı deneme
+  int _correctCount = 0;
+  int _wrongCount = 0;
+  bool _finished = false;
+  final Stopwatch _levelSW = Stopwatch(); // level süresi
+
   @override
   void initState() {
     super.initState();
+    _bgPlayer = AudioPlayer();      // ✅ null hatasını önle
+    _levelSW.start();               // ✅ süreyi başlat
+
     _generateShuffledOptionsForIndex(_currentQuestionIndex);
+    _logQuestionStart();            // ✅ ilk soru
     _playCurrentSound();
   }
 
@@ -36,6 +48,19 @@ class _Level2State extends State<Level2> {
     }
   }
 
+  String _currentQId() {
+    final soundPath = vehicleQuestions[_currentQuestionIndex]['sound'] as String;
+    return p.basenameWithoutExtension(soundPath);
+  }
+
+  void _logQuestionStart() {
+    ALog.e('sound_question_start', params: {
+      'category': 'vehicles',
+      'q_id': _currentQId(),
+    });
+    _attempts[_currentQuestionIndex] = 0;
+  }
+
   Future<void> _playCurrentSound() async {
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
@@ -44,6 +69,12 @@ class _Level2State extends State<Level2> {
   }
 
   Future<void> _playHint() async {
+    // ✅ hint kullanımı
+    ALog.e('sound_hint_used', params: {
+      'category': 'vehicles',
+      'q_id': _currentQId(),
+    });
+
     await _sfxPlayer.stop();
     await _sfxPlayer.play(
       UrlSource(vehicleQuestions[_currentQuestionIndex]['hint']),
@@ -57,7 +88,22 @@ class _Level2State extends State<Level2> {
     final correct = q['correct'] as String;
 
     await _sfxPlayer.stop();
-    if (p.basename(selectedImage) == p.basename(correct)) {
+
+    final isCorrect = p.basename(selectedImage) == p.basename(correct);
+
+    // ✅ cevap olayı (+ deneme sayacı)
+    final attempt = (_attempts[_currentQuestionIndex] ?? 0) + 1;
+    _attempts[_currentQuestionIndex] = attempt;
+
+    ALog.e('sound_answer', params: {
+      'category': 'vehicles',
+      'q_id': _currentQId(),
+      'correct': isCorrect ? 1 : 0,
+      'attempt': attempt,
+    });
+
+    if (isCorrect) {
+      _correctCount++;
       _answered = true;
 
       await _sfxPlayer.play(AssetSource(q['correct_sound']));
@@ -70,12 +116,29 @@ class _Level2State extends State<Level2> {
           _answered = false;
         });
         _generateShuffledOptionsForIndex(_currentQuestionIndex);
+        _logQuestionStart(); // ✅ sıradaki soru
         await _playCurrentSound();
       } else {
+        // ✅ level bitti
+        final timeMs = _levelSW.elapsedMilliseconds;
+        _levelSW.stop();
+
+        ALog.e('sound_level_complete', params: {
+          'category': 'vehicles',
+          'time_ms': timeMs,
+          'correct_count': _correctCount,
+          'wrong_count': _wrongCount,
+        });
+
+        // level_select_sound.dart'ta başlattığın kategori sayacını kapat
+        ALog.endTimer('sound:vehicles', extra: {'category': 'vehicles'});
+
+        _finished = true;
         await _showCongratulations();
         if (mounted) Navigator.of(context).pop();
       }
     } else {
+      _wrongCount++;
       await _sfxPlayer.play(AssetSource('audio/game2_tekrar_dene.mp3'));
       await _sfxPlayer.onPlayerComplete.first;
     }
@@ -115,6 +178,23 @@ class _Level2State extends State<Level2> {
 
   @override
   void dispose() {
+    // ✅ yarıda çıkış
+    if (!_finished) {
+      final total = vehicleQuestions.length;
+      int completed = _currentQuestionIndex + (_answered ? 1 : 0);
+      if (completed > total) completed = total;
+      final progressPct = ((completed / total) * 100).round();
+
+      ALog.e('sound_exit', params: {
+        'category': 'vehicles',
+        'progress_pct': progressPct,
+        'reason': 'back',
+      });
+
+      ALog.endTimer('sound:vehicles', extra: {'category': 'vehicles'});
+      _levelSW.stop();
+    }
+
     _sfxPlayer.dispose();
     _bgPlayer.stop();
     _bgPlayer.dispose();
@@ -128,9 +208,7 @@ class _Level2State extends State<Level2> {
     final options = _shuffledOptionsMap[_currentQuestionIndex]!;
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final shortestSide = MediaQuery.of(context).size.shortestSide;
-    final cardSize = isPortrait
-        ? shortestSide * 0.45
-        : shortestSide * 0.50;
+    final cardSize = isPortrait ? shortestSide * 0.45 : shortestSide * 0.50;
 
     return Scaffold(
       body: SafeArea(
@@ -176,7 +254,7 @@ class _Level2State extends State<Level2> {
               top: 20,
               right: 20,
               child: GestureDetector(
-                onTap: _playHint,
+                onTap: _playHint, // ✅ hint (url)
                 child: const Icon(Icons.info_outline, size: 45, color: Colors.orange),
               ),
             ),
@@ -191,10 +269,15 @@ class _Level2State extends State<Level2> {
                   if (_currentQuestionIndex > 0)
                     GestureDetector(
                       onTap: () {
+                        // (opsiyonel) geri soru
+                        ALog.tap('sound_prev_question', place: 'vehicles');
+
                         setState(() {
                           _currentQuestionIndex--;
                           _answered = false;
                         });
+                        _generateShuffledOptionsForIndex(_currentQuestionIndex);
+                        _logQuestionStart(); // ✅ geri gidince yeni soru
                         _playCurrentSound();
                       },
                       child: Image.asset(
@@ -207,7 +290,14 @@ class _Level2State extends State<Level2> {
                     const SizedBox(width: 60),
 
                   GestureDetector(
-                    onTap: _playCurrentSound,
+                    onTap: () async {
+                      // ✅ tekrar dinleme: hint gibi say
+                      ALog.e('sound_hint_used', params: {
+                        'category': 'vehicles',
+                        'q_id': _currentQId(),
+                      });
+                      await _playCurrentSound();
+                    },
                     child: Image.asset(
                       'assets/images/planet2/sound_button.png',
                       width: 60,

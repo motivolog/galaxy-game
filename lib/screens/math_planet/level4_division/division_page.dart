@@ -7,6 +7,7 @@ import 'package:flutter_projects/screens/math_planet/tts_manager.dart';
 import 'package:flutter_projects/screens/math_planet/speech_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_projects/screens/math_planet/celebration_galaxy.dart';
+import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
 
 class DivisionPage extends StatefulWidget {
   const DivisionPage({super.key, required this.difficulty});
@@ -20,16 +21,41 @@ class _DivisionPageState extends State<DivisionPage> {
   late DivisionGame game;
   final AudioPlayer _fx = AudioPlayer();
 
+  // ✅ Analytics state
+  late final Stopwatch _sw;
+  int _misses = 0;
+  bool _finished = false;
+  late final int _levelIndex; // easy=1, medium=2, hard=3
+
   bool get isTablet {
     final mq = MediaQuery.maybeOf(context);
     if (mq == null) return false;
     return mq.size.shortestSide >= 600;
   }
 
+  int _mapLevel(String d) {
+    switch (d) {
+      case 'easy':
+        return 1;
+      case 'hard':
+        return 3;
+      case 'medium':
+      default:
+        return 2;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _fx.setReleaseMode(ReleaseMode.stop);
+
+    // ✅ Analytics: ekran + level başlangıcı + süre
+    _levelIndex = _mapLevel(widget.difficulty);
+    ALog.screen('math_division_game');
+    ALog.levelStart('math_division', _levelIndex, difficulty: widget.difficulty);
+    ALog.startTimer('game:math_division:${widget.difficulty}');
+    _sw = Stopwatch()..start();
 
     game = DivisionGame(
       difficulty: widget.difficulty,
@@ -43,12 +69,11 @@ class _DivisionPageState extends State<DivisionPage> {
       onCorrectAnswer: (int a, int b) async {
         final ans = mathAnswerToSpeech(a: a, op: '÷', b: b);
         try {
-          await TTSManager.instance
-              .speakNow(ans)
-              .timeout(const Duration(seconds: 2));
+          await TTSManager.instance.speakNow(ans).timeout(const Duration(seconds: 2));
         } catch (_) {}
       },
       onWrongAnswer: () async {
+        _misses++; // ✅ yanlış say
         try { await TTSManager.instance.stop(); } catch (_) {}
         try { await _fx.stop(); } catch (_) {}
         try {
@@ -59,6 +84,23 @@ class _DivisionPageState extends State<DivisionPage> {
   }
 
   Future<void> _onFinished() async {
+    _finished = true;
+
+    // ✅ Analytics: level tamamlandı + süre bitti
+    final dur = _sw.elapsedMilliseconds;
+    ALog.levelComplete(
+      'math_division',
+      _levelIndex,
+      score: game.correctCount,
+      mistakes: _misses,
+      durationMs: dur,
+    );
+    ALog.endTimer('game:math_division:${widget.difficulty}', extra: {
+      'result': 'completed',
+      'correct': game.correctCount,
+      'misses': _misses,
+    });
+
     await TTSManager.instance.stop();
     try { await _fx.stop(); } catch (_) {}
 
@@ -75,6 +117,14 @@ class _DivisionPageState extends State<DivisionPage> {
 
   @override
   void dispose() {
+    // ✅ Kullanıcı çıkarsa süreyi kapat
+    if (!_finished) {
+      ALog.endTimer('game:math_division:${widget.difficulty}', extra: {
+        'result': 'quit',
+        'correct': game.correctCount,
+        'misses': _misses,
+      });
+    }
     TTSManager.instance.stop();
     _fx.dispose();
     super.dispose();
@@ -155,6 +205,7 @@ class _DivisionPageState extends State<DivisionPage> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () async {
+                        ALog.tap('back', place: 'math_division_game'); // ✅
                         await TTSManager.instance.stop();
                         try { await _fx.stop(); } catch (_) {}
                         if (mounted) Navigator.pop(context);
@@ -174,9 +225,7 @@ class _DivisionPageState extends State<DivisionPage> {
                           ],
                         ),
                         alignment: Alignment.center,
-                        child: Icon(
-                          Icons.arrow_back, color: Colors.white, size: backIcon,
-                        ),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: backIcon),
                       ),
                     ),
                   ),

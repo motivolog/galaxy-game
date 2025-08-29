@@ -45,9 +45,6 @@ class _IntroScreenState extends State<IntroScreen>
   @override
   void initState() {
     super.initState();
-
-    // ANALYTICS
-    ALog.screen('intro');
     ALog.startTimer('screen:intro');
     _preloadIntroAudio().then((_) => _playIntroMusic());
     for (int i = 0; i < colorfulText.length + 1; i++) {
@@ -122,7 +119,6 @@ class _IntroScreenState extends State<IntroScreen>
   }
   @override
   void dispose() {
-    // ANALYTICS
     _endIntroTimer();
     _stopIntroMusic();
     _musicPlayer.dispose();
@@ -141,8 +137,7 @@ class _IntroScreenState extends State<IntroScreen>
       backgroundColor: Colors.white,
       body: Center(
         child: showRocket
-            ? Lottie.asset(
-          'assets/animations/rocket_launch.json',
+            ? Lottie.asset('assets/animations/rocket_launch.json',
           width: rocketSize,
           height: rocketSize,
           fit: BoxFit.contain,

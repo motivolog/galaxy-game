@@ -2,9 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_projects/analytics_helper.dart';
 
 Future<void> showCelebrationGalaxy(
     BuildContext context, {
@@ -12,17 +12,33 @@ Future<void> showCelebrationGalaxy(
       Duration duration = const Duration(seconds: 4),
       bool closeOnBackgroundTap = false,
       bool closeOnAnimationTap = true,
-
     }) async {
   await Navigator.of(context).push(PageRouteBuilder(
     opaque: false,
     barrierColor: Colors.black.withOpacity(0.4),
     pageBuilder: (_, __, ___) {
-      void close() => Navigator.of(_).pop();
+      bool _closed = false;
+
+      Future<void> _close(BuildContext ctx, {required String reason}) async {
+        if (_closed) return;
+        _closed = true;
+        await ALog.e('celebration_close', params: {'reason': reason});
+        await ALog.endTimer('overlay:celebration', metric: 'celebration_time_ms');
+        if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
+      }
+
+      // analytics: gösterildi + süre sayacı
+      ALog.e('celebration_open', params: {
+        'autoClose': autoClose,
+        'duration_ms': duration.inMilliseconds,
+        'bg_tap_enabled': closeOnBackgroundTap,
+        'anim_tap_enabled': closeOnAnimationTap,
+      });
+      ALog.startTimer('overlay:celebration');
 
       if (autoClose) {
         Future.delayed(duration, () {
-          if (Navigator.of(_).canPop()) close();
+          if (!_closed) _close(_, reason: 'auto');
         });
       }
 
@@ -32,32 +48,43 @@ Future<void> showCelebrationGalaxy(
       final double targetWidth = (isTablet ? shortest * 0.80 : shortest * 0.80)
           .clamp(isTablet ? 360.0 : 300.0, isTablet ? 820.0 : 650.0);
 
-      return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            IgnorePointer(child: GameWidget(game: _CelebrationGalaxyGame())),
-            if (closeOnBackgroundTap)
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: close,
+      return WillPopScope(
+        onWillPop: () async {
+          if (!_closed) {
+            await ALog.e('celebration_close', params: {'reason': 'system_back'});
+            await ALog.endTimer('overlay:celebration', metric: 'celebration_time_ms');
+          }
+          return true; // sistem geri kapanmasına izin ver
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              IgnorePointer(child: GameWidget(game: _CelebrationGalaxyGame())),
+              if (closeOnBackgroundTap)
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _close(_, reason: 'background_tap'),
+                  ),
                 ),
-              ),
-            Center(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: closeOnAnimationTap ? close : null,
-                child: SizedBox(
-                  width: targetWidth,
-                  child: Lottie.asset(
-                    'assets/animations/game3celebrate.json',
-                    repeat: false,
+              Center(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: closeOnAnimationTap
+                      ? () => _close(_, reason: 'animation_tap')
+                      : null,
+                  child: SizedBox(
+                    width: targetWidth,
+                    child: Lottie.asset(
+                      'assets/animations/game3celebrate.json',
+                      repeat: false,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     },
@@ -73,6 +100,7 @@ class _CelebrationGalaxyGame extends FlameGame {
     add(_StarField(count: 130)..priority = -1);
   }
 }
+
 class _GalaxyBackground extends PositionComponent with HasGameRef {
   @override
   Future<void> onLoad() async => size = gameRef.size;
@@ -91,6 +119,7 @@ class _GalaxyBackground extends PositionComponent with HasGameRef {
     c.drawRect(rect, paint);
   }
 }
+
 class _StarField extends Component with HasGameRef {
   _StarField({this.count = 120});
   final int count;
@@ -106,7 +135,7 @@ class _StarField extends Component with HasGameRef {
 
       final vel = Vector2(
         (_rnd.nextDouble() - 0.5) * 6,
-        - (8 + _rnd.nextDouble() * 12),
+        -(8 + _rnd.nextDouble() * 12),
       );
 
       final radius = 0.8 + _rnd.nextDouble() * 1.6;
@@ -123,6 +152,7 @@ class _StarField extends Component with HasGameRef {
     }
   }
 }
+
 class _Star extends PositionComponent with HasGameRef {
   _Star({
     required Vector2 position,
@@ -144,7 +174,8 @@ class _Star extends PositionComponent with HasGameRef {
 
   @override
   void render(Canvas c) {
-    final a = 0.4 + 0.6 * (0.5 * (1 + math.sin(_t * twinkleHz * 2 * math.pi + phase)));
+    final a = 0.4 +
+        0.6 * (0.5 * (1 + math.sin(_t * twinkleHz * 2 * math.pi + phase)));
     _paint.color = Colors.white.withOpacity(a);
     c.drawCircle(Offset(radius, radius), radius, _paint);
   }
@@ -163,4 +194,3 @@ class _Star extends PositionComponent with HasGameRef {
     if (position.x > w + radius) position.x = -radius;
   }
 }
-

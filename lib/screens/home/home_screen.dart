@@ -24,9 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _audioPlayer = AudioPlayer();
     _playWelcomeAudio();
-
-    // ANALYTICS: Home ekranı görüntülendi + süre ölçümü
-    ALog.screen('home');
     ALog.startTimer('screen:home');
   }
 
@@ -42,27 +39,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // ANALYTICS: Home ekranında geçirilen süreyi bitir
     ALog.endTimer('screen:home');
-
     _audioPlayer.stop();
     _audioPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _goToMatchPlanet() async {
-    // ANALYTICS: Tıklama + gezegen açılışı
     ALog.tap('open_match', place: 'home');
     ALog.planetOpened('match');
-
     await _audioPlayer.stop();
     await _playGezegenAudio();
     if (!mounted) return;
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer),
+      MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer),
       ),
     );
   }
@@ -77,8 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
+      MaterialPageRoute(builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
       ),
     );
   }
@@ -107,8 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox.expand(
             child: Lottie.asset(
               'assets/animations/space_animation.json',
-              fit: BoxFit.cover,
-              repeat: true,
+              fit: BoxFit.cover, repeat: true,
             ),
           ),
           Center(
