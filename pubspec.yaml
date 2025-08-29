@@ -44,6 +44,7 @@ dependencies:
   firebase_analytics: ^12.0.0
   firebase_core: ^4.0.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -330,6 +331,10 @@ flutter:
     - assets/audio/planet3/hard.mp3
     - assets/audio/planet3/zorluksec.mp3
     - assets/images/planet3/bg_add.png
+    - assets/animations/game3celebrate.json
+    - assets/images/planet3/again.png
+    - assets/images/planet3/again_button.png
+    - assets/images/planet3/left_button.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
