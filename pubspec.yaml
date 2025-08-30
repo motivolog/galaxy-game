@@ -338,6 +338,8 @@ flutter:
     - assets/images/planet3/again.png
     - assets/images/planet3/again_button.png
     - assets/images/planet3/left_button.png
+    - assets/audio/planet3/zoom_acik.mp3
+    - assets/audio/planet3/zoom_off.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
