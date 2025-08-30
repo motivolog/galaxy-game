@@ -3,7 +3,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'multiplication_page.dart';
 import 'multiplication_question_generator.dart';
-import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics
+import 'package:flutter_projects/analytics_helper.dart'; //  Analytics
+import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
 class MultiplicationDifficultyPage extends StatefulWidget {
   const MultiplicationDifficultyPage({super.key});
@@ -91,7 +92,7 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            ALog.tap('back', place: 'math_difficulty'); // ✅
+            ALog.tap('back', place: 'math_difficulty');
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -152,9 +153,11 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         ),
       );
     }
-
     return Scaffold(
-      body: Stack(
+        body: AccessibleZoom(
+          persistKey: 'math_access_zoom',
+          showButton: false,
+          child: Stack(
         children: [
           Positioned.fill(
             child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
@@ -191,8 +194,6 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
                         ),
                       ),
                       SizedBox(height: verticalGapLarge),
-
-                      // ✅ Kolay
                       buildBtn("Kolay", () async {
                         ALog.tap('math_mul_easy', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'easy'});
@@ -202,8 +203,6 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
                       }),
 
                       SizedBox(height: verticalGap),
-
-                      // ✅ Orta
                       buildBtn("Orta", () async {
                         ALog.tap('math_mul_medium', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'medium'});
@@ -213,8 +212,6 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
                       }),
 
                       SizedBox(height: verticalGap),
-
-                      // ✅ Zor
                       buildBtn("Zor", () async {
                         ALog.tap('math_mul_hard', place: 'math_difficulty');
                         await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'hard'});
@@ -230,6 +227,7 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
           ),
         ],
       ),
+        ),
     );
   }
 }

@@ -4,11 +4,21 @@ enum Difficulty { easy, medium, hard }
 enum QuizState { presenting, resolving, finished }
 
 class Question {
+  final int a;
+  final int b;
   final String text;
   final int answer;
   final List<int> options;
-  Question(this.text, this.answer, this.options);
+
+  Question({
+    required this.a,
+    required this.b,
+    required this.text,
+    required this.answer,
+    required this.options,
+  });
 }
+
 class MultiplicationQuestionGenerator {
   static final _rng = math.Random();
 
@@ -22,6 +32,7 @@ class MultiplicationQuestionGenerator {
         return (10, 50);
     }
   }
+
   static Question next(Difficulty difficulty) {
     final (min, max) = _range(difficulty);
     final a = min + _rng.nextInt(max - min + 1);
@@ -36,6 +47,13 @@ class MultiplicationQuestionGenerator {
       if (cand != ans) opts.add(cand);
     }
     final list = opts.toList()..shuffle(_rng);
-    return Question("$a × $b = ?", ans, list);
+
+    return Question(
+      a: a,
+      b: b,
+      text: "$a × $b = ?",
+      answer: ans,
+      options: list,
+    );
   }
 }

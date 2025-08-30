@@ -5,21 +5,23 @@ import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'multiplication_question_generator.dart';
-import 'package:flutter_projects/analytics_helper.dart'; // ✅ Analytics eklendi
+import 'package:flutter_projects/analytics_helper.dart'; //  Analytics
 
 class Monster extends SpriteComponent {
   Monster({
     required Vector2 start,
     required this.speed,
     required Sprite sprite,
-    required double worldScale,
+    required this.worldScale,
   }) : super(
     sprite: sprite,
     position: start,
     size: Vector2(80, 80) * worldScale,
     anchor: Anchor.center,
   );
+
   final double speed;
+  final double worldScale;
 
   @override
   void update(double dt) {
@@ -27,7 +29,7 @@ class Monster extends SpriteComponent {
     x -= speed * dt;
   }
 
-  bool get isOutOfScreen => x + width < -16;
+  bool get isOutOfScreen => x + width < -16 * worldScale;
 }
 
 class PiratesMultiplyGame extends FlameGame {
@@ -93,6 +95,9 @@ class PiratesMultiplyGame extends FlameGame {
     return 1.28;
   }
 
+  bool get _isTablet => math.min(size.x, size.y) >= 600;
+  double get _laneY => size.y * (_isTablet ? 0.56 : 0.58);
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -107,10 +112,8 @@ class PiratesMultiplyGame extends FlameGame {
       await Sprite.load('planet3/enemy5.png'),
     ];
 
-    final laneY = size.y * 0.58;
-
     playerAnchor = RectangleComponent(
-      position: Vector2(24 * worldScale, laneY - 28 * worldScale),
+      position: Vector2(24 * worldScale, _laneY - 28 * worldScale),
       size: Vector2(56, 56) * worldScale,
       paint: Paint()..color = const Color(0x00000000),
       anchor: Anchor.topLeft,
@@ -127,7 +130,6 @@ class PiratesMultiplyGame extends FlameGame {
     final m = monster;
     if (state == QuizState.presenting && m != null && m.isOutOfScreen) {
       lives = (lives - 1).clamp(0, 3);
-      // ✅ Can kaybı: canavar kaçırıldı
       ALog.e('math_life_lost', params: {
         'mode': 'mul',
         'reason': 'missed',
@@ -151,23 +153,16 @@ class PiratesMultiplyGame extends FlameGame {
 
     final q = currentQuestion;
     if (q != null) {
-      final m = RegExp(r'^(\d+)\s*[×x\*]\s*(\d+)\s*=').firstMatch(q.text);
-      if (m != null) {
-        final a = int.parse(m.group(1)!);
-        final b = int.parse(m.group(2)!);
-        onNewQuestion?.call(a, b);
-      }
+      onNewQuestion?.call(q.a, q.b);
     }
   }
 
   void _spawnMonster() {
     monster?.removeFromParent();
 
-    final laneY = size.y * 0.58;
     final sprite = monsterSprites[math.Random().nextInt(monsterSprites.length)];
-
     monster = Monster(
-      start: Vector2(size.x + 80 * worldScale, laneY - 6 * worldScale),
+      start: Vector2(size.x + 80 * worldScale, _laneY - 6 * worldScale),
       speed: monsterSpeed,
       sprite: sprite,
       worldScale: worldScale,
@@ -178,82 +173,97 @@ class PiratesMultiplyGame extends FlameGame {
   Future<void> onAnswerSelected(int value) async {
     if (state != QuizState.presenting || currentQuestion == null) return;
 
-    if (value == currentQuestion!.answer) {
-      state = QuizState.resolving;
+    state = QuizState.resolving;
+    final q = currentQuestion!;
+    final isCorrect = value == q.answer;
+
+    if (isCorrect) {
       correctCount++;
-      final txt = currentQuestion!.text;
-      final m = RegExp(r'^(\d+)\s*[×x\*]\s*(\d+)\s*=').firstMatch(txt);
-      if (m != null) {
-        final a = int.parse(m.group(1)!);
-        final b = int.parse(m.group(2)!);
-        if (onCorrectAnswer != null) {
-          await onCorrectAnswer!(a, b);
-        }
-      }
-
-      _beamThenNext();
-    } else {
-      final x = playerAnchor.x;
-      final double shake = 6 * worldScale;
-      playerAnchor.add(
-        SequenceEffect([
-          MoveToEffect(Vector2(x + shake, playerAnchor.y),
-              EffectController(duration: 0.05)),
-          MoveToEffect(Vector2(x - shake, playerAnchor.y),
-              EffectController(duration: 0.05)),
-          MoveToEffect(Vector2(x, playerAnchor.y),
-              EffectController(duration: 0.05)),
-        ]),
-      );
-      if (onWrongAnswer != null) {
-        await onWrongAnswer!();
-      }
-
-      lives = (lives - 1).clamp(0, 3);
-      // ✅ Can kaybı: yanlış cevap
-      ALog.e('math_life_lost', params: {
-        'mode': 'mul',
-        'reason': 'wrong',
-        'lives_left': lives,
-      });
-
-      if (lives <= 0) {
-        _triggerGameOver();
-        return;
-      }
-      state = QuizState.presenting;
       onUiRefresh();
+      _fireBeamAndRemoveMonster();
+
+      Future<void> speak = onCorrectAnswer?.call(q.a, q.b) ?? Future.value();
+      bool timedOut = false;
+      await Future.any([
+        speak,
+        Future.delayed(const Duration(milliseconds: 3000)).then((_) {
+          timedOut = true;
+        }),
+      ]);
+      if (timedOut) {
+        ALog.e('tts_timeout', params: {'mode': 'mul', 'phase': 'correct'});
+      }
+      _proceedAfterCorrect();
+      return;
     }
+    final x = playerAnchor.x;
+    final double shake = 6 * worldScale;
+    playerAnchor.add(
+      SequenceEffect([
+        MoveToEffect(Vector2(x + shake, playerAnchor.y),
+            EffectController(duration: 0.05)),
+        MoveToEffect(Vector2(x - shake, playerAnchor.y),
+            EffectController(duration: 0.05)),
+        MoveToEffect(Vector2(x, playerAnchor.y),
+            EffectController(duration: 0.05)),
+      ]),
+    );
+
+    if (onWrongAnswer != null) {
+      await onWrongAnswer!();
+    }
+    lives = (lives - 1).clamp(0, 3);
+    ALog.e('math_life_lost', params: {
+      'mode': 'mul',
+      'reason': 'wrong',
+      'lives_left': lives,
+    });
+
+    if (lives <= 0) {
+      _triggerGameOver();
+      return;
+    }
+    monster?.removeFromParent();
+    monster = null;
+    _spawnMonster();
+
+    state = QuizState.presenting;
+    onUiRefresh();
   }
 
-  void _beamThenNext() {
+  void _fireBeamAndRemoveMonster() {
     final to = monster?.center;
     final from = playerAnchor.center;
     if (to != null) {
       final dx = to.x - from.x;
       final dy = to.y - from.y;
       final len = math.sqrt(dx * dx + dy * dy);
+      final double beamThickness = (_isTablet ? 3.0 : 2.0) * worldScale;
 
-      final double beamThickness = 2 * worldScale;
       final beam = RectangleComponent(
         position: from,
         size: Vector2(beamThickness, beamThickness),
         paint: Paint()..color = const Color(0xFF80DEEA),
         anchor: Anchor.centerLeft,
       )..angle = math.atan2(dy, dx);
+
+      beam.priority = 1000;
       add(beam);
 
       beam.add(SequenceEffect([
-        SizeEffect.to(Vector2(len, beamThickness),
-            EffectController(duration: 0.12, curve: Curves.easeOut)),
+        SizeEffect.to(
+          Vector2(len, beamThickness),
+          EffectController(duration: 0.12, curve: Curves.easeOut),
+        ),
         OpacityEffect.to(0, EffectController(duration: 0.12)),
         RemoveEffect(),
       ]));
     }
-
     monster?.removeFromParent();
     monster = null;
+  }
 
+  void _proceedAfterCorrect() {
     if (correctCount >= targetCorrect) {
       state = QuizState.finished;
       onUiRefresh();
@@ -269,7 +279,7 @@ class PiratesMultiplyGame extends FlameGame {
     overlays.add('gameover');
     onUiRefresh();
 
-    // ✅ Game over olayı
+    // Game over olayı
     ALog.e('math_gameover', params: {
       'mode': 'mul',
       'correct': correctCount,
