@@ -21,10 +21,16 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
     _playScreenIntro();
+
+    // Analytics: screen_view + ekran süresi
+    ALog.screen('math_sub_difficulty', clazz: 'SubtractionDifficultyPage');
+    ALog.startTimer('screen:math_sub_difficulty');
   }
 
   @override
   void dispose() {
+    //  Ekran süresi (çıkış)
+    ALog.endTimer('screen:math_sub_difficulty', extra: {'result': 'exit'});
     _player.dispose();
     super.dispose();
   }
@@ -55,28 +61,38 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
     } catch (_) {}
   }
 
-  void _start(
+  // ⬇ Navigasyon öncesi timer kapat, dönüşte yeniden başlat
+  Future<void> _start(
       BuildContext context, {
         required int maxA,
         required int maxB,
-      }) {
-    Navigator.push(
+        required String navTag, // 'sub_easy' | 'sub_medium' | 'sub_hard'
+      }) async {
+    //  Nav nedeniyle bu ekranın süresini kapat
+    ALog.endTimer('screen:math_sub_difficulty', extra: {'result': 'nav_$navTag'});
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => SubtractionLevelPage(
-          maxA: maxA, maxB: maxB, targetCorrect: 6,
+          maxA: maxA,
+          maxB: maxB,
+          targetCorrect: 6,
         ),
       ),
     );
+
+    // Geri dönünce ekran süresini yeniden başlat
+    if (mounted) ALog.startTimer('screen:math_sub_difficulty');
   }
 
-  Future<void> _sayThenGo(String cue, VoidCallback go) async {
+  Future<void> _sayThenGo(String cue, Future<void> Function() go) async {
     if (_busy) return;
     setState(() => _busy = true);
     await _playCueAndWait(cue);
     if (!mounted) return;
     setState(() => _busy = false);
-    go();
+    await go();
   }
 
   Widget _buildBackButton(BuildContext context, double scale) {
@@ -91,8 +107,10 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            // Analytics: geri
+            //  Analytics: geri
             ALog.tap('back', place: 'math_difficulty');
+            //  Ekran süresi (geri butonu ile)
+            ALog.endTimer('screen:math_sub_difficulty', extra: {'result': 'back'});
 
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
@@ -156,7 +174,8 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
             await onTap();
           },
           child: Text(
-            label, style: TextStyle(
+            label,
+            style: TextStyle(
               fontSize: buttonTextSize,
               fontWeight: FontWeight.w600,
             ),
@@ -166,93 +185,114 @@ class _SubtractionDifficultyPageState extends State<SubtractionDifficultyPage> {
     }
 
     return Scaffold(
-        body: AccessibleZoom(
-          persistKey: 'math_access_zoom',
-          showButton: false,
-          child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/planet3/bg_add.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 20 : 12),
-                child: _buildBackButton(context, scale),
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/planet3/bg_add.png',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding: horizontalPadding,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Çıkarma - Zorluk Seviyesi",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: const [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 2,
-                              color: Colors.black54,
-                            ),
-                          ],
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(isTablet ? 20 : 12),
+                  child: _buildBackButton(context, scale),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: horizontalPadding,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Çıkarma - Zorluk Seviyesi",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: const [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: verticalGapLarge),
+                        SizedBox(height: verticalGapLarge),
 
-                      buildBtn("Kolay", () async {
-                        ALog.tap('math_sub_easy', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'sub', 'difficulty': 'easy'});
+                        // Kolay
+                        buildBtn("Kolay", () async {
+                          ALog.tap('math_sub_easy', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'sub', 'difficulty': 'easy'});
 
-                        await _sayThenGo('easy', () {
-                          _start(context, maxA: 10, maxB: 10);
-                        });
-                      }),
-                      SizedBox(height: verticalGap),
+                          await _sayThenGo('easy', () {
+                            return _start(
+                              context,
+                              navTag: 'sub_easy',
+                              maxA: 10,
+                              maxB: 10,
+                            );
+                          });
+                        }),
 
-                      buildBtn("Orta", () async {
-                        ALog.tap('math_sub_medium', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'sub', 'difficulty': 'medium'});
+                        SizedBox(height: verticalGap),
 
-                        await _sayThenGo('medium', () {
-                          _start(context, maxA: 50, maxB: 50);
-                        });
-                      }),
-                      SizedBox(height: verticalGap),
+                        // Orta
+                        buildBtn("Orta", () async {
+                          ALog.tap('math_sub_medium', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'sub', 'difficulty': 'medium'});
 
-                      buildBtn("Zor", () async {
-                        ALog.tap('math_sub_hard', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'sub', 'difficulty': 'hard'});
+                          await _sayThenGo('medium', () {
+                            return _start(
+                              context,
+                              navTag: 'sub_medium',
+                              maxA: 50,
+                              maxB: 50,
+                            );
+                          });
+                        }),
 
-                        await _sayThenGo('hard', () {
-                          _start(context, maxA: 100, maxB: 100);
-                        });
-                      }),
-                    ],
+                        SizedBox(height: verticalGap),
+
+                        // Zor
+                        buildBtn("Zor", () async {
+                          ALog.tap('math_sub_hard', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'sub', 'difficulty': 'hard'});
+
+                          await _sayThenGo('hard', () {
+                            return _start(
+                              context,
+                              navTag: 'sub_hard',
+                              maxA: 100,
+                              maxB: 100,
+                            );
+                          });
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
+      ),
     );
   }
 }

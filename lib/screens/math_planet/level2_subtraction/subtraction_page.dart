@@ -68,6 +68,10 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
   void initState() {
     super.initState();
 
+    //  Analytics: screen_view + ekran süresi
+    ALog.screen('math_sub', clazz: 'SubtractionLevelPage');
+    ALog.startTimer('screen:math_sub');
+
     ALog.e('math_mode_enter', params: {'mode': 'sub'});
     ALog.startTimer('math:sub');
     _levelSW.start();
@@ -102,6 +106,8 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
         'reason': 'dispose',
       });
       ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+      //  ekran süresini de kapat (erken çıkış)
+      ALog.endTimer('screen:math_sub', extra: {'result': 'exit'});
     }
 
     TTSManager.instance.stop();
@@ -218,6 +224,8 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
       'q_wrong': wrong,
     });
     ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+    //  ekran süresini "win" sonucu ile kapat
+    ALog.endTimer('screen:math_sub', extra: {'result': 'win'});
     _finished = true;
 
     await showCelebrationGalaxy(
@@ -233,6 +241,7 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     final speech = mathQuestionToSpeech(a: question.a, op: '-', b: question.b);
     TTSManager.instance.speakOnce(speech, id: _qid());
   }
+
   @override
   Widget build(BuildContext context) {
     _ensureControllers();
@@ -243,106 +252,108 @@ class _SubtractionLevelPageState extends State<SubtractionLevelPage>
     final double bottomPad = 18;
 
     return Scaffold(
-        body: AccessibleZoom(
-          persistKey: 'math_access_zoom',
-          showButton: false,
-          child: SafeArea(
-            child: Stack(
-          children: [
-            const SpaceBackground(),
-            Positioned(
-              top: 8,
-              left: 8,
-              right: 8,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      final progressPct =
-                      ((correct / widget.targetCorrect) * 100).round();
-                      ALog.tap('back', place: 'math_sub');
-                      ALog.e('math_exit', params: {
-                        'mode': 'sub',
-                        'progress_pct': progressPct,
-                        'reason': 'back',
-                      });
-                      ALog.endTimer('math:sub', extra: {'mode': 'sub'});
-                      _exitLogged = true;
-
-                      Navigator.pop(context, false);
-                    },
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LinearProgressIndicator(
-                          value: correct / widget.targetCorrect,
-                          minHeight: isTablet ? 14 : 10,
-                          backgroundColor: Colors.white10,
-                          valueColor:
-                          const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: isTablet ? 18 : 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Align(
-              alignment: const Alignment(0, -0.45),
-              child: OperationPanel(
-                a: question.a,
-                b: question.b,
-                qmPulse: CurvedAnimation(
-                  parent: _qmPulseCtrl!,
-                  curve: Curves.easeInOut,
-                ),
-                reward: _rewardCtrl!,
-                isTablet: isTablet,
-                pulseHint: pulseHint,
-              ),
-            ),
-            Positioned(
-              left: 12, right: 12, bottom: bottomPad,
-              child: SizedBox(
-                height: panelH,
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              const SpaceBackground(),
+              Positioned(
+                top: 8, left: 8, right: 8,
                 child: Row(
                   children: [
-                    for (int i = 0; i < question.options.length; i++) ...[
-                      Expanded(
-                        child: MonsterChoice(
-                          label: '${question.options[i]}',
-                          palette: _paletteFor(i),
-                          shaking: shakeIndex == i,
-                          popping: popIndex == i,
-                          glowing: popIndex == i,
-                          phase: i * 0.9,
-                          onTap: lockingUi ? null : () => _onPickAt(i),
-                          fontSize: isTablet ? 22.0 : 18.0,
-                          height: panelH,
-                        ),
+                    IconButton(
+                      onPressed: () {
+                        final progressPct =
+                        ((correct / widget.targetCorrect) * 100).round();
+                        ALog.tap('back', place: 'math_sub');
+                        ALog.e('math_exit', params: {
+                          'mode': 'sub',
+                          'progress_pct': progressPct,
+                          'reason': 'back',
+                        });
+                        ALog.endTimer('math:sub', extra: {'mode': 'sub'});
+                        // geri tuşunda ekran süresi kapanışı
+                        ALog.endTimer('screen:math_sub', extra: {'result': 'back'});
+                        _exitLogged = true;
+
+                        Navigator.pop(context, false);
+                      },
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          LinearProgressIndicator(
+                            value: correct / widget.targetCorrect,
+                            minHeight: isTablet ? 14 : 10,
+                            backgroundColor: Colors.white10,
+                            valueColor:
+                            const AlwaysStoppedAnimation(Color(0xFF66E0FF)),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Doğru: $correct / ${widget.targetCorrect}',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isTablet ? 18 : 14,
+                            ),
+                          ),
+                        ],
                       ),
-                      if (i != question.options.length - 1)
-                        SizedBox(width: gap),
-                    ],
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Align(
+                alignment: const Alignment(0, -0.45),
+                child: OperationPanel(
+                  a: question.a,
+                  b: question.b,
+                  qmPulse: CurvedAnimation(
+                    parent: _qmPulseCtrl!,
+                    curve: Curves.easeInOut,
+                  ),
+                  reward: _rewardCtrl!,
+                  isTablet: isTablet,
+                  pulseHint: pulseHint,
+                ),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: bottomPad,
+                child: SizedBox(
+                  height: panelH,
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < question.options.length; i++) ...[
+                        Expanded(
+                          child: MonsterChoice(
+                            label: '${question.options[i]}',
+                            palette: _paletteFor(i),
+                            shaking: shakeIndex == i,
+                            popping: popIndex == i,
+                            glowing: popIndex == i,
+                            phase: i * 0.9,
+                            onTap: lockingUi ? null : () => _onPickAt(i),
+                            fontSize: isTablet ? 22.0 : 18.0,
+                            height: panelH,
+                          ),
+                        ),
+                        if (i != question.options.length - 1)
+                          SizedBox(width: gap),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-        ),
     );
   }
 
