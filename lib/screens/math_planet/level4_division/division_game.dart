@@ -36,12 +36,26 @@ class DivisionGame extends FlameGame {
   int? lastSelectedIndex;
   int monsterShakeTick = 0;
 
+  // ⛑küçük korumalar
+  bool _finishNotified = false;
+  int _answerSeq = 0;
+
   @override
   Color backgroundColor() => const Color(0x00000000);
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    _nextQuestion();
+  }
+  void restart() {
+    currentIndex = 0;
+    correctCount = 0;
+    progress = 0.0;
+    state = QuizState.presenting;
+    lastSelectedIndex = null;
+    _finishNotified = false;
+    monsterShakeTick = 0;
     _nextQuestion();
   }
 
@@ -72,8 +86,7 @@ class DivisionGame extends FlameGame {
     if (a == null || b == null) {
       try {
         final dynamic dq = q;
-        final String text =
-        (dq.text is String) ? (dq.text as String) : dq.toString();
+        final String text = (dq.text is String) ? (dq.text as String) : dq.toString();
         final m = RegExp(r'(\d+)\s*[÷/]\s*(\d+)').firstMatch(text);
         if (m != null) {
           a = int.parse(m.group(1)!);
@@ -95,6 +108,7 @@ class DivisionGame extends FlameGame {
 
   Future<void> onAnswerSelectedAt(int value, int index) async {
     if (state != QuizState.presenting || current == null) return;
+    final int mySeq = ++_answerSeq;
 
     state = QuizState.resolving;
     lastSelectedIndex = index;
@@ -114,9 +128,14 @@ class DivisionGame extends FlameGame {
       progress = (correctCount / totalQuestions).clamp(0.0, 1.0);
 
       if (correctCount >= totalQuestions) {
+        // kaçış animasyonu → bitiş
         state = QuizState.escaping;
         onUiRefresh();
         Future.delayed(const Duration(milliseconds: 1200), () {
+          // aynı anda birden fazla tamamlanmayı engelle
+          if (_finishNotified) return;
+          _finishNotified = true;
+
           state = QuizState.finished;
           onUiRefresh();
           onFinished();
@@ -135,7 +154,12 @@ class DivisionGame extends FlameGame {
 
       monsterShakeTick++;
       onUiRefresh();
+
       await Future.delayed(const Duration(milliseconds: 400));
+
+      // esnada başka cevaplandıysa (ör. overlay) geri alma
+      if (mySeq != _answerSeq) return;
+
       state = QuizState.presenting;
       lastSelectedIndex = null;
       onUiRefresh();

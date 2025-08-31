@@ -5,7 +5,6 @@ import 'division_page.dart';
 import 'package:flutter_projects/analytics_helper.dart'; //  Analytics
 import 'package:flutter_projects/widgets/accessible_zoom.dart';
 
-
 class DivisionDifficultyPage extends StatefulWidget {
   const DivisionDifficultyPage({super.key});
 
@@ -23,7 +22,7 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
     // Analytics: ekran + süre ölçümü
-    ALog.screen('math_div_difficulty');
+    ALog.screen('math_div_difficulty', clazz: 'DivisionDifficultyPage');
     ALog.startTimer('screen:math_div_difficulty');
 
     _playScreenIntro();
@@ -31,8 +30,8 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
 
   @override
   void dispose() {
-    // Analytics: ekranda geçirilen süreyi bitir
-    ALog.endTimer('screen:math_div_difficulty');
+    // Analytics: ekranda geçirilen süreyi bitir (catch-all)
+    ALog.endTimer('screen:math_div_difficulty', extra: {'result': 'exit'});
 
     _player.dispose();
     super.dispose();
@@ -64,22 +63,33 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
     } catch (_) {}
   }
 
-  void _start(BuildContext context, {required String difficulty}) {
-    Navigator.push(
+  // Navigasyon öncesi ekran süresini kapat, dönüşte yeniden başlat
+  Future<void> _start(
+      BuildContext context, {
+        required String difficulty,
+      }) async {
+    // difficulty seçimi olayı
+    await ALog.e('math_difficulty_select', params: {'mode': 'div', 'difficulty': difficulty});
+
+    // nav öncesi ekran süresini kapat
+    ALog.endTimer('screen:math_div_difficulty', extra: {'result': 'nav_$difficulty'});
+
+    await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DivisionPage(difficulty: difficulty),
-      ),
+      MaterialPageRoute(builder: (_) => DivisionPage(difficulty: difficulty)),
     );
+
+    // geri dönünce yeniden başlat
+    if (mounted) ALog.startTimer('screen:math_div_difficulty');
   }
 
-  Future<void> _sayThenGo(String cue, VoidCallback go) async {
+  Future<void> _sayThenGo(String cue, Future<void> Function() go) async {
     if (_busy) return;
     setState(() => _busy = true);
     await _playCueAndWait(cue);
     if (!mounted) return;
     setState(() => _busy = false);
-    go();
+    await go();
   }
 
   Widget _buildBackButton(BuildContext context, double scale) {
@@ -95,6 +105,8 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
             ALog.tap('back', place: 'div_difficulty'); //  Analytics: geri
+            // ekran süresi: geri
+            ALog.endTimer('screen:math_div_difficulty', extra: {'result': 'back'});
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -147,93 +159,88 @@ class _DivisionDifficultyPageState extends State<DivisionDifficultyPage> {
         height: buttonHeight,
         child: ElevatedButton(
           style: ghostBtnStyle,
-          onPressed: _busy
-              ? null
-              : () async {
+          onPressed: _busy ? null : () async {
             await _player.stop();
             await onTap();
           },
-          child: Text(
-            label,
-            style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w600),
-          ),
+          child: Text(label, style: TextStyle(fontSize: buttonTextSize, fontWeight: FontWeight.w600)),
         ),
       );
     }
 
     return Scaffold(
-        body: AccessibleZoom(
-          persistKey: 'math_access_zoom',
-          showButton: false,
-          child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 20 : 12),
-                child: _buildBackButton(context, scale),
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(isTablet ? 20 : 12),
+                  child: _buildBackButton(context, scale),
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding: horizontalPadding,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Bölme - Zorluk Seviyesi",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: const [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)],
+            SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: horizontalPadding,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Bölme - Zorluk Seviyesi",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: const [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: verticalGapLarge),
+                        SizedBox(height: verticalGapLarge),
 
-                      buildBtn("Kolay", () async {
-                        ALog.tap('div_select_easy', place: 'div_difficulty');
-                        await _sayThenGo('easy', () {
-                          _start(context, difficulty: 'easy');
-                        });
-                      }),
+                        buildBtn("Kolay", () async {
+                          ALog.tap('div_select_easy', place: 'div_difficulty');
+                          await _sayThenGo('easy', () {
+                            return _start(context, difficulty: 'easy');
+                          });
+                        }),
 
-                      SizedBox(height: verticalGap),
+                        SizedBox(height: verticalGap),
 
-                      buildBtn("Orta", () async {
-                        ALog.tap('div_select_medium', place: 'div_difficulty');
-                        await _sayThenGo('medium', () {
-                          _start(context, difficulty: 'medium');
-                        });
-                      }),
+                        buildBtn("Orta", () async {
+                          ALog.tap('div_select_medium', place: 'div_difficulty');
+                          await _sayThenGo('medium', () {
+                            return _start(context, difficulty: 'medium');
+                          });
+                        }),
 
-                      SizedBox(height: verticalGap),
+                        SizedBox(height: verticalGap),
 
-                      buildBtn("Zor", () async {
-                        ALog.tap('div_select_hard', place: 'div_difficulty');
-                        await _sayThenGo('hard', () {
-                          _start(context, difficulty: 'hard');
-                        });
-                      }),
-                    ],
+                        buildBtn("Zor", () async {
+                          ALog.tap('div_select_hard', place: 'div_difficulty');
+                          await _sayThenGo('hard', () {
+                            return _start(context, difficulty: 'hard');
+                          });
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
+      ),
     );
   }
 }
