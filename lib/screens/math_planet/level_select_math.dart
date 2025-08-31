@@ -42,9 +42,9 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
 
     // Analytics: ekranda kalma süresi
     ALog.endTimer('screen:math_level_select', metric: 'screen_time_ms');
-
     super.dispose();
   }
+
   Future<void> _playTapSoundAndWait(String? assetPath) async {
     if (assetPath == null) return;
     try {
@@ -76,7 +76,18 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
       _navigating = false;
       return;
     }
+
+    //  Navigasyon öncesi bu ekranın süresini NAV sonucu ile kapat
+    ALog.endTimer('screen:math_level_select', extra: {'result': 'nav_$tapId'});
+
+    // Sayfaya git ve dönüşü bekle
     await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+
+    // Geri dönünce ekran süresini yeniden başlat
+    if (mounted) {
+      ALog.startTimer('screen:math_level_select');
+    }
+
     _navigating = false;
   }
 
@@ -97,15 +108,19 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
     final size = MediaQuery.of(context).size;
     final shortest = size.shortestSide;
     final bool isTablet = shortest >= 600;
-    final double btnWidth  = isTablet
+
+    final double btnWidth = isTablet
         ? (size.width * 0.22).clamp(160, 240).toDouble()
         : (size.width * 0.18).clamp(120, 200).toDouble();
+
     final double btnHeight = isTablet
         ? (shortest / 6.8).clamp(70, 100).toDouble()
         : (shortest / 7.9).clamp(59, 84).toDouble();
+
     final double symbolSize = isTablet
         ? (shortest / 10).clamp(60, 75).toDouble()
         : (shortest / 12).clamp(50, 52).toDouble();
+
     final double gapH = isTablet ? 30 : 28;
     final double gapW = isTablet ? 22 : 20;
     final double topPad = isTablet
@@ -126,113 +141,113 @@ class _LevelSelectMathScreenState extends State<LevelSelectMathScreen> {
         semanticsLabel: semantics,
       );
     }
-        return Scaffold(
-          body: AccessibleZoom(
-           persistKey: 'math_access_zoom',
-            textScaleBoost: 1.35,           
-            maxScale: 3.0,
-            child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/planet3/mathlevelback.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.bottomCenter,
-              filterQuality: FilterQuality.high,
+
+    return Scaffold(
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        textScaleBoost: 1.35,
+        maxScale: 3.0,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/planet3/mathlevelback.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+                filterQuality: FilterQuality.high,
+              ),
             ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, left: 12),
-              child: GestureDetector(
-                onTap: _onBack,
-                child: Container(
-                  width: isTablet ? 72 : 54,
-                  height: isTablet ? 72 : 54,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF8C7BFA),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: Colors.white,
-                    size: isTablet ? 40 : 32,
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, left: 12),
+                child: GestureDetector(
+                  onTap: _onBack,
+                  child: Container(
+                    width: isTablet ? 72 : 54,
+                    height: isTablet ? 72 : 54,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF8C7BFA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                      size: isTablet ? 40 : 32,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(left: 28, top: topPad, bottom: 26),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      btn(
-                        symbol: '+',
-                        semantics: 'Toplama',
-                        onTap: () => _go(
-                          const AdditionDifficultyPage(),
-                          soundAsset: 'audio/planet3/plus.mp3',
-                          tapId: 'open_addition',
+            SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(left: 28, top: topPad, bottom: 26),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        btn(
+                          symbol: '+',
+                          semantics: 'Toplama',
+                          onTap: () => _go(
+                            const AdditionDifficultyPage(),
+                            soundAsset: 'audio/planet3/plus.mp3',
+                            tapId: 'open_addition',
+                          ),
                         ),
-                      ),
-                      SizedBox(width: gapW),
-                      btn(
-                        symbol: '−',
-                        semantics: 'Çıkarma',
-                        onTap: () => _go(
-                          const SubtractionDifficultyPage(),
-                          soundAsset: 'audio/planet3/minus.mp3',
-                          tapId: 'open_subtraction',
+                        SizedBox(width: gapW),
+                        btn(
+                          symbol: '−',
+                          semantics: 'Çıkarma',
+                          onTap: () => _go(
+                            const SubtractionDifficultyPage(),
+                            soundAsset: 'audio/planet3/minus.mp3',
+                            tapId: 'open_subtraction',
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: gapH),
-                  Row(
-                    children: [
-                      btn(
-                        symbol: '×',
-                        semantics: 'Çarpma',
-                        onTap: () => _go(
-                          const MultiplicationDifficultyPage(),
-                          soundAsset: 'audio/planet3/multiplication.mp3',
-                          tapId: 'open_multiplication',
-                        ),
-                      ),
-                      SizedBox(width: gapW),
-                      btn(
-                        symbol: '÷',
-                        semantics: 'Bölme',
-                        onTap: () => _go(
-                          const DivisionDifficultyPage(),
-                          soundAsset: 'audio/planet3/divide.mp3',
-                          tapId: 'open_division',
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: gapH),
-                  btn(
-                    symbol: '?',
-                    semantics: 'Quiz',
-                    onTap: () => _go(
-                      const Level5MeteorQuizPage(),
-                      soundAsset: 'audio/planet3/quiz.mp3',
-                      tapId: 'open_quiz',
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: gapH),
+                    Row(
+                      children: [
+                        btn(
+                          symbol: '×',
+                          semantics: 'Çarpma',
+                          onTap: () => _go(
+                            const MultiplicationDifficultyPage(),
+                            soundAsset: 'audio/planet3/multiplication.mp3',
+                            tapId: 'open_multiplication',
+                          ),
+                        ),
+                        SizedBox(width: gapW),
+                        btn(
+                          symbol: '÷',
+                          semantics: 'Bölme',
+                          onTap: () => _go(
+                            const DivisionDifficultyPage(),
+                            soundAsset: 'audio/planet3/divide.mp3',
+                            tapId: 'open_division',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: gapH),
+                    btn(
+                      symbol: '?',
+                      semantics: 'Quiz',
+                      onTap: () => _go(
+                        const Level5MeteorQuizPage(),
+                        soundAsset: 'audio/planet3/quiz.mp3',
+                        tapId: 'open_quiz',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-    ),
-    ),
+          ],
+        ),
+      ),
     );
   }
 }
