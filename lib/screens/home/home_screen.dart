@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _audioPlayer = AudioPlayer();
     _playWelcomeAudio();
+    ALog.screen('home');
     ALog.startTimer('screen:home');
   }
 
@@ -48,46 +49,66 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _goToMatchPlanet() async {
     ALog.tap('open_match', place: 'home');
     ALog.planetOpened('match');
+
+    //  Home timer'ını NAVİGASYON nedeniyle kapat
+    ALog.endTimer('screen:home', extra: {'result': 'nav_match'});
+
     await _audioPlayer.stop();
     await _playGezegenAudio();
     if (!mounted) return;
 
-    Navigator.push(
+    //  DÖNÜŞÜ BEKLE (await), sonra Home süresini yeniden başlat
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer),
+      MaterialPageRoute(
+        builder: (_) => LevelSelectScreen(homePlayer: _audioPlayer),
       ),
     );
+
+    if (!mounted) return;
+    ALog.startTimer('screen:home');
   }
 
   Future<void> _goToSoundPlanet() async {
     ALog.tap('open_sound', place: 'home');
     ALog.planetOpened('sound');
 
+    ALog.endTimer('screen:home', extra: {'result': 'nav_sound'});
+
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/ses_gezegeni.mp3'));
     if (!mounted) return;
 
-    Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
+      MaterialPageRoute(
+        builder: (_) => LevelSelectSoundScreen(incomingPlayer: _audioPlayer),
       ),
     );
+
+    if (!mounted) return;
+    ALog.startTimer('screen:home');
   }
 
   Future<void> _goToMathPlanet() async {
     ALog.tap('open_math', place: 'home');
     ALog.planetOpened('math');
 
+    ALog.endTimer('screen:home', extra: {'result': 'nav_math'});
+
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource('audio/mathplanet/math_planet.mp3'));
     if (!mounted) return;
 
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => LevelSelectMathScreen(incomingPlayer: _audioPlayer),
       ),
     );
+
+    if (!mounted) return;
+    ALog.startTimer('screen:home');
   }
 
   @override
@@ -98,7 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox.expand(
             child: Lottie.asset(
               'assets/animations/space_animation.json',
-              fit: BoxFit.cover, repeat: true,
+              fit: BoxFit.cover,
+              repeat: true,
             ),
           ),
           Center(

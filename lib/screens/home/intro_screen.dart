@@ -45,6 +45,7 @@ class _IntroScreenState extends State<IntroScreen>
   @override
   void initState() {
     super.initState();
+    ALog.screen('intro');
     ALog.startTimer('screen:intro');
     _preloadIntroAudio().then((_) => _playIntroMusic());
     for (int i = 0; i < colorfulText.length + 1; i++) {
