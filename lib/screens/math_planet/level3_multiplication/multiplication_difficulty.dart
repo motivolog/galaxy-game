@@ -22,10 +22,16 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
     _playScreenIntro();
+
+    //  Analytics: screen_view + ekran süresi
+    ALog.screen('math_mul_difficulty', clazz: 'MultiplicationDifficultyPage');
+    ALog.startTimer('screen:math_mul_difficulty');
   }
 
   @override
   void dispose() {
+    //  Ekran süresi (çıkış)
+    ALog.endTimer('screen:math_mul_difficulty', extra: {'result': 'exit'});
     _player.dispose();
     super.dispose();
   }
@@ -55,12 +61,16 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
     } catch (_) {}
   }
 
-  void _start(
+  //  Navigasyon öncesi ekran süresini kapat, dönüşte yeniden başlat
+  Future<void> _start(
       BuildContext context, {
         required Difficulty difficulty,
         int targetCorrect = 10,
-      }) {
-    Navigator.push(
+        required String navTag, // 'mul_easy' | 'mul_medium' | 'mul_hard'
+      }) async {
+    ALog.endTimer('screen:math_mul_difficulty', extra: {'result': 'nav_$navTag'});
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => MultiplicationLevelPage(
@@ -69,15 +79,17 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         ),
       ),
     );
+
+    if (mounted) ALog.startTimer('screen:math_mul_difficulty');
   }
 
-  Future<void> _sayThenGo(String cue, VoidCallback go) async {
+  Future<void> _sayThenGo(String cue, Future<void> Function() go) async {
     if (_busy) return;
     setState(() => _busy = true);
     await _playCueAndWait(cue);
     if (!mounted) return;
     setState(() => _busy = false);
-    go();
+    await go();
   }
 
   Widget _buildBackButton(BuildContext context, double scale) {
@@ -93,6 +105,9 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
             ALog.tap('back', place: 'math_difficulty');
+            // 🔎 Ekran süresi (geri)
+            ALog.endTimer('screen:math_mul_difficulty', extra: {'result': 'back'});
+
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
             if (!mounted) return;
@@ -153,81 +168,103 @@ class _MultiplicationDifficultyPageState extends State<MultiplicationDifficultyP
         ),
       );
     }
+
     return Scaffold(
-        body: AccessibleZoom(
-          persistKey: 'math_access_zoom',
-          showButton: false,
-          child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 20 : 12),
-                child: _buildBackButton(context, scale),
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset('assets/images/planet3/bg_add.png', fit: BoxFit.cover),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(isTablet ? 20 : 12),
+                  child: _buildBackButton(context, scale),
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding: horizontalPadding,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Çarpma - Zorluk Seviyesi",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: const [
-                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
-                          ],
+            SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: horizontalPadding,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Çarpma - Zorluk Seviyesi",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: const [
+                              Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54),
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: verticalGapLarge),
-                      buildBtn("Kolay", () async {
-                        ALog.tap('math_mul_easy', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'easy'});
-                        await _sayThenGo('easy', () {
-                          _start(context, difficulty: Difficulty.easy, targetCorrect: 10);
-                        });
-                      }),
+                        SizedBox(height: verticalGapLarge),
 
-                      SizedBox(height: verticalGap),
-                      buildBtn("Orta", () async {
-                        ALog.tap('math_mul_medium', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'medium'});
-                        await _sayThenGo('medium', () {
-                          _start(context, difficulty: Difficulty.medium, targetCorrect: 10);
-                        });
-                      }),
+                        // Kolay
+                        buildBtn("Kolay", () async {
+                          ALog.tap('math_mul_easy', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'easy'});
+                          await _sayThenGo('easy', () {
+                            return _start(
+                              context,
+                              difficulty: Difficulty.easy,
+                              targetCorrect: 10,
+                              navTag: 'mul_easy',
+                            );
+                          });
+                        }),
 
-                      SizedBox(height: verticalGap),
-                      buildBtn("Zor", () async {
-                        ALog.tap('math_mul_hard', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'hard'});
-                        await _sayThenGo('hard', () {
-                          _start(context, difficulty: Difficulty.hard, targetCorrect: 10);
-                        });
-                      }),
-                    ],
+                        SizedBox(height: verticalGap),
+
+                        // Orta
+                        buildBtn("Orta", () async {
+                          ALog.tap('math_mul_medium', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'medium'});
+                          await _sayThenGo('medium', () {
+                            return _start(
+                              context,
+                              difficulty: Difficulty.medium,
+                              targetCorrect: 10,
+                              navTag: 'mul_medium',
+                            );
+                          });
+                        }),
+
+                        SizedBox(height: verticalGap),
+
+                        // Zor
+                        buildBtn("Zor", () async {
+                          ALog.tap('math_mul_hard', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select', params: {'mode': 'mul', 'difficulty': 'hard'});
+                          await _sayThenGo('hard', () {
+                            return _start(
+                              context,
+                              difficulty: Difficulty.hard,
+                              targetCorrect: 10,
+                              navTag: 'mul_hard',
+                            );
+                          });
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
+      ),
     );
   }
 }

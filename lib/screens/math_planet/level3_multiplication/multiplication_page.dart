@@ -44,6 +44,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
 
     //  screen + mode enter + süre
     ALog.screen('math_mul');
+    ALog.startTimer('screen:math_mul'); //  ekran süresi başlat
     ALog.e('math_mode_enter', params: {
       'mode': 'mul',
       'difficulty': widget.difficulty.name,
@@ -63,6 +64,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
         'reason': 'dispose',
       });
       ALog.endTimer('math:mul', extra: {'mode': 'mul'});
+      ALog.endTimer('screen:math_mul', extra: {'result': 'exit'}); // ekran süresi kapanış
     }
     TTSManager.instance.stop();
     _fx.dispose();
@@ -142,6 +144,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
       'difficulty': widget.difficulty.name,
     });
     ALog.endTimer('math:mul', extra: {'mode': 'mul'});
+    ALog.endTimer('screen:math_mul', extra: {'result': 'win'}); //  ekran süresi "win"
     _finished = true;
 
     await showCelebrationGalaxy(
@@ -185,6 +188,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
           'reason': 'back',
         });
         ALog.endTimer('math:mul', extra: {'mode': 'mul'});
+        ALog.endTimer('screen:math_mul', extra: {'result': 'back'}); //  ekran süresi "back"
         _exitLogged = true;
         return true;
       },
@@ -261,6 +265,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                                     const SizedBox(height: 18),
                                     Row(
                                       children: [
+                                        // Retry
                                         Expanded(
                                           child: ElevatedButton(
                                             onPressed: () async {
@@ -268,10 +273,9 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                                               await TTSManager.instance.stop();
                                               try { await _fx.stop(); } catch (_) {}
 
-                                              _levelSW
-                                                ..reset()
-                                                ..start();
+                                              _levelSW..reset()..start();
                                               await ALog.endTimer('math:mul', extra: {'mode': 'mul'});
+                                              //  Ekran süresi kapanmıyor (aynı ekranda tekrar dene)
                                               ALog.startTimer('math:mul');
 
                                               _correct = 0;
@@ -295,6 +299,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 12),
+                                        // Quit
                                         Expanded(
                                           child: OutlinedButton(
                                             onPressed: () async {
@@ -307,6 +312,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
                                                 'reason': 'gameover_quit',
                                               });
                                               ALog.endTimer('math:mul', extra: {'mode': 'mul'});
+                                              ALog.endTimer('screen:math_mul', extra: {'result': 'quit'}); //  ekran süresi "quit"
                                               _exitLogged = true;
 
                                               await TTSManager.instance.stop();
@@ -362,6 +368,7 @@ class _MultiplicationLevelPageState extends State<MultiplicationLevelPage> {
     );
   }
 }
+
 class _PlayerLottie extends StatelessWidget {
   const _PlayerLottie();
 
