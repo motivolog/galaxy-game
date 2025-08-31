@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
+// 🔎 Analytics helper
+import 'package:flutter_projects/analytics_helper.dart';
 
 class AccessibleZoom extends StatefulWidget {
   const AccessibleZoom({
@@ -30,6 +32,10 @@ class _AccessibleZoomState extends State<AccessibleZoom> {
   final _transform = TransformationController();
   late final AudioPlayer _player;
 
+  // İlk defa zoom'u AÇAN kullanıcıyı işaretlemek için
+  static const String _usedOnceSuffix = '_used_once';
+  bool _usedOnce = false;
+
   @override
   void initState() {
     super.initState();
@@ -45,7 +51,10 @@ class _AccessibleZoomState extends State<AccessibleZoom> {
 
   Future<void> _load() async {
     final sp = await SharedPreferences.getInstance();
-    setState(() => _enabled = sp.getBool(widget.persistKey) ?? false);
+    setState(() {
+      _enabled = sp.getBool(widget.persistKey) ?? false;
+      _usedOnce = sp.getBool('${widget.persistKey}$_usedOnceSuffix') ?? false;
+    });
   }
 
   Future<void> _stopSounds() async {
@@ -64,10 +73,33 @@ class _AccessibleZoomState extends State<AccessibleZoom> {
     }
   }
 
+  Future<void> _logAnalyticsOnToggle(bool enabled) async {
+    // Her basışta toggle event'i
+    ALog.e('zoom_toggle', params: {
+      'enabled': enabled,
+      'component': 'accessible_zoom',
+    });
+
+    // İlk KEZ "enabled" olduğunda kullanıcıyı işaretle
+    if (enabled && !_usedOnce) {
+      ALog.setUserProperty('uses_zoom', 'true');
+      ALog.e('zoom_first_enable', params: {
+        'component': 'accessible_zoom',
+      });
+
+      final sp = await SharedPreferences.getInstance();
+      _usedOnce = true;
+      await sp.setBool('${widget.persistKey}$_usedOnceSuffix', true);
+    }
+  }
+
   Future<void> _toggle() async {
     final sp = await SharedPreferences.getInstance();
     setState(() => _enabled = !_enabled);
     await sp.setBool(widget.persistKey, _enabled);
+
+    // 🔎 Analytics
+    await _logAnalyticsOnToggle(_enabled);
 
     HapticFeedback.selectionClick();
     await _playToggleSound(_enabled);
