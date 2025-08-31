@@ -19,15 +19,25 @@ class _MatchLevel5State extends State<MatchLevel5> {
   @override
   void initState() {
     super.initState();
+    // Ekran ve süre başlangıcı
     ALog.screen('match_level_$LEVEL');
     ALog.startTimer('screen:match_level_$LEVEL');
+
+    // Level başlangıcı
     ALog.levelStart('matching', LEVEL, difficulty: 'easy');
-    _gameSW..reset()..start();
+
+    _gameSW
+      ..reset()
+      ..start();
   }
 
   @override
   void dispose() {
-    if (!_completed && _gameSW.isRunning) _gameSW.stop();
+    // Kazanmadan çıkıldıysa süreyi durdur
+    if (!_completed && _gameSW.isRunning) {
+      _gameSW.stop();
+    }
+    // Ekran süresi "exit" olarak kapansın
     ALog.endTimer('screen:match_level_$LEVEL', extra: {'result': 'exit'});
     super.dispose();
   }
@@ -35,10 +45,12 @@ class _MatchLevel5State extends State<MatchLevel5> {
   @override
   Widget build(BuildContext context) {
     const pairCount = 6;
+
     const double kGapPhonePortrait   = 4.0;
     const double kGapPhoneLandscape  = 4.0;
     const double kGapTabletPortrait  = 12.0;
     const double kGapLandscapeCommon = 10.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -117,6 +129,7 @@ class _MatchLevel5State extends State<MatchLevel5> {
                 pr: pr,
               );
             }
+
             final gridW = best.cols * best.card + best.gap * (best.cols - 1);
             final gridH = best.rows * best.card + best.gap * (best.rows - 1);
 
@@ -142,6 +155,28 @@ class _MatchLevel5State extends State<MatchLevel5> {
                   congratsSound: 'audio/tebrikler.mp3',
                   flipBackDelayMs: 60,
                   cardSize: best.card,
+
+                  //  Kazanma anında Analytics:
+                  onGameCompleted: (int score, int mistakes) {
+                    if (_completed) return; 
+                    _completed = true;
+
+                    if (_gameSW.isRunning) {
+                      _gameSW.stop();
+                    }
+
+                    // Level tamamlandı
+                    ALog.levelComplete(
+                      'matching',
+                      LEVEL,
+                      score: score,
+                      mistakes: mistakes,
+                      durationMs: _gameSW.elapsedMilliseconds,
+                    );
+
+                    // Ekran süresi "win" olarak kapansın
+                    ALog.endTimer('screen:match_level_$LEVEL', extra: {'result': 'win'});
+                  },
                 ),
               ),
             );
@@ -182,12 +217,22 @@ class _MatchLevel5State extends State<MatchLevel5> {
       }
     }
     final clampedCard = bestCard.clamp(84.0, 640.0);
-    return _BestLayout(cols: bestCols, rows: bestRows, card: clampedCard.toDouble(), gap: gap);
+    return _BestLayout(
+      cols: bestCols,
+      rows: bestRows,
+      card: clampedCard.toDouble(),
+      gap: gap,
+    );
   }
 }
 
 class _BestLayout {
   final int cols, rows;
   final double card, gap;
-  const _BestLayout({required this.cols, required this.rows, required this.card, required this.gap});
+  const _BestLayout({
+    required this.cols,
+    required this.rows,
+    required this.card,
+    required this.gap,
+  });
 }
