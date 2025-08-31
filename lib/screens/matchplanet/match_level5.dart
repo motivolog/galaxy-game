@@ -156,9 +156,9 @@ class _MatchLevel5State extends State<MatchLevel5> {
                   flipBackDelayMs: 60,
                   cardSize: best.card,
 
-                  //  Kazanma anında Analytics:
+                  // ✅ KAZANMA anında Analytics:
                   onGameCompleted: (int score, int mistakes) {
-                    if (_completed) return; 
+                    if (_completed) return; // çifte log'u engelle
                     _completed = true;
 
                     if (_gameSW.isRunning) {
