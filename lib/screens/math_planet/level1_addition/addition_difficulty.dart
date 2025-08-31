@@ -21,10 +21,16 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     super.initState();
     _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
     _playScreenIntro();
+
+    //  Analytics: screen_view + ekran süresi
+    ALog.screen('math_add_difficulty', clazz: 'AdditionDifficultyPage');
+    ALog.startTimer('screen:math_add_difficulty');
   }
 
   @override
   void dispose() {
+    // Ekran süresi (çıkış)
+    ALog.endTimer('screen:math_add_difficulty', extra: {'result': 'exit'});
     _player.dispose();
     super.dispose();
   }
@@ -55,14 +61,19 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     } catch (_) {}
   }
 
-  void _start(
+  // ⬇ Navigasyon öncesi timer kapat, dönüşte yeniden başlat
+  Future<void> _start(
       BuildContext context, {
         required int maxA,
         required int maxB,
         required int visualizeUpTo,
         required List<String> objectAssets,
-      }) {
-    Navigator.push(
+        required String navTag, // 'easy' | 'medium' | 'hard'
+      }) async {
+    //  Nav nedeniyle bu ekranın süresini kapat
+    ALog.endTimer('screen:math_add_difficulty', extra: {'result': 'nav_$navTag'});
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => AdditionLevelPage(
@@ -77,15 +88,20 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         ),
       ),
     );
+
+    //  Geri dönünce ekran süresini yeniden başlat
+    if (mounted) {
+      ALog.startTimer('screen:math_add_difficulty');
+    }
   }
 
-  Future<void> _sayThenGo(String cue, VoidCallback go) async {
+  Future<void> _sayThenGo(String cue, Future<void> Function() go) async {
     if (_busy) return;
     setState(() => _busy = true);
     await _playCueAndWait(cue);
     if (!mounted) return;
     setState(() => _busy = false);
-    go();
+    await go();
   }
 
   Widget _buildBackButton(BuildContext context, double scale) {
@@ -100,8 +116,10 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(size),
           onTap: () async {
-            //  Analytics: geri
+            // Analytics: geri
             ALog.tap('back', place: 'math_difficulty');
+            //  Ekran süresi (geri butonu ile)
+            ALog.endTimer('screen:math_add_difficulty', extra: {'result': 'back'});
 
             await _player.stop();
             await SystemSound.play(SystemSoundType.click);
@@ -141,6 +159,7 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     final maxContentWidth = isTablet ? 800.0 : 420.0;
     final horizontalPadding =
     EdgeInsets.symmetric(horizontal: isTablet ? 32 : 20);
+
     final ButtonStyle ghostBtnStyle = ElevatedButton.styleFrom(
       backgroundColor: Colors.white.withOpacity(0.15),
       foregroundColor: Colors.white,
@@ -174,123 +193,126 @@ class _AdditionDifficultyPageState extends State<AdditionDifficultyPage> {
     }
 
     return Scaffold(
-        body: AccessibleZoom(
-          persistKey: 'math_access_zoom',
-          showButton: false,
-          child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/planet3/bg_add.png', fit: BoxFit.cover,
-            ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 20 : 12),
-                child: _buildBackButton(context, scale),
+      body: AccessibleZoom(
+        persistKey: 'math_access_zoom',
+        showButton: false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/planet3/bg_add.png',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding: horizontalPadding,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Toplama - Zorluk Seviyesi",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: const [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 2,
-                              color: Colors.black54,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: verticalGapLarge),
-
-                      buildBtn("Kolay", () async {
-                        // Analytics: seçim
-                        ALog.tap('math_add_easy', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'add', 'difficulty': 'easy'});
-
-                        await _sayThenGo('easy', () {
-                          _start(
-                            context,
-                            maxA: 10,
-                            maxB: 10,
-                            visualizeUpTo: 10,
-                            objectAssets: const [
-                              'assets/images/planet3/meteor.png',
-                              'assets/images/planet3/asteroid.png',
-                              'assets/images/planet3/monster.png',
-                              'assets/images/planet3/planet.png',
-                              'assets/images/planet3/alien.png',
-                              'assets/images/planet3/ship.png',
-                              'assets/images/planet3/space.png',
-                              'assets/images/planet3/star.png',
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(isTablet ? 20 : 12),
+                  child: _buildBackButton(context, scale),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: horizontalPadding,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Toplama - Zorluk Seviyesi",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: const [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                                color: Colors.black54,
+                              ),
                             ],
-                          );
-                        });
-                      }),
+                          ),
+                        ),
+                        SizedBox(height: verticalGapLarge),
 
-                      SizedBox(height: verticalGap),
+                        // Kolay
+                        buildBtn("Kolay", () async {
+                          // Analytics: seçim
+                          ALog.tap('math_add_easy', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'add', 'difficulty': 'easy'});
 
-                      buildBtn("Orta", () async {
-                        ALog.tap('math_add_medium', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'add', 'difficulty': 'medium'});
+                          await _sayThenGo('easy', () {
+                            return _start(
+                              context,
+                              navTag: 'add_easy',
+                              maxA: 10,
+                              maxB: 10,
+                              visualizeUpTo: 10,
+                              objectAssets: const [
+                                'assets/images/planet3/meteor.png',
+                                'assets/images/planet3/asteroid.png',
+                                'assets/images/planet3/monster.png',
+                                'assets/images/planet3/planet.png',
+                                'assets/images/planet3/alien.png',
+                                'assets/images/planet3/ship.png',
+                                'assets/images/planet3/space.png',
+                                'assets/images/planet3/star.png',
+                              ],
+                            );
+                          });
+                        }),
 
-                        await _sayThenGo('medium', () {
-                          _start(
-                            context,
-                            maxA: 50,
-                            maxB: 50,
-                            visualizeUpTo: 0,
-                            objectAssets: const [],
-                          );
-                        });
-                      }),
+                        SizedBox(height: verticalGap),
 
-                      SizedBox(height: verticalGap),
+                        buildBtn("Orta", () async {
+                          ALog.tap('math_add_medium', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'add', 'difficulty': 'medium'});
 
-                      buildBtn("Zor", () async {
-                        ALog.tap('math_add_hard', place: 'math_difficulty');
-                        await ALog.e('math_difficulty_select',
-                            params: {'mode': 'add', 'difficulty': 'hard'});
+                          await _sayThenGo('medium', () {
+                            return _start(
+                              context,
+                              navTag: 'add_medium',
+                              maxA: 50,
+                              maxB: 50,
+                              visualizeUpTo: 0,
+                              objectAssets: const [],
+                            );
+                          });
+                        }),
+                        SizedBox(height: verticalGap),
+                        buildBtn("Zor", () async {
+                          ALog.tap('math_add_hard', place: 'math_difficulty');
+                          await ALog.e('math_difficulty_select',
+                              params: {'mode': 'add', 'difficulty': 'hard'});
 
-                        await _sayThenGo('hard', () {
-                          _start(
-                            context,
-                            maxA: 100,
-                            maxB: 100,
-                            visualizeUpTo: 0,
-                            objectAssets: const [],
-                          );
-                        });
-                      }),
-                    ],
+                          await _sayThenGo('hard', () {
+                            return _start(
+                              context,
+                              navTag: 'add_hard',
+                              maxA: 100,
+                              maxB: 100,
+                              visualizeUpTo: 0,
+                              objectAssets: const [],
+                            );
+                          });
+                        }),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
         ),
+      ),
     );
   }
 }

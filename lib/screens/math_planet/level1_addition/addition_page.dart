@@ -49,7 +49,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   int _shakeKey = 0;
   int _tapSeq = 0;
 
-  // ✅ analytics yardımcıları
+  // analytics yardımcıları
   final Stopwatch _levelSW = Stopwatch();
   final Map<String, int> _attempts = {}; // q_id -> attempt
   bool _finished = false;
@@ -63,6 +63,9 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
   @override
   void initState() {
     super.initState();
+
+    ALog.screen('math_add', clazz: 'AdditionLevelPage'); //  screen_view
+    ALog.startTimer('screen:math_add');                  // ekran süresi
 
     ALog.e('math_mode_enter', params: {'mode': 'add'});
     ALog.startTimer('math:add');
@@ -203,6 +206,7 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
       'q_wrong': wrong,
     });
     ALog.endTimer('math:add', extra: {'mode': 'add'});
+    ALog.endTimer('screen:math_add', extra: {'result': 'win'});
 
     _finished = true;
 
@@ -229,6 +233,8 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         'reason': 'dispose',
       });
       ALog.endTimer('math:add', extra: {'mode': 'add'});
+      // ekran süresini de kapat (erken çıkış)
+      ALog.endTimer('screen:math_add', extra: {'result': 'exit'});
     }
 
     TTSManager.instance.stop();
@@ -249,212 +255,211 @@ class _AdditionLevelPageState extends State<AdditionLevelPage> {
         showButton: false,
         child: SafeArea(
           child: Stack(
-          children: [
-            const SpaceBackground(),
-            Positioned(
-              top: -2, left: 1, right: 8,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      final progressPct =
-                      ((correct / widget.targetCorrect) * 100).round();
-                      ALog.tap('back', place: 'math_add');
-                      ALog.e('math_exit', params: {
-                        'mode': 'add',
-                        'progress_pct': progressPct,
-                        'reason': 'back',
-                      });
-                      ALog.endTimer('math:add', extra: {'mode': 'add'});
-                      _exitLogged = true;
-
-                      Navigator.pop(context, false);
-                    },
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LinearProgressIndicator(
-                          value: correct / widget.targetCorrect,
-                          minHeight: isTablet ? 14 : 10,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Doğru: $correct / ${widget.targetCorrect}',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: isTablet ? 18 : 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Align(
-              alignment: Alignment.center,
-              child: Container(
-                width: size.width * (isTablet ? 0.92 : 0.96),
-                padding: EdgeInsets.all(isTablet ? 20 : 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E2148).withOpacity(0.55),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+            children: [
+              const SpaceBackground(),
+              Positioned(
+                top: -2, left: 1, right: 8,
+                child: Row(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: titleFs,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            children: [
-                              const TextSpan(
-                                  text: '  ', style: TextStyle(color: Colors.white)),
-                              TextSpan(
-                                text: '${q.a}',
-                                style:
-                                const TextStyle(color: Color(0xFF9AE6FF)),
-                              ),
-                              const TextSpan(
-                                  text: '  +  ', style: TextStyle(color: Colors.white)),
-                              TextSpan(
-                                text: '${q.b}',
-                                style:
-                                const TextStyle(color: Color(0xFFFF84B8)),
-                              ),
-                              const TextSpan(
-                                  text: '  =  ?', style: TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
+                    IconButton(
+                      onPressed: () {
+                        final progressPct =
+                        ((correct / widget.targetCorrect) * 100).round();
+                        ALog.tap('back', place: 'math_add');
+                        ALog.e('math_exit', params: {
+                          'mode': 'add',
+                          'progress_pct': progressPct,
+                          'reason': 'back',
+                        });
+                        ALog.endTimer('math:add', extra: {'mode': 'add'});
+                        //  geri tuşunda ekran süresini kapat
+                        ALog.endTimer('screen:math_add', extra: {'result': 'back'});
+
+                        _exitLogged = true;
+                        Navigator.pop(context, false);
+                      },
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
-                    const SizedBox(height: 8),
-                    if (_showObjects) ...[
-                      Row(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: ObjectPanel(
-                              count: q.a,
-                              asset: _leftAsset,
-                              maxTargetSize: isTablet
-                                  ? widget.objectSize * 1.8
-                                  : widget.objectSize * 1.1,
-                              semantic: 'Birinci sayı ${q.a}',
-                              pulse: pulseHint,
-                            ),
+                          LinearProgressIndicator(
+                            value: correct / widget.targetCorrect,
+                            minHeight: isTablet ? 14 : 10,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ObjectPanel(
-                              count: q.b,
-                              asset: _rightAsset,
-                              maxTargetSize: isTablet
-                                  ? widget.objectSize * 1.8
-                                  : widget.objectSize * 1.1,
-                              semantic: 'İkinci sayı ${q.b}',
-                              pulse: pulseHint,
+                          const SizedBox(height: 6),
+                          Text(
+                            'Doğru: $correct / ${widget.targetCorrect}',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isTablet ? 18 : 14,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                    ] else ...[
-                      const SizedBox(height: 4),
-                    ],
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: SafeArea(
-                minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
-                child: LayoutBuilder(
-                  builder: (_, cons) {
-                    final btnH = isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
-                    final btnW = isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
-                    final spacing = isTablet ? 20.0 : 14.0;
-                    final fs = isTablet ? 32.0 : 24.0;
-
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: size.width),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.24),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: Colors.white.withOpacity(0.05)),
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: size.width * (isTablet ? 0.92 : 0.96),
+                  padding: EdgeInsets.all(isTablet ? 20 : 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0E2148).withOpacity(0.55),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: titleFs,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              children: [
+                                const TextSpan(
+                                    text: '  ', style: TextStyle(color: Colors.white)),
+                                TextSpan(
+                                  text: '${q.a}',
+                                  style: const TextStyle(color: Color(0xFF9AE6FF)),
+                                ),
+                                const TextSpan(
+                                    text: '  +  ', style: TextStyle(color: Colors.white)),
+                                TextSpan(
+                                  text: '${q.b}',
+                                  style: const TextStyle(color: Color(0xFFFF84B8)),
+                                ),
+                                const TextSpan(
+                                    text: '  =  ?', style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                          ),
                         ),
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: spacing,
-                          runSpacing: 10,
+                      ),
+                      const SizedBox(height: 8),
+                      if (_showObjects) ...[
+                        Row(
                           children: [
-                            for (int idx = 0; idx < q.options.length; idx++)
-                              SizedBox(
-                                width: btnW,
-                                height: btnH,
-                                child: TweenAnimationBuilder<double>(
-                                  key: ValueKey(
-                                      'shake$_shakeKey-$idx-${_shakeIdx == idx}'),
-                                  tween: Tween<double>(
-                                      begin: 0,
-                                      end: _shakeIdx == idx ? 1 : 0),
-                                  duration:
-                                  const Duration(milliseconds: 450),
-                                  builder: (context, t, child) {
-                                    final dx = (_shakeIdx == idx)
-                                        ? sin(t * pi * 6) * 6
-                                        : 0.0;
-                                    return Transform.translate(
-                                      offset: Offset(dx, 0),
-                                      child: child,
-                                    );
-                                  },
-                                  child: ElevatedButton(
-                                    onPressed: lockingUi
-                                        ? null
-                                        : () => _onPick(idx, q.options[idx]),
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.circular(16),
+                            Expanded(
+                              child: ObjectPanel(
+                                count: q.a,
+                                asset: _leftAsset,
+                                maxTargetSize: isTablet
+                                    ? widget.objectSize * 1.8
+                                    : widget.objectSize * 1.1,
+                                semantic: 'Birinci sayı ${q.a}',
+                                pulse: pulseHint,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ObjectPanel(
+                                count: q.b,
+                                asset: _rightAsset,
+                                maxTargetSize: isTablet
+                                    ? widget.objectSize * 1.8
+                                    : widget.objectSize * 1.1,
+                                semantic: 'İkinci sayı ${q.b}',
+                                pulse: pulseHint,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ] else ...[
+                        const SizedBox(height: 4),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              Positioned(
+                left: 0, right: 0, bottom: 0,
+                child: SafeArea(
+                  minimum: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
+                  child: LayoutBuilder(
+                    builder: (_, cons) {
+                      final btnH = isTablet ? 90.0 : (size.width < 360 ? 52.0 : 62.0);
+                      final btnW = isTablet ? 160.0 : (size.width < 360 ? 90.0 : 112.0);
+                      final spacing = isTablet ? 20.0 : 14.0;
+                      final fs = isTablet ? 32.0 : 24.0;
+
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: size.width),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.24),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.05)),
+                          ),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: spacing,
+                            runSpacing: 10,
+                            children: [
+                              for (int idx = 0; idx < q.options.length; idx++)
+                                SizedBox(
+                                  width: btnW,
+                                  height: btnH,
+                                  child: TweenAnimationBuilder<double>(
+                                    key: ValueKey(
+                                        'shake$_shakeKey-$idx-${_shakeIdx == idx}'),
+                                    tween: Tween<double>(
+                                        begin: 0,
+                                        end: _shakeIdx == idx ? 1 : 0),
+                                    duration: const Duration(milliseconds: 450),
+                                    builder: (context, t, child) {
+                                      final dx = (_shakeIdx == idx)
+                                          ? sin(t * pi * 6) * 6
+                                          : 0.0;
+                                      return Transform.translate(
+                                        offset: Offset(dx, 0),
+                                        child: child,
+                                      );
+                                    },
+                                    child: ElevatedButton(
+                                      onPressed: lockingUi
+                                          ? null
+                                          : () => _onPick(idx, q.options[idx]),
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(16),
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      '${q.options[idx]}',
-                                      style: TextStyle(fontSize: fs),
+                                      child: Text(
+                                        '${q.options[idx]}',
+                                        style: TextStyle(fontSize: fs),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
